@@ -246,7 +246,7 @@ function PlotTypePanel({ plotType, example }) {
 // example that correspond to those same beats. The join key throughout is the act, so this works
 // for any structure without per-structure content, and the literature column re-splits itself
 // automatically whenever a different structure re-groups the same beats into different acts.
-function ActTable({ structure, plotType, plotTypeExample, structureExample, arcExample }) {
+function ActTable({ structure, plotType, plotTypeExample, structureExample }) {
   return (
     <div className="act-table-wrap">
       <table className="act-table">
@@ -255,9 +255,8 @@ function ActTable({ structure, plotType, plotTypeExample, structureExample, arcE
             <th>Act</th>
             {plotType && <th>{plotType.name}</th>}
             {plotTypeExample && <th>In {plotTypeExample.title}</th>}
-            <th>{structure.name} beats</th>
+            <th>{structure.name} sections</th>
             {structureExample && <th>In {structureExample.title}</th>}
-            {arcExample && <th>Character arc — in {arcExample.title}</th>}
           </tr>
         </thead>
         <tbody>
@@ -271,17 +270,35 @@ function ActTable({ structure, plotType, plotTypeExample, structureExample, arcE
                 </td>
                 {plotType && <td>{plotType.acts[key]}</td>}
                 {plotTypeExample && <td>{plotTypeExample.beats[key]}</td>}
-                <td>{beats.map(b => b.name).join(", ") || "—"}</td>
+                <td>
+                  {beats.length === 0 ? "—" : (
+                    <ul className="act-table-list">
+                      {beats.map(b => (
+                        <li key={b.id}>
+                          <span className="act-breakdown-swatch" style={{ background: ACTS[key].color }} />
+                          {b.name}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </td>
                 {structureExample && (
                   <td>
-                    {beats.length === 0 ? "—" : beats.map(b => (
-                      <div key={b.id} className="act-table-beat-row">
-                        <span className="act-table-beat-name">{b.name}:</span> {structureExample.beats[b.id]}
-                      </div>
-                    ))}
+                    {beats.length === 0 ? "—" : (
+                      <ul className="act-table-list">
+                        {beats.map(b => (
+                          <li key={b.id}>
+                            <span className="act-breakdown-swatch" style={{ background: ACTS[key].color }} />
+                            <span>
+                              <span className="act-table-beat-name">{b.name}</span>
+                              <span>{structureExample.beats[b.id]}</span>
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </td>
                 )}
-                {arcExample && <td>{arcExample.beats[key]}</td>}
               </tr>
             );
           })}
@@ -642,7 +659,7 @@ export default function StoryWheel() {
             ))}
           </div>
 
-          <ActTable structure={structure} plotType={plotType} plotTypeExample={plotTypeExample} structureExample={structureExample} arcExample={arcExample} />
+          <ActTable structure={structure} plotType={plotType} plotTypeExample={plotTypeExample} structureExample={structureExample} />
 
           <main className="layout">
             <div className="side-col">
@@ -758,9 +775,10 @@ button{font-family:inherit;cursor:pointer}
 .act-table tr:last-child td{border-bottom:none}
 .act-table-act{white-space:nowrap;font-weight:600;color:var(--gold)}
 .act-table-act .act-breakdown-swatch{display:inline-block;vertical-align:middle;margin:0 8px 2px 0}
-.act-table-beat-row{margin-bottom:8px}
-.act-table-beat-row:last-child{margin-bottom:0}
-.act-table-beat-name{font-weight:600;color:var(--ember)}
+.act-table-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.act-table-list li{display:flex;gap:8px}
+.act-table-list .act-breakdown-swatch{margin-top:5px}
+.act-table-beat-name{font-weight:600;color:var(--ember);display:block;margin-bottom:2px}
 .plot-type-panel{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--border);
   border-radius:12px;padding:14px 16px}
 .plot-type-taxonomy{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}

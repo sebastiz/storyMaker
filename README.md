@@ -44,15 +44,17 @@ horizontal tracks with ribbons linking their matching acts, to see how they rela
   specific beats
 - **The grid** — directly under the timeline, one row per act: what the chosen plot type says
   happens there, what a real example (*Jaws*, *Alice in Wonderland*, *Macbeth*…) actually does
-  there, which of the *current* structure's beats fall in that act, and — its own column — the
-  parts of a real literary/film example that correspond to those exact beats. Every structure
-  ships with one worked example (*Star Wars* on the Hero's Journey, *The Godfather* on Truby's 22
-  Steps, *Cinderella* on Propp's 31 Functions…), shown automatically — no picker needed — both
-  inline in the beat editor and, spelled out beat by beat, right here in the grid; switching
-  structures re-splits the same plot type, example, and literature column across a different,
-  finer set of beats without picking anything again. **Every one of the 17 structures and all 73
-  plot types has at least one worked example** (90 in total), each checked programmatically
-  against the target's actual beat/act ids so nothing is mismatched or missing
+  there, which of the *current* structure's beats fall in that act (a bulleted list, colour-coded
+  to match), and — its own matching bulleted column — the parts of a real literary/film example
+  that correspond to those exact beats, one heading per bullet. Every structure ships with one
+  worked example (*Star Wars* on the Hero's Journey, *The Godfather* on Truby's 22 Steps,
+  *Cinderella* on Propp's 31 Functions…), shown automatically — no picker needed — both inline in
+  the beat editor and, spelled out beat by beat, right here in the grid; switching structures
+  re-splits the same plot type, example, and literature column across a different, finer set of
+  beats without picking anything again. **Every one of the 17 structures and all 73 plot types has
+  at least one worked example** (90 in total), each checked programmatically against the target's
+  actual beat/act ids so nothing is mismatched or missing. (The character Arc track stays out of
+  this grid — its own reference example lives inline in the Arc tab instead.)
 - **Beat editor** — a distraction-free textarea per beat with a live word count; the timeline's
   Written track marks which beats have been written
 - **Characters** — a simple roster (name, role, one-line notes) alongside the outline, with an
