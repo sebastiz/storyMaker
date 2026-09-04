@@ -30,6 +30,10 @@ each — as concentric wheels with ribbons linking their matching acts, to see h
   archetype typically does at each of the four acts, and the beat editor surfaces the matching
   line for whichever beat is selected — works with any of the 17 structures, since it maps onto
   the acts they all share rather than onto specific beats
+- **See it in** — where a real example exists, a picker next to the structure (or the plot type)
+  lets you see a well-known book or film mapped beat-by-beat (or act-by-act) onto it — e.g. *Star
+  Wars* against the Hero's Journey, *Die Hard* against the Three-Act Structure, *Jaws* against
+  Overcoming the Monster — surfaced both below the wheel and inline in the beat editor
 - **Beat editor** — a distraction-free textarea per beat with a live word count; the wheel and beat
   list mark which beats have been written
 - **Characters** — a simple roster (name, role, one-line notes) alongside the outline

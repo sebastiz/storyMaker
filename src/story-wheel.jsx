@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ACTS, STRUCTURES, structureById } from "./structures.js";
 import { PLOT_TYPES, plotTypeById, plotTypesByTaxonomy } from "./plot-types.js";
+import { examplesFor, exampleById } from "./examples.js";
 // Story Wheel — a circular story-structure sketchpad
 const APP_VERSION = "dev";   // replaced with package.json version at build time (scripts/build.mjs)
 
@@ -30,6 +31,7 @@ function newProject(structureId = "three-act") {
   const now = Date.now();
   return {
     id: uid(), title: "Untitled Story", structureId, genre: "", logline: "", plotType: "",
+    structureExample: "", plotTypeExample: "",
     beats: {}, characters: [], createdAt: now, updatedAt: now,
   };
 }
@@ -198,7 +200,7 @@ function ActBreakdown({ structure }) {
     </div>
   );
 }
-function PlotTypePanel({ plotType }) {
+function PlotTypePanel({ plotType, example }) {
   return (
     <div className="plot-type-panel">
       <div className="plot-type-taxonomy">{plotType.taxonomy}</div>
@@ -209,6 +211,7 @@ function PlotTypePanel({ plotType }) {
           <div>
             <div className="act-breakdown-label">{ACTS[key].label}</div>
             <div className="act-breakdown-beats">{plotType.acts[key]}</div>
+            {example && <div className="example-line"><span>In {example.title}:</span> {example.beats[key]}</div>}
           </div>
         </div>
       ))}
@@ -290,7 +293,7 @@ function BeatList({ structure, project, selected, onSelect }) {
   );
 }
 
-function BeatEditor({ beat, text, onChange, plotType }) {
+function BeatEditor({ beat, text, onChange, plotType, example }) {
   return (
     <div className="beat-editor">
       <h3>{beat.name}</h3>
@@ -300,6 +303,11 @@ function BeatEditor({ beat, text, onChange, plotType }) {
         <p className="plot-type-note">
           <span className="plot-type-note-tax">{plotType.taxonomy}</span>
           <span style={{ color: ACTS[beat.act].color }}>{plotType.name}:</span> {plotType.acts[beat.act]}
+        </p>
+      )}
+      {example && example.beats[beat.id] && (
+        <p className="example-note">
+          <span className="example-note-tag">In {example.title}</span> — {example.beats[beat.id]}
         </p>
       )}
       <textarea value={text} placeholder="Write the scene, or just jot what has to happen…"
@@ -379,6 +387,8 @@ function toMarkdown(project, structure) {
   lines.push(`_Structure: ${structure.name}_`, "");
   const plotType = plotTypeById(project.plotType);
   if (plotType) lines.push(`_Plot type: ${plotType.name} (${plotType.taxonomy})_`, "");
+  const structureExample = exampleById(project.structureExample);
+  if (structureExample) lines.push(`_Studying: ${structureExample.title} (${structureExample.creator})_`, "");
   if (project.characters.length) {
     lines.push("## Characters", "");
     for (const c of project.characters) lines.push(`- **${c.name || "Unnamed"}** (${c.role})${c.notes ? ` — ${c.notes}` : ""}`);
@@ -436,6 +446,10 @@ export default function StoryWheel() {
 
   const beat = structure.beats.find(b => b.id === selected);
   const plotType = plotTypeById(project.plotType);
+  const structureExamples = examplesFor("structure", structure.id);
+  const plotTypeExamples = plotType ? examplesFor("plotType", plotType.id) : [];
+  const structureExample = structureExamples.some(e => e.id === project.structureExample) ? exampleById(project.structureExample) : null;
+  const plotTypeExample = plotTypeExamples.some(e => e.id === project.plotTypeExample) ? exampleById(project.plotTypeExample) : null;
 
   const openStory = id => { setActiveId(id); setShowStories(false); };
   const newStory = structureId => {
@@ -498,6 +512,14 @@ export default function StoryWheel() {
                   <span key={a.label} className="legend-item"><i style={{ background: a.color }} />{a.label}</span>
                 ))}
               </div>
+              {structureExamples.length > 0 && (
+                <label className="plot-type-picker">See it in <span className="plot-type-hint">(a real example, mapped beat-by-beat)</span>
+                  <select value={project.structureExample} onChange={e => update({ structureExample: e.target.value })}>
+                    <option value="">None</option>
+                    {structureExamples.map(ex => <option key={ex.id} value={ex.id}>{ex.title}</option>)}
+                  </select>
+                </label>
+              )}
               <label className="plot-type-picker">Plot type <span className="plot-type-hint">(what kind of story is this?)</span>
                 <select value={project.plotType} onChange={e => update({ plotType: e.target.value })}>
                   <option value="">None</option>
@@ -508,7 +530,15 @@ export default function StoryWheel() {
                   ))}
                 </select>
               </label>
-              {plotType && <PlotTypePanel plotType={plotType} />}
+              {plotType && plotTypeExamples.length > 0 && (
+                <label className="plot-type-picker">See it in <span className="plot-type-hint">(a real example, mapped act-by-act)</span>
+                  <select value={project.plotTypeExample} onChange={e => update({ plotTypeExample: e.target.value })}>
+                    <option value="">None</option>
+                    {plotTypeExamples.map(ex => <option key={ex.id} value={ex.id}>{ex.title}</option>)}
+                  </select>
+                </label>
+              )}
+              {plotType && <PlotTypePanel plotType={plotType} example={plotTypeExample} />}
             </div>
 
             <div className="side-col">
@@ -519,7 +549,8 @@ export default function StoryWheel() {
               </div>
               {tab === "beat" && beat && (
                 <BeatEditor beat={beat} text={project.beats[beat.id] || ""}
-                  onChange={text => update({ beats: { ...project.beats, [beat.id]: text } })} plotType={plotType} />
+                  onChange={text => update({ beats: { ...project.beats, [beat.id]: text } })}
+                  plotType={plotType} example={structureExample} />
               )}
               {tab === "characters" && (
                 <Characters characters={project.characters} onChange={characters => update({ characters })} />
@@ -607,6 +638,11 @@ button{font-family:inherit;cursor:pointer}
 .plot-type-note span{font-weight:600}
 .plot-type-note-tax{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.05em;
   color:var(--dim);opacity:.7;font-weight:400!important;margin-bottom:2px}
+.example-note{background:var(--bg);border:1px solid var(--ember);border-left-width:3px;border-radius:8px;
+  padding:10px 12px;font-size:12px;color:var(--dim);line-height:1.5;margin:0 0 12px}
+.example-note-tag{color:var(--ember);font-weight:600}
+.example-line{font-size:12px;color:var(--dim);margin-top:4px;line-height:1.5}
+.example-line span{color:var(--ember);font-weight:600}
 .side-col{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;min-height:420px}
 .tabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:10px}
 .tabs button{background:transparent;border:none;color:var(--dim);font-size:13px;padding:6px 10px;border-radius:7px}

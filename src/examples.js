@@ -1,0 +1,123 @@
+// Literary/film examples — a real, well-known work mapped beat-by-beat onto one structure, or
+// act-by-act onto one plot type, so you can see how a familiar story actually fills in the shape.
+// Each example is tied to exactly one structure OR one plot type (appliesToType/appliesToId);
+// `beats` keys match that structure's beat ids (or, for a plot type, the four shared act keys).
+export const EXAMPLES = [
+  {
+    id: "star-wars-hero-journey",
+    title: "Star Wars: A New Hope",
+    creator: "George Lucas, 1977",
+    appliesToType: "structure",
+    appliesToId: "hero-journey",
+    beats: {
+      "ordinary-world": "Luke Skywalker lives a dull life as a moisture farmer on Tatooine, dreaming of something more.",
+      "call": "R2-D2 carries Princess Leia's hidden message asking for Obi-Wan Kenobi's help.",
+      "refusal": "Luke tells Obi-Wan he can't leave — his uncle needs him on the farm.",
+      "mentor": "Obi-Wan gives Luke his father's lightsaber and begins teaching him about the Force.",
+      "threshold": "Luke finds his aunt and uncle killed and commits to leaving Tatooine for good.",
+      "tests-allies": "Luke meets Han Solo and Chewbacca in Mos Eisley and hires the Millennium Falcon.",
+      "approach": "The crew is captured by the Death Star's tractor beam and plans a rescue.",
+      "ordeal": "Luke and friends rescue Leia and narrowly escape the trash compactor.",
+      "reward": "They escape the Death Star with Leia and the stolen plans — but Obi-Wan is struck down by Vader.",
+      "road-back": "The Millennium Falcon is pursued back to the Rebel base, secretly tracked by the Empire.",
+      "resurrection": "Luke joins the assault on the Death Star, using the Force instead of his targeting computer.",
+      "elixir": "Luke destroys the Death Star and is honored as a hero of the Rebellion.",
+    },
+  },
+  {
+    id: "die-hard-three-act",
+    title: "Die Hard",
+    creator: "screenplay by Jeb Stuart & Steven E. de Souza, 1988",
+    appliesToType: "structure",
+    appliesToId: "three-act",
+    beats: {
+      "status-quo": "John McClane arrives in LA for Christmas, estranged from his wife Holly, and heads to her office party at Nakatomi Plaza.",
+      "inciting": "Terrorists led by Hans Gruber seize the building and take everyone hostage — McClane escapes upstairs, barefoot.",
+      "plot-point-1": "McClane triggers the fire alarm and grabs a fire axe, committing to fight back alone and unarmed.",
+      "rising": "McClane befriends Sgt. Al Powell by radio and starts picking off Gruber's men one by one to arm himself.",
+      "midpoint": "McClane discovers Gruber's plan isn't terrorism at all — it's a $640 million vault heist hidden behind a hostage crisis.",
+      "plot-point-2": "The FBI's assault plan fails catastrophically, and McClane is nearly killed running barefoot across broken glass.",
+      "climax": "McClane confronts Gruber directly, ending with Gruber falling from the tower as McClane frees Holly's watch-clasped hand.",
+      "resolution": "McClane and Holly reunite outside, reconciled, as the hostages are freed and the police stand down.",
+    },
+  },
+  {
+    id: "legally-blonde-save-the-cat",
+    title: "Legally Blonde",
+    creator: "screenplay by Karen McCullah & Kirsten Smith, 2001",
+    appliesToType: "structure",
+    appliesToId: "save-the-cat",
+    beats: {
+      "opening-image": "Elle Woods prepares for what she assumes will be a marriage proposal from her boyfriend Warner.",
+      "theme-stated": "A sorority sister tells Elle looks aren't everything — foreshadowing that she'll have to prove her substance.",
+      "set-up": "Elle is shown as popular and fashion-obsessed, and academically underestimated by everyone around her.",
+      "catalyst": "Warner breaks up with Elle, saying he needs someone more 'serious' for law school and his future.",
+      "debate": "Elle wonders whether to chase Warner to Harvard Law or accept the breakup and move on.",
+      "break-into-two": "Elle throws herself into studying and gets into Harvard Law School to win Warner back.",
+      "b-story": "Elle meets Emmett, a working-class law associate who sees her potential when no one else does.",
+      "fun-and-games": "Elle clashes with Harvard's elitist culture — mocked and out of place in her pink outfits.",
+      "midpoint": "Elle lands a coveted internship on a real murder case, despite everyone's low expectations of her.",
+      "bad-guys-close": "Professor Callahan makes an inappropriate advance, shaking Elle's confidence and trust badly.",
+      "all-is-lost": "Elle nearly quits law school entirely, packing to go home in defeat.",
+      "dark-night": "Elle's mentor Paulette and her friends convince her she's more capable than she's giving herself credit for.",
+      "break-into-three": "Elle returns with new resolve, drawing on real expertise — including her knowledge of hair perms — to solve the case.",
+      "finale": "Elle cross-examines the witness and proves the case using knowledge no one else in the room has.",
+      "final-image": "Elle graduates at the top of her class and gives the commencement speech, respected on her own terms.",
+    },
+  },
+  {
+    id: "jaws-overcoming-monster",
+    title: "Jaws",
+    creator: "Peter Benchley / dir. Steven Spielberg, 1975",
+    appliesToType: "plotType",
+    appliesToId: "overcoming-monster",
+    beats: {
+      setup: "A great white shark begins attacking swimmers off Amity Island, and Chief Brody wants to close the beaches.",
+      rise: "Brody, Hooper and Quint set out on the Orca to hunt the shark, which proves far larger and smarter than expected.",
+      climax: "The shark destroys the boat and attacks the crew directly, cornering Brody alone.",
+      fall: "Brody kills the shark by shooting a pressurized tank in its mouth, and swims back to shore.",
+    },
+  },
+  {
+    id: "alice-voyage-return",
+    title: "Alice's Adventures in Wonderland",
+    creator: "Lewis Carroll, 1865",
+    appliesToType: "plotType",
+    appliesToId: "voyage-and-return",
+    beats: {
+      setup: "Alice follows a white rabbit down a hole into the strange, rule-bending world of Wonderland.",
+      rise: "She explores Wonderland's oddities — shrinking, growing, tea parties, talking creatures — delighted and increasingly disoriented.",
+      climax: "The Queen of Hearts turns violently dangerous, putting Alice on trial and threatening her life.",
+      fall: "Alice asserts herself against the Queen's tyranny and wakes up back home, the whole adventure behind her.",
+    },
+  },
+  {
+    id: "macbeth-tragedy",
+    title: "Macbeth",
+    creator: "William Shakespeare, c. 1606",
+    appliesToType: "plotType",
+    appliesToId: "tragedy",
+    beats: {
+      setup: "Macbeth, a loyal and celebrated general, is told by three witches that he will become king.",
+      rise: "Ambition and his wife's urging push Macbeth to murder King Duncan and seize the throne.",
+      climax: "Macbeth's paranoia drives him to murder more and more to secure his rule, including his friend Banquo.",
+      fall: "Macbeth's tyranny collapses under rebellion; he is killed by Macduff, his ambition having cost him everything.",
+    },
+  },
+  {
+    id: "cinderella-rags-to-riches",
+    title: "Cinderella",
+    creator: "traditional folk tale",
+    appliesToType: "plotType",
+    appliesToId: "rags-to-riches",
+    beats: {
+      setup: "Cinderella is overworked and mistreated by her stepmother and stepsisters, denied any life of her own.",
+      rise: "With her fairy godmother's help, she attends the royal ball and catches the Prince's attention — then flees at midnight, losing a glass slipper.",
+      climax: "The Prince's search for the slipper's owner puts Cinderella's fate in the hands of a single, decisive test.",
+      fall: "The slipper fits; Cinderella marries the Prince, her worth finally recognized beyond her circumstances.",
+    },
+  },
+];
+
+export const examplesFor = (type, id) => EXAMPLES.filter(e => e.appliesToType === type && e.appliesToId === id);
+export const exampleById = id => EXAMPLES.find(e => e.id === id) || null;
