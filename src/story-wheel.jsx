@@ -240,36 +240,33 @@ function PlotTypePanel({ plotType, example }) {
     </div>
   );
 }
-// the unified grid: one row per shared act, showing (as columns exist) the plot type's own
-// description of that act, a plot-type example's version of it, which of the CURRENT structure's
-// beats fall in that act, and — its own column — the parts of the structure-level literature
-// example that correspond to those same beats. The join key throughout is the act, so this works
-// for any structure without per-structure content, and the literature column re-splits itself
-// automatically whenever a different structure re-groups the same beats into different acts.
-function ActTable({ structure, plotType, plotTypeExample, structureExample }) {
+// the grid always illustrates through the Three-Act Structure's own sections and its own worked
+// example (Die Hard) — one fixed, simple reference for any plot type, independent of whichever of
+// the 17 structures the current story actually uses (that's shown live in the arrangement view
+// instead, above). A plot type's own example, when picked, appears in its own column at the end.
+const GRID_STRUCTURE = structureById("three-act");
+const GRID_EXAMPLE = examplesFor("structure", "three-act")[0];
+function ActTable({ plotTypeExample }) {
   return (
     <div className="act-table-wrap">
       <table className="act-table">
         <thead>
           <tr>
             <th>Act</th>
-            {plotType && <th>{plotType.name}</th>}
+            <th>{GRID_STRUCTURE.name} sections</th>
+            {GRID_EXAMPLE && <th>In {GRID_EXAMPLE.title}</th>}
             {plotTypeExample && <th>In {plotTypeExample.title}</th>}
-            <th>{structure.name} sections</th>
-            {structureExample && <th>In {structureExample.title}</th>}
           </tr>
         </thead>
         <tbody>
           {Object.keys(ACTS).map(key => {
-            const beats = structure.beats.filter(b => b.act === key);
+            const beats = GRID_STRUCTURE.beats.filter(b => b.act === key);
             return (
               <tr key={key}>
                 <td className="act-table-act">
                   <span className="act-breakdown-swatch" style={{ background: ACTS[key].color }} />
                   {ACTS[key].label}
                 </td>
-                {plotType && <td>{plotType.acts[key]}</td>}
-                {plotTypeExample && <td>{plotTypeExample.beats[key]}</td>}
                 <td>
                   {beats.length === 0 ? "—" : (
                     <ul className="act-table-list">
@@ -282,7 +279,7 @@ function ActTable({ structure, plotType, plotTypeExample, structureExample }) {
                     </ul>
                   )}
                 </td>
-                {structureExample && (
+                {GRID_EXAMPLE && (
                   <td>
                     {beats.length === 0 ? "—" : (
                       <ul className="act-table-list">
@@ -291,7 +288,7 @@ function ActTable({ structure, plotType, plotTypeExample, structureExample }) {
                             <span className="act-breakdown-swatch" style={{ background: ACTS[key].color }} />
                             <span>
                               <span className="act-table-beat-name">{b.name}</span>
-                              <span>{structureExample.beats[b.id]}</span>
+                              <span>{GRID_EXAMPLE.beats[b.id]}</span>
                             </span>
                           </li>
                         ))}
@@ -299,6 +296,7 @@ function ActTable({ structure, plotType, plotTypeExample, structureExample }) {
                     )}
                   </td>
                 )}
+                {plotTypeExample && <td>{plotTypeExample.beats[key]}</td>}
               </tr>
             );
           })}
@@ -659,7 +657,7 @@ export default function StoryWheel() {
             ))}
           </div>
 
-          <ActTable structure={structure} plotType={plotType} plotTypeExample={plotTypeExample} structureExample={structureExample} />
+          <ActTable plotTypeExample={plotTypeExample} />
 
           <main className="layout">
             <div className="side-col">

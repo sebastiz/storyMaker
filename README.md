@@ -42,19 +42,20 @@ horizontal tracks with ribbons linking their matching acts, to see how they rela
   Story Shapes, or the MICE Quotient (73 entries total, grouped by taxonomy). It works with any of
   the 17 structures at once, since it maps onto the four acts they all share rather than onto
   specific beats
-- **The grid** — directly under the timeline, one row per act: what the chosen plot type says
-  happens there, what a real example (*Jaws*, *Alice in Wonderland*, *Macbeth*…) actually does
-  there, which of the *current* structure's beats fall in that act (a bulleted list, colour-coded
-  to match), and — its own matching bulleted column — the parts of a real literary/film example
-  that correspond to those exact beats, one heading per bullet. Every structure ships with one
-  worked example (*Star Wars* on the Hero's Journey, *The Godfather* on Truby's 22 Steps,
-  *Cinderella* on Propp's 31 Functions…), shown automatically — no picker needed — both inline in
-  the beat editor and, spelled out beat by beat, right here in the grid; switching structures
-  re-splits the same plot type, example, and literature column across a different, finer set of
-  beats without picking anything again. **Every one of the 17 structures and all 73 plot types has
-  at least one worked example** (90 in total), each checked programmatically against the target's
-  actual beat/act ids so nothing is mismatched or missing. (The character Arc track stays out of
-  this grid — its own reference example lives inline in the Arc tab instead.)
+- **The grid** — directly under the timeline, a fixed reference for any plot type: one row per
+  act, the Three-Act Structure's own sections for that act (a bulleted list, colour-coded to
+  match), and *Die Hard* mapped onto those same sections beat by beat, in a matching bulleted
+  column. It's always this pairing — Three-Act + *Die Hard* — regardless of which of the 17
+  structures the current story actually uses (that's shown live in the arrangement view above
+  instead), so every plot type gets the same simple, concrete illustration. Once you've picked a
+  plot type and its own example (*Jaws*, *Alice in Wonderland*, *Macbeth*…), that appears as a
+  fourth column at the end. Every structure and plot type separately ships with its own worked
+  example too — shown inline in the beat editor as you write (*Star Wars* on the Hero's Journey,
+  *The Godfather* on Truby's 22 Steps, *Cinderella* on Propp's 31 Functions…), no picker needed.
+  **Every one of the 17 structures and all 73 plot types has at least one worked example** (90 in
+  total), each checked programmatically against the target's actual beat/act ids so nothing is
+  mismatched or missing. (The character Arc track stays out of this grid — its own reference
+  example lives inline in the Arc tab instead.)
 - **Beat editor** — a distraction-free textarea per beat with a live word count; the timeline's
   Written track marks which beats have been written
 - **Characters** — a simple roster (name, role, one-line notes) alongside the outline, with an
