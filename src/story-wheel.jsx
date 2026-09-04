@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ACTS, STRUCTURES, structureById } from "./structures.js";
-import { PLOT_TYPES, plotTypeById } from "./plot-types.js";
+import { PLOT_TYPES, plotTypeById, plotTypesByTaxonomy } from "./plot-types.js";
 // Story Wheel — a circular story-structure sketchpad
 const APP_VERSION = "dev";   // replaced with package.json version at build time (scripts/build.mjs)
 
@@ -192,6 +192,7 @@ function ActBreakdown({ structure }) {
 function PlotTypePanel({ plotType }) {
   return (
     <div className="plot-type-panel">
+      <div className="plot-type-taxonomy">{plotType.taxonomy}</div>
       <p className="plot-type-blurb">{plotType.blurb}</p>
       {Object.keys(ACTS).map(key => (
         <div className="act-breakdown-row" key={key}>
@@ -263,6 +264,7 @@ function BeatEditor({ beat, text, onChange, plotType }) {
       <p className="beat-ex-line">e.g. <em>{beat.ex}</em></p>
       {plotType && (
         <p className="plot-type-note">
+          <span className="plot-type-note-tax">{plotType.taxonomy}</span>
           <span style={{ color: ACTS[beat.act].color }}>{plotType.name}:</span> {plotType.acts[beat.act]}
         </p>
       )}
@@ -342,7 +344,7 @@ function toMarkdown(project, structure) {
   if (project.logline) lines.push(`> ${project.logline}`, "");
   lines.push(`_Structure: ${structure.name}_`, "");
   const plotType = plotTypeById(project.plotType);
-  if (plotType) lines.push(`_Plot type: ${plotType.name}_`, "");
+  if (plotType) lines.push(`_Plot type: ${plotType.name} (${plotType.taxonomy})_`, "");
   if (project.characters.length) {
     lines.push("## Characters", "");
     for (const c of project.characters) lines.push(`- **${c.name || "Unnamed"}** (${c.role})${c.notes ? ` — ${c.notes}` : ""}`);
@@ -465,7 +467,11 @@ export default function StoryWheel() {
               <label className="plot-type-picker">Plot type <span className="plot-type-hint">(what kind of story is this?)</span>
                 <select value={project.plotType} onChange={e => update({ plotType: e.target.value })}>
                   <option value="">None</option>
-                  {PLOT_TYPES.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  {plotTypesByTaxonomy().map(g => (
+                    <optgroup key={g.taxonomy} label={g.taxonomy}>
+                      {g.items.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </optgroup>
+                  ))}
                 </select>
               </label>
               {plotType && <PlotTypePanel plotType={plotType} />}
@@ -560,10 +566,13 @@ button{font-family:inherit;cursor:pointer}
   border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;text-transform:none;letter-spacing:normal}
 .plot-type-panel{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--border);
   border-radius:12px;padding:14px 16px}
+.plot-type-taxonomy{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
 .plot-type-blurb{color:var(--gold);font-size:13px;font-style:italic;margin:0 0 12px}
 .plot-type-note{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;
   font-size:12px;color:var(--dim);line-height:1.5;margin:0 0 12px}
 .plot-type-note span{font-weight:600}
+.plot-type-note-tax{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--dim);opacity:.7;font-weight:400!important;margin-bottom:2px}
 .side-col{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;min-height:420px}
 .tabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:10px}
 .tabs button{background:transparent;border:none;color:var(--dim);font-size:13px;padding:6px 10px;border-radius:7px}
