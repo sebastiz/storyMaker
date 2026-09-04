@@ -1,7 +1,7 @@
 {
   "name": "storymaker",
   "type": "module",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A circular story-structure sketchpad — pick a structure template, the wheel lays out the beats, and you fill in the story.",
   "scripts": {
     "build": "node scripts/build.mjs"

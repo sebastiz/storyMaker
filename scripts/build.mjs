@@ -1,6 +1,7 @@
 // Builds the pre-compiled, fast-loading index.html from src/story-wheel.jsx.
 import { build } from "esbuild";
 import { readFileSync, writeFileSync } from "fs";
+import { createHash } from "crypto";
 
 const pkg = JSON.parse(readFileSync("package.json", "utf8"));
 
@@ -50,6 +51,11 @@ if ("serviceWorker" in navigator && location.protocol.startsWith("http"))
 writeFileSync("index.html", html);
 console.log("built index.html");
 
-const sw = readFileSync("sw.js", "utf8").replace(/const CACHE = "[^"]*";/, `const CACHE = "sw-v${pkg.version}";`);
+// hashed onto the version (not the version alone) so the cache key — and therefore sw.js's byte
+// content, which is what actually triggers a browser's service-worker update check — changes on
+// every build that changes the app, even if nobody remembered to bump package.json's version
+const hash = createHash("sha256").update(js).digest("hex").slice(0, 8);
+const cacheKey = `sw-v${pkg.version}-${hash}`;
+const sw = readFileSync("sw.js", "utf8").replace(/const CACHE = "[^"]*";/, `const CACHE = "${cacheKey}";`);
 writeFileSync("sw.js", sw);
-console.log(`stamped sw.js cache → sw-v${pkg.version}`);
+console.log(`stamped sw.js cache → ${cacheKey}`);
