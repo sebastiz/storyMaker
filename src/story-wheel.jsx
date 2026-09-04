@@ -485,7 +485,14 @@ function Characters({ characters, onChange, arcCharacterId, onArcCharacterChange
     arcValue: { ...DEFAULT_ARC_VALUE }, interacts: { ...DEFAULT_INTERACTS },
   }]);
   const set = (id, patch) => onChange(characters.map(c => (c.id === id ? { ...c, ...patch } : c)));
-  const setArcValue = (c, key, value) => set(c.id, { arcValue: { ...DEFAULT_ARC_VALUE, ...c.arcValue, [key]: clampArc(value) } });
+  // stored unclamped while typing (every consumer already reads arc values through clampArc, so a
+  // transient "-" or "-1" is harmless) — a native type="number" input reverts its own displayed text
+  // to the last committed value the instant it sees invalid interim content like a lone "-", which
+  // makes typing a negative number impossible; a clamped-on-every-keystroke value made that worse by
+  // committing 0 right under the user's cursor. Clamping to the final -3..3 integer only happens on
+  // blur, once the value settles into a document with parseable content
+  const setArcValue = (c, key, raw) => set(c.id, { arcValue: { ...DEFAULT_ARC_VALUE, ...c.arcValue, [key]: raw } });
+  const blurArcValue = (c, key) => set(c.id, { arcValue: { ...DEFAULT_ARC_VALUE, ...c.arcValue, [key]: clampArc(c.arcValue?.[key]) } });
   const setInteracts = (c, key, checked) => set(c.id, { interacts: { ...DEFAULT_INTERACTS, ...c.interacts, [key]: checked } });
   const remove = id => onChange(characters.filter(c => c.id !== id));
   return (
@@ -520,8 +527,13 @@ function Characters({ characters, onChange, arcCharacterId, onArcCharacterChange
               {Object.keys(ACTS).map(key => (
                 <div className="char-arc-point" key={key}>
                   <span className="char-arc-point-act" style={{ color: ACTS[key].color }}>{ACTS[key].label}</span>
-                  <input type="number" min={-3} max={3} value={c.arcValue?.[key] ?? 0}
-                    onChange={e => setArcValue(c, key, e.target.value)} />
+                  <input type="text" inputMode="numeric" className="char-arc-value" value={c.arcValue?.[key] ?? 0}
+                    onChange={e => {
+                      const raw = e.target.value;
+                      if (raw !== "" && raw !== "-" && !/^-?\d+$/.test(raw)) return; // ignore non-numeric keystrokes
+                      setArcValue(c, key, raw);
+                    }}
+                    onBlur={() => blurArcValue(c, key)} />
                   <label className="char-interact-check">
                     <input type="checkbox" checked={!!c.interacts?.[key]}
                       onChange={e => setInteracts(c, key, e.target.checked)} />
@@ -918,7 +930,7 @@ button{font-family:inherit;cursor:pointer}
 .char-arc-points-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .char-arc-point{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
 .char-arc-point-act{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.03em}
-.char-arc-point input[type="number"]{width:52px;text-align:center;background:var(--panel);
+.char-arc-value{width:52px;text-align:center;background:var(--panel);
   border:1px solid var(--border);color:var(--ink);border-radius:6px;padding:5px 4px;font-size:13px}
 .char-interact-check{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--dim);
   cursor:pointer}
