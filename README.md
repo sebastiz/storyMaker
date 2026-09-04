@@ -29,7 +29,9 @@ horizontal tracks with ribbons linking their matching acts, to see how they rela
   change arc — who they are before the story disrupts them, how they change while pursuing the
   goal, the test that forces a real choice, who they've become. Click a clip to write that stage in
   a dedicated Arc tab next to the beat editor; only one character is tracked at a time, keeping the
-  timeline readable
+  timeline readable. A worked reference is shown automatically alongside your own notes — Scrooge's
+  transformation in *A Christmas Carol*, act by act — both inline in the Arc tab and as its own
+  column in the grid, the same "no picker needed" treatment every other example in the app gets
 - **Compare view** — stack any two structures, plot types, or a structure against a plot type, as
   two horizontal tracks; ribbons connect each one's four acts to its counterpart in the other,
   sized by that act's own share of its story (a plot type's four acts are conceptual, so its

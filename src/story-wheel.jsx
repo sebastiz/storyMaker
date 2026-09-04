@@ -246,7 +246,7 @@ function PlotTypePanel({ plotType, example }) {
 // example that correspond to those same beats. The join key throughout is the act, so this works
 // for any structure without per-structure content, and the literature column re-splits itself
 // automatically whenever a different structure re-groups the same beats into different acts.
-function ActTable({ structure, plotType, plotTypeExample, structureExample }) {
+function ActTable({ structure, plotType, plotTypeExample, structureExample, arcExample }) {
   return (
     <div className="act-table-wrap">
       <table className="act-table">
@@ -257,6 +257,7 @@ function ActTable({ structure, plotType, plotTypeExample, structureExample }) {
             {plotTypeExample && <th>In {plotTypeExample.title}</th>}
             <th>{structure.name} beats</th>
             {structureExample && <th>In {structureExample.title}</th>}
+            {arcExample && <th>Character arc — in {arcExample.title}</th>}
           </tr>
         </thead>
         <tbody>
@@ -280,6 +281,7 @@ function ActTable({ structure, plotType, plotTypeExample, structureExample }) {
                     ))}
                   </td>
                 )}
+                {arcExample && <td>{arcExample.beats[key]}</td>}
               </tr>
             );
           })}
@@ -376,11 +378,16 @@ const ARC_STAGE_GUIDE = {
   climax: "The test that forces a real choice — what breaks or reveals them.",
   fall: "Who they've become — the lie replaced, the flaw faced, or, for a flat arc, what they proved right.",
 };
-function ArcEditor({ character, act, text, onChange }) {
+function ArcEditor({ character, act, text, onChange, example }) {
   return (
     <div className="beat-editor">
       <h3>{character.name || "Unnamed"} <span className="arc-editor-act" style={{ color: ACTS[act].color }}>— {ACTS[act].label}</span></h3>
       <p className="guide">{ARC_STAGE_GUIDE[act]}</p>
+      {example && (
+        <p className="example-note">
+          <span className="example-note-tag">In {example.title}</span> — {example.beats[act]}
+        </p>
+      )}
       <textarea value={text} placeholder="What's happening to them here?"
         onChange={e => onChange(e.target.value)} rows={12} />
       <div className="wc">{wordCount(text)} words</div>
@@ -538,6 +545,10 @@ export default function StoryWheel() {
   const beat = structure.beats.find(b => b.id === selected);
   const plotType = plotTypeById(project.plotType);
   const arcCharacter = project.characters.find(c => c.id === project.arcCharacterId) || null;
+  // "A Christmas Carol" already illustrates the MICE Quotient's "Character" plot type act by act —
+  // a character-driven plot type IS a change arc, so the same beats double as the arc reference
+  // rather than duplicating the same story as separate data
+  const arcExample = arcCharacter ? exampleById("christmas-carol-mice-character") : null;
   // every structure ships with exactly one worked literature example, so it's shown automatically
   // rather than picked from a dropdown — see it inline in the beat editor and split across the
   // grid below the timeline
@@ -631,7 +642,7 @@ export default function StoryWheel() {
             ))}
           </div>
 
-          <ActTable structure={structure} plotType={plotType} plotTypeExample={plotTypeExample} structureExample={structureExample} />
+          <ActTable structure={structure} plotType={plotType} plotTypeExample={plotTypeExample} structureExample={structureExample} arcExample={arcExample} />
 
           <main className="layout">
             <div className="side-col">
@@ -653,7 +664,7 @@ export default function StoryWheel() {
                   onChange={text => update({
                     characters: project.characters.map(c => (c.id === arcCharacter.id
                       ? { ...c, arc: { ...c.arc, [selectedArcAct]: text } } : c)),
-                  })} />
+                  })} example={arcExample} />
               )}
               {tab === "characters" && (
                 <Characters characters={project.characters} onChange={characters => update({ characters })}
