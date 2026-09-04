@@ -31,7 +31,7 @@ function newProject(structureId = "three-act") {
   const now = Date.now();
   return {
     id: uid(), title: "Untitled Story", structureId, genre: "", logline: "", plotType: "",
-    plotTypeExample: "",
+    plotTypeExample: "", arcCharacterId: "",
     beats: {}, characters: [], createdAt: now, updatedAt: now,
   };
 }
@@ -75,7 +75,7 @@ function groupSlices(slices, keyFn) {
    Written (a per-beat clip/empty-slot overlay of the same track) -> Acts (a 3-clip summary
    track) -> Plot Type (an external 4-clip track, only present once one's picked; a highlighted
    border marks a clip that also has a real-world example). */
-function Timeline({ structure, project, selected, onSelect, plotType, plotTypeExample }) {
+function Timeline({ structure, project, selected, onSelect, arcCharacter, selectedArcAct, onSelectArcAct }) {
   const slices = useMemo(() => segments(structure.beats), [structure]);
   const acts3 = useMemo(() => groupSlices(slices, b => b.threeAct), [slices]);
   const actGroups = useMemo(() => groupSlices(slices, b => b.act), [slices]);
@@ -130,16 +130,21 @@ function Timeline({ structure, project, selected, onSelect, plotType, plotTypeEx
         </div>
       </div>
 
-      {plotType && (
+      {arcCharacter && (
         <div className="tl-track">
-          <div className="tl-label">Plot Type</div>
-          <div className="tl-lane tl-lane-plottype">
-            {actGroups.map(({ key, a0, a1 }) => (
-              <div key={key} className={`tl-clip tl-clip-plottype${plotTypeExample ? " has-example" : ""}`}
-                style={{ left: a0 + "%", width: (a1 - a0) + "%", background: ACTS[key].color }}>
-                <span className="tl-clip-label">{ACTS[key].label}</span>
-              </div>
-            ))}
+          <div className="tl-label">Arc</div>
+          <div className="tl-lane tl-lane-arc">
+            {actGroups.map(({ key, a0, a1 }) => {
+              const isSel = selectedArcAct === key;
+              const hasText = wordCount(arcCharacter.arc?.[key]) > 0;
+              return (
+                <div key={key} className={`tl-clip tl-clip-arc${isSel ? " is-sel" : ""}`}
+                  style={{ left: a0 + "%", width: (a1 - a0) + "%", background: ACTS[key].color, opacity: isSel ? 1 : hasText ? 0.88 : 0.45 }}
+                  onClick={() => onSelectArcAct(key)} title={`${arcCharacter.name || "Unnamed"} — ${ACTS[key].label}`}>
+                  <span className="tl-clip-label">{ACTS[key].label}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -381,16 +386,47 @@ function BeatEditor({ beat, text, onChange, plotType, example }) {
     </div>
   );
 }
+// four stock stages of a change arc, mapped onto the same shared acts every structure, plot type
+// and example already uses — so a character's arc is just another act-keyed track, no new join key
+const ARC_STAGE_GUIDE = {
+  setup: "Who they are before the story disrupts them — their flaw, lie, or unmet want.",
+  rise: "How they change while pursuing the goal — new skills, allies, doubts.",
+  climax: "The test that forces a real choice — what breaks or reveals them.",
+  fall: "Who they've become — the lie replaced, the flaw faced, or, for a flat arc, what they proved right.",
+};
+function ArcEditor({ character, act, text, onChange }) {
+  return (
+    <div className="beat-editor">
+      <h3>{character.name || "Unnamed"} <span className="arc-editor-act" style={{ color: ACTS[act].color }}>— {ACTS[act].label}</span></h3>
+      <p className="guide">{ARC_STAGE_GUIDE[act]}</p>
+      <textarea value={text} placeholder="What's happening to them here?"
+        onChange={e => onChange(e.target.value)} rows={12} />
+      <div className="wc">{wordCount(text)} words</div>
+    </div>
+  );
+}
 
 /* ===== characters ===== */
 const ROLES = ["Protagonist", "Antagonist", "Supporting", "Other"];
-function Characters({ characters, onChange }) {
-  const add = () => onChange([...characters, { id: uid(), name: "", role: "Supporting", notes: "" }]);
+function Characters({ characters, onChange, arcCharacterId, onArcCharacterChange }) {
+  const add = () => onChange([...characters, {
+    id: uid(), name: "", role: "Supporting", notes: "",
+    arc: { setup: "", rise: "", climax: "", fall: "" },
+  }]);
   const set = (id, patch) => onChange(characters.map(c => (c.id === id ? { ...c, ...patch } : c)));
   const remove = id => onChange(characters.filter(c => c.id !== id));
   return (
     <div className="characters">
       {characters.length === 0 && <p className="empty">No characters yet.</p>}
+      {characters.length > 0 && (
+        <label className="plot-type-top-picker arc-tracker-picker">Track arc in timeline
+          <span className="plot-type-hint">(adds an Arc track to the arrangement view)</span>
+          <select value={arcCharacterId} onChange={e => onArcCharacterChange(e.target.value)}>
+            <option value="">None</option>
+            {characters.map(c => <option key={c.id} value={c.id}>{c.name || "Unnamed"}</option>)}
+          </select>
+        </label>
+      )}
       {characters.map(c => (
         <div className="char-row" key={c.id}>
           <input placeholder="Name" value={c.name} onChange={e => set(c.id, { name: e.target.value })} />
@@ -456,7 +492,10 @@ function toMarkdown(project, structure) {
   if (structureExample) lines.push(`_Studying: ${structureExample.title} (${structureExample.creator})_`, "");
   if (project.characters.length) {
     lines.push("## Characters", "");
-    for (const c of project.characters) lines.push(`- **${c.name || "Unnamed"}** (${c.role})${c.notes ? ` — ${c.notes}` : ""}`);
+    for (const c of project.characters) {
+      lines.push(`- **${c.name || "Unnamed"}** (${c.role})${c.notes ? ` — ${c.notes}` : ""}`);
+      for (const key of Object.keys(ACTS)) if (c.arc?.[key]) lines.push(`  - *${ACTS[key].label}:* ${c.arc[key]}`);
+    }
     lines.push("");
   }
   lines.push("## Beats", "");
@@ -479,7 +518,8 @@ export default function StoryWheel() {
   const [projects, setProjects] = useState(loadProjects);
   const [activeId, setActiveId] = useState(() => loadActiveId());
   const [selected, setSelected] = useState(null);
-  const [tab, setTab] = useState("beat"); // beat | characters | notes
+  const [selectedArcAct, setSelectedArcAct] = useState(null);
+  const [tab, setTab] = useState("beat"); // beat | arc | characters | notes
   const [showStories, setShowStories] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
   const booted = useRef(false);
@@ -505,12 +545,17 @@ export default function StoryWheel() {
       setSelected(structure.beats[0]?.id || null);
   }, [structure?.id]); // eslint-disable-line
 
+  useEffect(() => {
+    setSelectedArcAct(project?.arcCharacterId ? "setup" : null);
+  }, [project?.arcCharacterId]); // eslint-disable-line
+
   const update = patch => setProjects(ps => ps.map(p => (p.id === activeId ? { ...p, ...patch, updatedAt: Date.now() } : p)));
 
   if (!project || !structure) return <div className="boot">Sharpening the pencil…</div>;
 
   const beat = structure.beats.find(b => b.id === selected);
   const plotType = plotTypeById(project.plotType);
+  const arcCharacter = project.characters.find(c => c.id === project.arcCharacterId) || null;
   // every structure ships with exactly one worked literature example, so it's shown automatically
   // rather than picked from a dropdown — see it inline in the beat editor and split across the
   // grid below the timeline
@@ -595,7 +640,8 @@ export default function StoryWheel() {
           </div>
 
           <Timeline structure={structure} project={project} selected={selected} onSelect={id => { setSelected(id); setTab("beat"); }}
-            plotType={plotType} plotTypeExample={plotTypeExample} />
+            arcCharacter={arcCharacter} selectedArcAct={selectedArcAct}
+            onSelectArcAct={key => { setSelectedArcAct(key); setTab("arc"); }} />
 
           <ActTable structure={structure} plotType={plotType} plotTypeExample={plotTypeExample} structureExample={structureExample} />
 
@@ -612,6 +658,9 @@ export default function StoryWheel() {
             <div className="side-col">
               <div className="tabs">
                 <button className={tab === "beat" ? "is-sel" : ""} onClick={() => setTab("beat")}>Beat</button>
+                {arcCharacter && (
+                  <button className={tab === "arc" ? "is-sel" : ""} onClick={() => setTab("arc")}>Arc</button>
+                )}
                 <button className={tab === "characters" ? "is-sel" : ""} onClick={() => setTab("characters")}>Characters</button>
                 <button className={tab === "notes" ? "is-sel" : ""} onClick={() => setTab("notes")}>Logline &amp; Notes</button>
               </div>
@@ -620,8 +669,16 @@ export default function StoryWheel() {
                   onChange={text => update({ beats: { ...project.beats, [beat.id]: text } })}
                   plotType={plotType} example={structureExample} />
               )}
+              {tab === "arc" && arcCharacter && selectedArcAct && (
+                <ArcEditor character={arcCharacter} act={selectedArcAct} text={arcCharacter.arc?.[selectedArcAct] || ""}
+                  onChange={text => update({
+                    characters: project.characters.map(c => (c.id === arcCharacter.id
+                      ? { ...c, arc: { ...c.arc, [selectedArcAct]: text } } : c)),
+                  })} />
+              )}
               {tab === "characters" && (
-                <Characters characters={project.characters} onChange={characters => update({ characters })} />
+                <Characters characters={project.characters} onChange={characters => update({ characters })}
+                  arcCharacterId={project.arcCharacterId} onArcCharacterChange={id => update({ arcCharacterId: id })} />
               )}
               {tab === "notes" && (
                 <div className="notes-panel">
@@ -690,9 +747,7 @@ button{font-family:inherit;cursor:pointer}
 .tl-clip-empty{background:transparent;border:1px solid var(--border);border-radius:3px}
 .tl-lane-acts .tl-clip{background:var(--panel2);border:1px solid var(--border);cursor:default}
 .tl-lane-acts .tl-clip-label{color:var(--gold)}
-.tl-lane-plottype .tl-clip{cursor:default;opacity:.8}
-.tl-lane-plottype .tl-clip.has-example{box-shadow:inset 0 0 0 2px var(--ember)}
-.tl-lane-plottype .tl-clip-label{color:#120E1C}
+.tl-lane-arc .tl-clip{border-radius:3px}
 .beat-list{list-style:none;margin:0;padding:0;width:100%;max-width:420px;display:flex;flex-direction:column;gap:2px}
 .beat-list li{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:7px;cursor:pointer;font-size:13px}
 .beat-list li:hover{background:var(--panel)}
@@ -754,6 +809,7 @@ button{font-family:inherit;cursor:pointer}
   color:var(--ink);padding:12px;font-size:14px;line-height:1.6;font-family:'Fraunces',serif;resize:vertical}
 .wc{color:var(--dim);font-size:11px;margin-top:6px;text-align:right}
 .characters{display:flex;flex-direction:column;gap:8px}
+.arc-tracker-picker{padding-bottom:12px;margin-bottom:4px;border-bottom:1px solid var(--border)}
 .char-row{display:grid;grid-template-columns:1fr 120px 2fr auto;gap:8px}
 .char-row input,.char-row select{background:var(--bg);border:1px solid var(--border);color:var(--ink);
   border-radius:7px;padding:8px 10px;font-size:13px}

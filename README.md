@@ -21,8 +21,15 @@ horizontal tracks with ribbons linking their matching acts, to see how they rela
   over one shared timeline: **Beats** (the main track, clips sized by each beat's share of the
   story and colour-coded by act), **Written** (a thin per-beat lane of filled clips vs. empty
   slots), **Acts** (the three-act spine as a 3-clip summary track), and, once you've picked one,
-  **Plot Type** (a 4-clip track, highlighted where a real example is attached) — a live progress
-  count sits above the tracks
+  **Arc** (a character's change arc as a 4-clip track — see below) — a live progress count sits
+  above the tracks
+- **Character arcs** — track one character's arc right in the arrangement view: pick them from the
+  Characters tab and a 4-clip **Arc** track appears alongside Beats/Written/Acts, one clip per
+  shared act (Setup/Rising Action/Confrontation/Resolution), each prompted with a stock stage of a
+  change arc — who they are before the story disrupts them, how they change while pursuing the
+  goal, the test that forces a real choice, who they've become. Click a clip to write that stage in
+  a dedicated Arc tab next to the beat editor; only one character is tracked at a time, keeping the
+  timeline readable
 - **Compare view** — stack any two structures, plot types, or a structure against a plot type, as
   two horizontal tracks; ribbons connect each one's four acts to its counterpart in the other,
   sized by that act's own share of its story (a plot type's four acts are conceptual, so its
@@ -46,7 +53,8 @@ horizontal tracks with ribbons linking their matching acts, to see how they rela
   against the target's actual beat/act ids so nothing is mismatched or missing
 - **Beat editor** — a distraction-free textarea per beat with a live word count; the timeline and beat
   list mark which beats have been written
-- **Characters** — a simple roster (name, role, one-line notes) alongside the outline
+- **Characters** — a simple roster (name, role, one-line notes) alongside the outline, with an
+  optional per-act change arc for whichever one is tracked in the timeline
 - **Logline & notes** — a genre field and a logline/premise textarea per story
 - **My Stories** — keep multiple stories side by side, switch, rename, duplicate or delete them
 - **Export** — write the whole outline out as a Markdown file
