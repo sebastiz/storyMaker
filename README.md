@@ -21,6 +21,11 @@ linking their matching acts, to see how they relate.
   beat falls on the classic three-act spine, and a live progress count in the hub
 - **Compare view** — draw any two structures as concentric wheels; ribbons connect each one's four
   acts to its counterpart in the other, sized by that act's own share of its story
+- **Plot type** — tag a story with one of Booker's 7 Basic Plots (Overcoming the Monster, Rags to
+  Riches, The Quest, Voyage and Return, Comedy, Tragedy, Rebirth); a panel below the wheel shows
+  what that archetype typically does at each of the four acts, and the beat editor surfaces the
+  matching line for whichever beat is selected — works with any of the 17 structures, since it maps
+  onto the acts they all share rather than onto specific beats
 - **Beat editor** — a distraction-free textarea per beat with a live word count; the wheel and beat
   list mark which beats have been written
 - **Characters** — a simple roster (name, role, one-line notes) alongside the outline

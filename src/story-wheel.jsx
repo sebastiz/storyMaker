@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ACTS, STRUCTURES, structureById } from "./structures.js";
+import { PLOT_TYPES, plotTypeById } from "./plot-types.js";
 // Story Wheel — a circular story-structure sketchpad
 const APP_VERSION = "dev";   // replaced with package.json version at build time (scripts/build.mjs)
 
@@ -28,7 +29,7 @@ function saveActiveId(id) {
 function newProject(structureId = "three-act") {
   const now = Date.now();
   return {
-    id: uid(), title: "Untitled Story", structureId, genre: "", logline: "",
+    id: uid(), title: "Untitled Story", structureId, genre: "", logline: "", plotType: "",
     beats: {}, characters: [], createdAt: now, updatedAt: now,
   };
 }
@@ -188,6 +189,22 @@ function ActBreakdown({ structure }) {
     </div>
   );
 }
+function PlotTypePanel({ plotType }) {
+  return (
+    <div className="plot-type-panel">
+      <p className="plot-type-blurb">{plotType.blurb}</p>
+      {Object.keys(ACTS).map(key => (
+        <div className="act-breakdown-row" key={key}>
+          <span className="act-breakdown-swatch" style={{ background: ACTS[key].color }} />
+          <div>
+            <div className="act-breakdown-label">{ACTS[key].label}</div>
+            <div className="act-breakdown-beats">{plotType.acts[key]}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 function CompareView({ onClose }) {
   const [aId, setAId] = useState(STRUCTURES[0].id);
   const [bId, setBId] = useState(STRUCTURES[1].id);
@@ -238,12 +255,17 @@ function BeatList({ structure, project, selected, onSelect }) {
   );
 }
 
-function BeatEditor({ beat, text, onChange }) {
+function BeatEditor({ beat, text, onChange, plotType }) {
   return (
     <div className="beat-editor">
       <h3>{beat.name}</h3>
       <p className="guide">{beat.guide}</p>
       <p className="beat-ex-line">e.g. <em>{beat.ex}</em></p>
+      {plotType && (
+        <p className="plot-type-note">
+          <span style={{ color: ACTS[beat.act].color }}>{plotType.name}:</span> {plotType.acts[beat.act]}
+        </p>
+      )}
       <textarea value={text} placeholder="Write the scene, or just jot what has to happen…"
         onChange={e => onChange(e.target.value)} rows={12} />
       <div className="wc">{wordCount(text)} words</div>
@@ -319,6 +341,8 @@ function toMarkdown(project, structure) {
   if (project.genre) lines.push(`*Genre: ${project.genre}*`, "");
   if (project.logline) lines.push(`> ${project.logline}`, "");
   lines.push(`_Structure: ${structure.name}_`, "");
+  const plotType = plotTypeById(project.plotType);
+  if (plotType) lines.push(`_Plot type: ${plotType.name}_`, "");
   if (project.characters.length) {
     lines.push("## Characters", "");
     for (const c of project.characters) lines.push(`- **${c.name || "Unnamed"}** (${c.role})${c.notes ? ` — ${c.notes}` : ""}`);
@@ -375,6 +399,7 @@ export default function StoryWheel() {
   if (!project || !structure) return <div className="boot">Sharpening the pencil…</div>;
 
   const beat = structure.beats.find(b => b.id === selected);
+  const plotType = plotTypeById(project.plotType);
 
   const openStory = id => { setActiveId(id); setShowStories(false); };
   const newStory = structureId => {
@@ -437,6 +462,13 @@ export default function StoryWheel() {
                   <span key={a.label} className="legend-item"><i style={{ background: a.color }} />{a.label}</span>
                 ))}
               </div>
+              <label className="plot-type-picker">Plot type <span className="plot-type-hint">(what kind of story is this?)</span>
+                <select value={project.plotType} onChange={e => update({ plotType: e.target.value })}>
+                  <option value="">None</option>
+                  {PLOT_TYPES.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </label>
+              {plotType && <PlotTypePanel plotType={plotType} />}
             </div>
 
             <div className="side-col">
@@ -447,7 +479,7 @@ export default function StoryWheel() {
               </div>
               {tab === "beat" && beat && (
                 <BeatEditor beat={beat} text={project.beats[beat.id] || ""}
-                  onChange={text => update({ beats: { ...project.beats, [beat.id]: text } })} />
+                  onChange={text => update({ beats: { ...project.beats, [beat.id]: text } })} plotType={plotType} />
               )}
               {tab === "characters" && (
                 <Characters characters={project.characters} onChange={characters => update({ characters })} />
@@ -521,6 +553,17 @@ button{font-family:inherit;cursor:pointer}
 .legend{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:4px}
 .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--dim)}
 .legend-item i{width:9px;height:9px;border-radius:3px;display:inline-block}
+.plot-type-picker{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--dim);
+  text-transform:uppercase;letter-spacing:.04em;width:100%;max-width:420px;margin-top:4px}
+.plot-type-hint{text-transform:none;letter-spacing:normal;font-size:11px;opacity:.7}
+.plot-type-picker select{background:var(--panel);border:1px solid var(--border);color:var(--ink);
+  border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;text-transform:none;letter-spacing:normal}
+.plot-type-panel{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--border);
+  border-radius:12px;padding:14px 16px}
+.plot-type-blurb{color:var(--gold);font-size:13px;font-style:italic;margin:0 0 12px}
+.plot-type-note{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;
+  font-size:12px;color:var(--dim);line-height:1.5;margin:0 0 12px}
+.plot-type-note span{font-weight:600}
 .side-col{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;min-height:420px}
 .tabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:10px}
 .tabs button{background:transparent;border:none;color:var(--dim);font-size:13px;padding:6px 10px;border-radius:7px}
