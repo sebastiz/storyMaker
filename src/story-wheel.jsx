@@ -305,7 +305,6 @@ function ActTable({ plotTypeExample }) {
         <thead>
           <tr>
             <th>Act</th>
-            <th>{GRID_STRUCTURE.name} sections</th>
             {plotTypeExample && <th>In {plotTypeExample.title}</th>}
           </tr>
         </thead>
@@ -315,11 +314,11 @@ function ActTable({ plotTypeExample }) {
             return (
               <tr key={key}>
                 <td className="act-table-act">
-                  <span className="act-breakdown-swatch" style={{ background: ACTS[key].color }} />
-                  {ACTS[key].label}
-                </td>
-                <td>
-                  {beats.length === 0 ? "—" : (
+                  <div className="act-table-act-heading">
+                    <span className="act-breakdown-swatch" style={{ background: ACTS[key].color }} />
+                    {ACTS[key].label}
+                  </div>
+                  {beats.length > 0 && (
                     <ul className="act-table-list">
                       {beats.map(b => (
                         <li key={b.id}>
@@ -412,7 +411,7 @@ function CompareView({ onClose }) {
 
 /* ===== beat editor ===== */
 
-function BeatEditor({ beat, text, onChange, plotType, example }) {
+function BeatEditor({ beat, text, onChange, plotType, plotTypeExample, example }) {
   return (
     <div className="beat-editor">
       <h3>{beat.name}</h3>
@@ -422,6 +421,11 @@ function BeatEditor({ beat, text, onChange, plotType, example }) {
         <p className="plot-type-note">
           <span className="plot-type-note-tax">{plotType.taxonomy}</span>
           <span style={{ color: ACTS[beat.act].color }}>{plotType.name}:</span> {plotType.acts[beat.act]}
+        </p>
+      )}
+      {plotTypeExample && plotTypeExample.beats[beat.act] && (
+        <p className="example-note">
+          <span className="example-note-tag">In {plotTypeExample.title}</span> — {plotTypeExample.beats[beat.act]}
         </p>
       )}
       {example && example.beats[beat.id] && (
@@ -776,7 +780,7 @@ export default function StoryWheel() {
               {tab === "beat" && beat && (
                 <BeatEditor beat={beat} text={project.beats[beat.id] || ""}
                   onChange={text => update({ beats: { ...project.beats, [beat.id]: text } })}
-                  plotType={plotType} example={structureExample} />
+                  plotType={plotType} plotTypeExample={plotTypeExample} example={structureExample} />
               )}
               {tab === "arc" && arcCharacter && selectedArcAct && (
                 <ArcEditor character={arcCharacter} act={selectedArcAct} text={arcCharacter.arc?.[selectedArcAct] || ""}
@@ -884,8 +888,9 @@ button{font-family:inherit;cursor:pointer}
   font-weight:600;padding:0 14px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
 .act-table td{vertical-align:top;padding:14px;border-bottom:1px solid var(--border);line-height:1.5}
 .act-table tr:last-child td{border-bottom:none}
-.act-table-act{white-space:nowrap;font-weight:600;color:var(--gold)}
-.act-table-act .act-breakdown-swatch{display:inline-block;vertical-align:middle;margin:0 8px 2px 0}
+.act-table-act{min-width:170px}
+.act-table-act-heading{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--gold);
+  white-space:nowrap;margin-bottom:8px}
 .act-table-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .act-table-list li{display:flex;gap:8px}
 .act-table-list .act-breakdown-swatch{margin-top:5px}
