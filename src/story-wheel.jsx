@@ -80,47 +80,74 @@ function groupSlices(slices, keyFn) {
   return groups;
 }
 
-/* ===== wheel ===== */
-function Wheel({ structure, project, selected, onSelect }) {
-  const size = 540, cx = size / 2, cy = size / 2, rOuter = 200, rInner = 108;
-  const ringInner = rOuter + 6, ringOuter = rOuter + 22, ringLabelR = rOuter + 34;
+/* ===== wheel =====
+   Laid out as concentric tracks, the way Ableton's Arrangement View stacks parallel tracks over
+   one shared timeline — here the "timeline" is angle-around-the-circle instead of left-to-right.
+   Track order, innermost to outermost: Beats (the primary track) -> Written (a per-beat clip/empty-
+   slot overlay of the same track) -> Acts (a 3-clip summary track) -> Plot Type (an external
+   4-clip track, only present once one's picked; a highlighted border marks a clip that also has a
+   real-world example). A hairline ring divides each track from the next, like a lane separator. */
+function Wheel({ structure, project, selected, onSelect, plotType, plotTypeExample }) {
+  const size = 580, cx = size / 2, cy = size / 2;
+  const rHub = 100;
+  const rBeatIn = 104, rBeatOut = 189;
+  const rWrittenIn = 193, rWrittenOut = 207;
+  const rActIn = 211, rActOut = 227;
+  const rActLabel = 239;
+  const rPlotIn = 247, rPlotOut = 263;
   const slices = useMemo(() => wedges(structure.beats), [structure]);
   const acts3 = useMemo(() => groupSlices(slices, b => b.threeAct), [slices]);
+  const actGroups = useMemo(() => groupSlices(slices, b => b.act), [slices]);
   const done = structure.beats.filter(b => wordCount(project.beats[b.id]) > 0).length;
   return (
     <svg viewBox={`0 0 ${size} ${size}`} className="wheel" role="img" aria-label={`${structure.name} wheel`}>
+      {plotType && actGroups.map(({ key, a0, a1 }) => (
+        <path key={key} d={donutSlice(cx, cy, rPlotIn, rPlotOut, a0 + 1, a1 - 1)}
+          fill={ACTS[key].color} opacity={0.8}
+          className={`plot-ring-seg${plotTypeExample ? " has-example" : ""}`} />
+      ))}
       {acts3.map(({ key, a0, a1 }) => {
-        const p = polar(cx, cy, ringLabelR, (a0 + a1) / 2);
+        const p = polar(cx, cy, rActLabel, (a0 + a1) / 2);
         return (
           <g key={key} className="act-ring-group">
-            <path d={donutSlice(cx, cy, ringInner, ringOuter, a0 + 1, a1 - 1)} className="act-ring" />
+            <path d={donutSlice(cx, cy, rActIn, rActOut, a0 + 1, a1 - 1)} className="act-ring" />
             <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle" className="act-ring-label">
               {ACT3_LABEL[key]}
             </text>
           </g>
         );
       })}
+      {slices.map(({ beat, a0, a1 }) => {
+        const hasText = wordCount(project.beats[beat.id]) > 0;
+        return hasText ? (
+          <path key={beat.id} d={donutSlice(cx, cy, rWrittenIn, rWrittenOut, a0 + 1, a1 - 1)}
+            fill={ACTS[beat.act].color} className="written-block" />
+        ) : (
+          <path key={beat.id} d={donutSlice(cx, cy, rWrittenIn, rWrittenOut, a0 + 1, a1 - 1)}
+            className="written-empty" />
+        );
+      })}
       {slices.map(({ beat, a0, a1, mid }, i) => {
         const isSel = selected === beat.id;
         const hasText = wordCount(project.beats[beat.id]) > 0;
-        const p = polar(cx, cy, (rInner + rOuter) / 2, mid);
+        const p = polar(cx, cy, (rBeatIn + rBeatOut) / 2, mid);
         const wide = a1 - a0 > 14;
         return (
           <g key={beat.id} className={`slice${isSel ? " is-sel" : ""}`} onClick={() => onSelect(beat.id)}>
-            <path d={donutSlice(cx, cy, rInner, rOuter, a0 + 0.6, a1 - 0.6)}
+            <path d={donutSlice(cx, cy, rBeatIn, rBeatOut, a0 + 0.6, a1 - 0.6)}
               fill={ACTS[beat.act].color} opacity={isSel ? 1 : hasText ? 0.82 : 0.42} />
             {wide && (
               <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle" className="slice-num">
                 {i + 1}
               </text>
             )}
-            {hasText && (
-              <circle cx={polar(cx, cy, rOuter - 14, mid).x} cy={polar(cx, cy, rOuter - 14, mid).y} r={3.4} className="dot" />
-            )}
           </g>
         );
       })}
-      <circle cx={cx} cy={cy} r={rInner - 4} className="hub" />
+      <circle cx={cx} cy={cy} r={rBeatOut + 2} className="track-divider" />
+      <circle cx={cx} cy={cy} r={rWrittenOut + 2} className="track-divider" />
+      <circle cx={cx} cy={cy} r={rActOut + 2} className="track-divider" />
+      <circle cx={cx} cy={cy} r={rHub - 4} className="hub" />
       <text x={cx} y={cy - 10} textAnchor="middle" className="hub-title">{project.title || "Untitled Story"}</text>
       <text x={cx} y={cy + 14} textAnchor="middle" className="hub-sub">{done} / {structure.beats.length} beats</text>
     </svg>
@@ -562,7 +589,8 @@ export default function StoryWheel() {
 
           <main className="layout">
             <div className="wheel-col">
-              <Wheel structure={structure} project={project} selected={selected} onSelect={id => { setSelected(id); setTab("beat"); }} />
+              <Wheel structure={structure} project={project} selected={selected} onSelect={id => { setSelected(id); setTab("beat"); }}
+                plotType={plotType} plotTypeExample={plotTypeExample} />
               <BeatList structure={structure} project={project} selected={selected} onSelect={id => { setSelected(id); setTab("beat"); }} />
               <div className="legend">
                 {Object.values(ACTS).map(a => (
@@ -647,7 +675,11 @@ button{font-family:inherit;cursor:pointer}
 .slice:hover path{opacity:1}
 .slice.is-sel path{filter:drop-shadow(0 0 6px rgba(233,200,138,.55))}
 .slice-num{font-family:'Archivo',sans-serif;font-size:13px;font-weight:700;fill:#120E1C;pointer-events:none}
-.dot{fill:#120E1C;stroke:var(--ink);stroke-width:1;pointer-events:none}
+.track-divider{fill:none;stroke:var(--bg);stroke-width:2;pointer-events:none}
+.written-block{opacity:.95}
+.written-empty{fill:none;stroke:var(--border);stroke-width:1;pointer-events:none}
+.plot-ring-seg{stroke:var(--border);stroke-width:1}
+.plot-ring-seg.has-example{stroke:var(--ember);stroke-width:2}
 .hub{fill:var(--panel);stroke:var(--border);stroke-width:1}
 .hub-title{font-family:'Fraunces',serif;font-size:16px;fill:var(--ink);pointer-events:none}
 .hub-sub{font-size:11px;fill:var(--dim);pointer-events:none}

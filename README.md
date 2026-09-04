@@ -16,9 +16,12 @@ each — as concentric wheels with ribbons linking their matching acts, to see h
 
 - **17 structure templates** — from the workhorse Three-Act to Propp's 31-function folk-tale
   morphology — each beat comes with a one-line prompt and a three-word example
-- **The wheel** — beats drawn as a donut chart sized by their share of the story, colour-coded by
-  act (setup / rising action / confrontation / resolution), with an outer ring showing where each
-  beat falls on the classic three-act spine, and a live progress count in the hub
+- **The wheel** — organized as concentric tracks, Ableton Arrangement View wrapped around a
+  circle: **Beats** (the main donut, sized by each beat's share of the story and colour-coded by
+  act), **Written** (a thin per-beat lane of filled clips vs. empty slots — no more small dots),
+  **Acts** (the three-act spine as a 3-clip summary track), and, once you've picked one, **Plot
+  Type** (an outer 4-clip track, its border highlighted where a real example is attached) — each
+  lane divided from the next by a hairline, and a live progress count in the hub
 - **Compare view** — draw any two structures, plot types, or a structure against a plot type, as
   concentric wheels; ribbons connect each one's four acts to its counterpart in the other, sized
   by that act's own share of its story (a plot type's four acts are conceptual, so its wedges are
