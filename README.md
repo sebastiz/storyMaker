@@ -35,7 +35,10 @@ each — as concentric wheels with ribbons linking their matching acts, to see h
   plot type and example across a different, finer set of beats without picking anything again
 - **See it in** — a second, independent picker (next to the structure wheel) shows a real example
   mapped beat-by-beat onto the whole structure itself — e.g. *Star Wars* onto the Hero's Journey's
-  12 beats, *Die Hard* onto the Three-Act Structure's 8 — surfaced inline in the beat editor
+  12 beats, *The Godfather* onto Truby's 22 Steps, *Cinderella* onto Propp's 31 Functions —
+  surfaced inline in the beat editor. **Every one of the 17 structures and all 73 plot types has
+  at least one worked example** (90 in total), each checked programmatically against the target's
+  actual beat/act ids so nothing is mismatched or missing
 - **Beat editor** — a distraction-free textarea per beat with a live word count; the wheel and beat
   list mark which beats have been written
 - **Characters** — a simple roster (name, role, one-line notes) alongside the outline
