@@ -24,16 +24,18 @@ each — as concentric wheels with ribbons linking their matching acts, to see h
   by that act's own share of its story (a plot type's four acts are conceptual, so its wedges are
   always even — it's the shape of its ribbons meeting a structure's real proportions that's worth
   reading)
-- **Plot type** — tag a story with a plot-type taxonomy: Booker's 7 Basic Plots, Tobias' 20 Master
-  Plots, Polti's 36 Dramatic Situations, Vonnegut's 6 Story Shapes, or the MICE Quotient (73
-  entries total, grouped by taxonomy in the picker). A panel below the wheel shows what that
-  archetype typically does at each of the four acts, and the beat editor surfaces the matching
-  line for whichever beat is selected — works with any of the 17 structures, since it maps onto
-  the acts they all share rather than onto specific beats
-- **See it in** — where a real example exists, a picker next to the structure (or the plot type)
-  lets you see a well-known book or film mapped beat-by-beat (or act-by-act) onto it — e.g. *Star
-  Wars* against the Hero's Journey, *Die Hard* against the Three-Act Structure, *Jaws* against
-  Overcoming the Monster — surfaced both below the wheel and inline in the beat editor
+- **Plot type** — a picker at the top of the page tags the story with a plot-type taxonomy:
+  Booker's 7 Basic Plots, Tobias' 20 Master Plots, Polti's 36 Dramatic Situations, Vonnegut's 6
+  Story Shapes, or the MICE Quotient (73 entries total, grouped by taxonomy). It works with any of
+  the 17 structures at once, since it maps onto the four acts they all share rather than onto
+  specific beats
+- **The grid** — below the wheel, one row per act: what the chosen plot type says happens there,
+  what a real example (*Jaws*, *Alice in Wonderland*, *Macbeth*…) actually does there, and which
+  of the *current* structure's beats fall in that act — so switching structures re-splits the same
+  plot type and example across a different, finer set of beats without picking anything again
+- **See it in** — a second, independent picker (next to the structure wheel) shows a real example
+  mapped beat-by-beat onto the whole structure itself — e.g. *Star Wars* onto the Hero's Journey's
+  12 beats, *Die Hard* onto the Three-Act Structure's 8 — surfaced inline in the beat editor
 - **Beat editor** — a distraction-free textarea per beat with a live word count; the wheel and beat
   list mark which beats have been written
 - **Characters** — a simple roster (name, role, one-line notes) alongside the outline

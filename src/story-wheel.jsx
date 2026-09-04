@@ -218,6 +218,39 @@ function PlotTypePanel({ plotType, example }) {
     </div>
   );
 }
+// the unified grid: one row per shared act, showing (as columns exist) the plot type's own
+// description of that act, a real example's version of it, and which of the CURRENT structure's
+// beats fall in that act — the join key throughout is the act, so this works for any structure
+// without per-structure content, and shows a plot-type example "split" across a finer structure
+function ActTable({ structure, plotType, example }) {
+  return (
+    <div className="act-table-wrap">
+      <table className="act-table">
+        <thead>
+          <tr>
+            <th>Act</th>
+            {plotType && <th>{plotType.name}</th>}
+            {example && <th>In {example.title}</th>}
+            <th>{structure.name} beats</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Object.keys(ACTS).map(key => (
+            <tr key={key}>
+              <td className="act-table-act">
+                <span className="act-breakdown-swatch" style={{ background: ACTS[key].color }} />
+                {ACTS[key].label}
+              </td>
+              {plotType && <td>{plotType.acts[key]}</td>}
+              {example && <td>{example.beats[key]}</td>}
+              <td>{structure.beats.filter(b => b.act === key).map(b => b.name).join(", ") || "—"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 function SidePicker({ label, kind, onKind, id, onId }) {
   return (
     <div className="compare-picker">
@@ -503,6 +536,30 @@ export default function StoryWheel() {
         <>
           <p className="blurb">{structure.blurb}</p>
 
+          <div className="plot-type-top">
+            <label className="plot-type-top-picker">Plot type <span className="plot-type-hint">(pick one to see it against the wheel below)</span>
+              <select value={project.plotType} onChange={e => update({ plotType: e.target.value })}>
+                <option value="">None</option>
+                {plotTypesByTaxonomy().map(g => (
+                  <optgroup key={g.taxonomy} label={g.taxonomy}>
+                    {g.items.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </optgroup>
+                ))}
+              </select>
+            </label>
+            {plotType && (
+              <p className="plot-type-top-blurb"><span>{plotType.taxonomy}</span> — <em>{plotType.blurb}</em></p>
+            )}
+            {plotType && plotTypeExamples.length > 0 && (
+              <label className="plot-type-top-picker">See it in <span className="plot-type-hint">(a real example, mapped act-by-act)</span>
+                <select value={project.plotTypeExample} onChange={e => update({ plotTypeExample: e.target.value })}>
+                  <option value="">None</option>
+                  {plotTypeExamples.map(ex => <option key={ex.id} value={ex.id}>{ex.title}</option>)}
+                </select>
+              </label>
+            )}
+          </div>
+
           <main className="layout">
             <div className="wheel-col">
               <Wheel structure={structure} project={project} selected={selected} onSelect={id => { setSelected(id); setTab("beat"); }} />
@@ -520,25 +577,6 @@ export default function StoryWheel() {
                   </select>
                 </label>
               )}
-              <label className="plot-type-picker">Plot type <span className="plot-type-hint">(what kind of story is this?)</span>
-                <select value={project.plotType} onChange={e => update({ plotType: e.target.value })}>
-                  <option value="">None</option>
-                  {plotTypesByTaxonomy().map(g => (
-                    <optgroup key={g.taxonomy} label={g.taxonomy}>
-                      {g.items.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                    </optgroup>
-                  ))}
-                </select>
-              </label>
-              {plotType && plotTypeExamples.length > 0 && (
-                <label className="plot-type-picker">See it in <span className="plot-type-hint">(a real example, mapped act-by-act)</span>
-                  <select value={project.plotTypeExample} onChange={e => update({ plotTypeExample: e.target.value })}>
-                    <option value="">None</option>
-                    {plotTypeExamples.map(ex => <option key={ex.id} value={ex.id}>{ex.title}</option>)}
-                  </select>
-                </label>
-              )}
-              {plotType && <PlotTypePanel plotType={plotType} example={plotTypeExample} />}
             </div>
 
             <div className="side-col">
@@ -566,6 +604,8 @@ export default function StoryWheel() {
               )}
             </div>
           </main>
+
+          <ActTable structure={structure} plotType={plotType} example={plotTypeExample} />
 
           {showStories && (
             <StoryPanel projects={projects} activeId={activeId} onOpen={openStory} onNew={newStory}
@@ -629,6 +669,24 @@ button{font-family:inherit;cursor:pointer}
 .plot-type-hint{text-transform:none;letter-spacing:normal;font-size:11px;opacity:.7}
 .plot-type-picker select{background:var(--panel);border:1px solid var(--border);color:var(--ink);
   border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;text-transform:none;letter-spacing:normal}
+.plot-type-top{display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px;margin:4px 0 18px;
+  padding:14px 16px;background:var(--panel);border:1px solid var(--border);border-radius:12px}
+.plot-type-top-picker{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--dim);
+  text-transform:uppercase;letter-spacing:.04em}
+.plot-type-top-picker select{background:var(--bg);border:1px solid var(--border);color:var(--ink);
+  border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;text-transform:none;
+  letter-spacing:normal;min-width:220px}
+.plot-type-top-blurb{flex:1;min-width:200px;font-size:13px;color:var(--dim);margin:0}
+.plot-type-top-blurb span{color:var(--gold);text-transform:uppercase;font-size:10px;letter-spacing:.05em}
+.plot-type-top-blurb em{font-style:italic;display:block;margin-top:2px;color:var(--ink)}
+.act-table-wrap{width:100%;overflow-x:auto;margin-top:24px}
+.act-table{width:100%;border-collapse:collapse;font-size:13px}
+.act-table th{text-align:left;font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;
+  font-weight:600;padding:0 14px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+.act-table td{vertical-align:top;padding:14px;border-bottom:1px solid var(--border);line-height:1.5}
+.act-table tr:last-child td{border-bottom:none}
+.act-table-act{white-space:nowrap;font-weight:600;color:var(--gold)}
+.act-table-act .act-breakdown-swatch{display:inline-block;vertical-align:middle;margin:0 8px 2px 0}
 .plot-type-panel{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--border);
   border-radius:12px;padding:14px 16px}
 .plot-type-taxonomy{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
