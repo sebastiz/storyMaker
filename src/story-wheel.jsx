@@ -80,6 +80,15 @@ function Timeline({ structure, project, selected, onSelect, arcCharacter, select
   const acts3 = useMemo(() => groupSlices(slices, b => b.threeAct), [slices]);
   const actGroups = useMemo(() => groupSlices(slices, b => b.act), [slices]);
   const done = structure.beats.filter(b => wordCount(project.beats[b.id]) > 0).length;
+  // every character with at least one non-zero arc point gets a line — an empty/all-zero arc
+  // means "not scored yet", not "flat arc", so it stays off the track rather than drawing a
+  // meaningless straight line at the midline
+  const arcLineCharacters = useMemo(() => (project.characters || [])
+    .filter(c => Object.values(c.arcValue || {}).some(v => clampArc(v) !== 0)), [project.characters]);
+  // a v1 visual marker only — an act where 2+ characters flagged "interacts here", not an attempt
+  // to actually reconcile or force their lines together at that point
+  const interactionActs = useMemo(() => Object.keys(ACTS)
+    .filter(key => (project.characters || []).filter(c => c.interacts?.[key]).length >= 2), [project.characters]);
   return (
     <div className="timeline" role="img" aria-label={`${structure.name} timeline`}>
       <div className="tl-summary">
@@ -129,6 +138,48 @@ function Timeline({ structure, project, selected, onSelect, arcCharacter, select
           ))}
         </div>
       </div>
+
+      {arcLineCharacters.length > 0 && (
+        <div className="tl-track tl-track-arclines">
+          <div className="tl-label">Character arcs</div>
+          <div className="tl-lane tl-lane-arclines">
+            <svg viewBox="0 0 1000 200" preserveAspectRatio="none" className="arcline-svg" aria-hidden="true">
+              <line x1="0" y1="100" x2="1000" y2="100" className="arcline-midline" />
+              {interactionActs.map(key => {
+                const g = actGroups.find(a => a.key === key);
+                if (!g) return null;
+                const x = ((g.a0 + g.a1) / 2) * 10;
+                return <line key={key} x1={x} y1="4" x2={x} y2="196" className="arcline-interaction" />;
+              })}
+              {arcLineCharacters.map(c => {
+                const color = CATEGORY_COLORS[c.category || "other"];
+                const points = Object.keys(ACTS).map(key => {
+                  const g = actGroups.find(a => a.key === key);
+                  const x = g ? ((g.a0 + g.a1) / 2) * 10 : 0;
+                  const v = clampArc(c.arcValue?.[key] ?? 0);
+                  return [x, 100 - (v / 3) * 85];
+                });
+                return (
+                  <g key={c.id}>
+                    <polyline points={points.map(p => p.join(",")).join(" ")} className="arcline-path" stroke={color} />
+                    {points.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="4" className="arcline-point" fill={color} />)}
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
+        </div>
+      )}
+      {arcLineCharacters.length > 0 && (
+        <div className="legend arcline-legend">
+          {arcLineCharacters.map(c => (
+            <span key={c.id} className="legend-item">
+              <i style={{ background: CATEGORY_COLORS[c.category || "other"] }} />
+              {c.name || "Unnamed"}
+            </span>
+          ))}
+        </div>
+      )}
 
       {arcCharacter && (
         <div className="tl-track">
@@ -384,6 +435,22 @@ function BeatEditor({ beat, text, onChange, plotType, example }) {
     </div>
   );
 }
+// seven named character functions get their own hue; "other" gets the app's neutral dim gray
+// instead of an eighth hue, so the palette stays as seven distinct, memorable colours plus a
+// deliberate "uncategorized" default
+const CATEGORY_LIST = ["protagonist", "antagonist", "ally", "mentor", "love-interest", "foil", "threshold-guardian", "other"];
+const CATEGORY_LABELS = {
+  protagonist: "Protagonist", antagonist: "Antagonist", ally: "Ally", mentor: "Mentor",
+  "love-interest": "Love Interest", foil: "Foil", "threshold-guardian": "Threshold Guardian", other: "Other",
+};
+const CATEGORY_COLORS = {
+  protagonist: "#E9C88A", antagonist: "#D2785A", ally: "#5FA8A0", mentor: "#8E7CC3",
+  "love-interest": "#D98CA8", foil: "#C97B3D", "threshold-guardian": "#6FA3D8", other: "#8B8398",
+};
+const DEFAULT_ARC_VALUE = { setup: 0, rise: 0, climax: 0, fall: 0 };
+const DEFAULT_INTERACTS = { setup: false, rise: false, climax: false, fall: false };
+const clampArc = v => Math.max(-3, Math.min(3, Math.round(Number(v)) || 0));
+
 // four stock stages of a change arc, mapped onto the same shared acts every structure, plot type
 // and example already uses — so a character's arc is just another act-keyed track, no new join key
 const ARC_STAGE_GUIDE = {
@@ -413,10 +480,13 @@ function ArcEditor({ character, act, text, onChange, example }) {
 const ROLES = ["Protagonist", "Antagonist", "Supporting", "Other"];
 function Characters({ characters, onChange, arcCharacterId, onArcCharacterChange }) {
   const add = () => onChange([...characters, {
-    id: uid(), name: "", role: "Supporting", notes: "",
+    id: uid(), name: "", role: "Supporting", notes: "", category: "other",
     arc: { setup: "", rise: "", climax: "", fall: "" },
+    arcValue: { ...DEFAULT_ARC_VALUE }, interacts: { ...DEFAULT_INTERACTS },
   }]);
   const set = (id, patch) => onChange(characters.map(c => (c.id === id ? { ...c, ...patch } : c)));
+  const setArcValue = (c, key, value) => set(c.id, { arcValue: { ...DEFAULT_ARC_VALUE, ...c.arcValue, [key]: clampArc(value) } });
+  const setInteracts = (c, key, checked) => set(c.id, { interacts: { ...DEFAULT_INTERACTS, ...c.interacts, [key]: checked } });
   const remove = id => onChange(characters.filter(c => c.id !== id));
   return (
     <div className="characters">
@@ -431,13 +501,36 @@ function Characters({ characters, onChange, arcCharacterId, onArcCharacterChange
         </label>
       )}
       {characters.map(c => (
-        <div className="char-row" key={c.id}>
-          <input placeholder="Name" value={c.name} onChange={e => set(c.id, { name: e.target.value })} />
-          <select value={c.role} onChange={e => set(c.id, { role: e.target.value })}>
-            {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-          </select>
-          <input placeholder="One-line notes" value={c.notes} onChange={e => set(c.id, { notes: e.target.value })} />
-          <button className="icon-btn" onClick={() => remove(c.id)} title="Remove">✕</button>
+        <div className="char-block" key={c.id}>
+          <div className="char-row">
+            <input placeholder="Name" value={c.name} onChange={e => set(c.id, { name: e.target.value })} />
+            <select value={c.role} onChange={e => set(c.id, { role: e.target.value })}>
+              {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
+            <select value={c.category || "other"} onChange={e => set(c.id, { category: e.target.value })}
+              style={{ color: CATEGORY_COLORS[c.category || "other"] }}>
+              {CATEGORY_LIST.map(cat => <option key={cat} value={cat}>{CATEGORY_LABELS[cat]}</option>)}
+            </select>
+            <input placeholder="One-line notes" value={c.notes} onChange={e => set(c.id, { notes: e.target.value })} />
+            <button className="icon-btn" onClick={() => remove(c.id)} title="Remove">✕</button>
+          </div>
+          <div className="char-arc-points">
+            <span className="char-arc-points-label">Arc points <span className="plot-type-hint">(-3 falling to 3 rising, per act — plots on the Character arcs track)</span></span>
+            <div className="char-arc-points-row">
+              {Object.keys(ACTS).map(key => (
+                <div className="char-arc-point" key={key}>
+                  <span className="char-arc-point-act" style={{ color: ACTS[key].color }}>{ACTS[key].label}</span>
+                  <input type="number" min={-3} max={3} value={c.arcValue?.[key] ?? 0}
+                    onChange={e => setArcValue(c, key, e.target.value)} />
+                  <label className="char-interact-check">
+                    <input type="checkbox" checked={!!c.interacts?.[key]}
+                      onChange={e => setInteracts(c, key, e.target.checked)} />
+                    interacts here
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       ))}
       <button className="ghost-btn" onClick={add}>+ Add character</button>
@@ -750,6 +843,15 @@ button{font-family:inherit;cursor:pointer}
 .tl-lane-acts .tl-clip{background:var(--panel2);border:1px solid var(--border);cursor:default}
 .tl-lane-acts .tl-clip-label{color:var(--gold)}
 .tl-lane-arc .tl-clip{border-radius:3px}
+.tl-track-arclines{height:140px}
+.tl-track-arclines .tl-lane{height:140px}
+.tl-lane-arclines{background:var(--panel)}
+.arcline-svg{width:100%;height:100%;display:block}
+.arcline-midline{stroke:var(--border);stroke-width:1.5}
+.arcline-interaction{stroke:var(--ember);stroke-width:1.5;stroke-dasharray:6 5;opacity:.7}
+.arcline-path{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;opacity:.9}
+.arcline-point{stroke:var(--panel);stroke-width:1.5}
+.arcline-legend{margin-top:-8px}
 .legend{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:4px 0 20px}
 .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--dim)}
 .legend-item i{width:9px;height:9px;border-radius:3px;display:inline-block}
@@ -804,9 +906,23 @@ button{font-family:inherit;cursor:pointer}
 .wc{color:var(--dim);font-size:11px;margin-top:6px;text-align:right}
 .characters{display:flex;flex-direction:column;gap:8px}
 .arc-tracker-picker{padding-bottom:12px;margin-bottom:4px;border-bottom:1px solid var(--border)}
-.char-row{display:grid;grid-template-columns:1fr 120px 2fr auto;gap:8px}
+.char-block{display:flex;flex-direction:column;gap:6px;padding-bottom:10px;margin-bottom:4px;
+  border-bottom:1px solid var(--border)}
+.char-block:last-of-type{border-bottom:none;margin-bottom:0}
+.char-row{display:grid;grid-template-columns:1fr 110px 150px 2fr auto;gap:8px}
 .char-row input,.char-row select{background:var(--bg);border:1px solid var(--border);color:var(--ink);
   border-radius:7px;padding:8px 10px;font-size:13px}
+.char-arc-points{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.char-arc-points-label{display:block;font-size:11px;color:var(--dim);text-transform:uppercase;
+  letter-spacing:.04em;margin-bottom:8px}
+.char-arc-points-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.char-arc-point{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.char-arc-point-act{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.char-arc-point input[type="number"]{width:52px;text-align:center;background:var(--panel);
+  border:1px solid var(--border);color:var(--ink);border-radius:6px;padding:5px 4px;font-size:13px}
+.char-interact-check{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--dim);
+  cursor:pointer}
+@media (max-width: 700px){ .char-arc-points-row{grid-template-columns:repeat(2,1fr);row-gap:12px} }
 .empty{color:var(--dim);font-size:13px}
 .notes-panel{display:flex;flex-direction:column;gap:6px}
 .notes-panel label{color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.04em;margin-top:8px}

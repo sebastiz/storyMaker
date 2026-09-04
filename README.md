@@ -32,6 +32,15 @@ horizontal tracks with ribbons linking their matching acts, to see how they rela
   timeline readable. A worked reference is shown automatically alongside your own notes — Scrooge's
   transformation in *A Christmas Carol*, act by act — both inline in the Arc tab and as its own
   column in the grid, the same "no picker needed" treatment every other example in the app gets
+- **Character arc lines** — every character (not just the one tracked above) can get a lightweight
+  fortune arc: a **-3 to 3** score per shared act, set from four small number fields on the
+  Characters tab, plus an "interacts here" checkbox per act. Any character with a non-zero score
+  draws a coloured line on a **Character arcs** track in the arrangement view, one polyline per
+  character plotted across the same four acts everything else aligns to, coloured by a category
+  you pick per character (Protagonist, Antagonist, Ally, Mentor, Love Interest, Foil, Threshold
+  Guardian, or Other), with a small legend underneath. A thin dashed line marks any act where two
+  or more characters are flagged as interacting there — a visual cue only, not a claim about what
+  happens at that point. The track only appears once at least one character has scores set
 - **Compare view** — stack any two structures, plot types, or a structure against a plot type, as
   two horizontal tracks; ribbons connect each one's four acts to its counterpart in the other,
   sized by that act's own share of its story (a plot type's four acts are conceptual, so its
@@ -59,8 +68,9 @@ horizontal tracks with ribbons linking their matching acts, to see how they rela
   example lives inline in the Arc tab instead.)
 - **Beat editor** — a distraction-free textarea per beat with a live word count; the timeline's
   Written track marks which beats have been written
-- **Characters** — a simple roster (name, role, one-line notes) alongside the outline, with an
-  optional per-act change arc for whichever one is tracked in the timeline
+- **Characters** — a roster (name, role, category, one-line notes) alongside the outline, with an
+  optional per-act change arc for whichever one is tracked in the timeline, plus lightweight per-act
+  arc scores and interaction flags for every character (see Character arc lines, above)
 - **Logline & notes** — a genre field and a logline/premise textarea per story
 - **My Stories** — keep multiple stories side by side, switch, rename, duplicate or delete them
 - **Export** — write the whole outline out as a Markdown file
