@@ -104,10 +104,11 @@ function BeatList({ structure, project, selected, onSelect }) {
       {structure.beats.map((b, i) => {
         const has = wordCount(project.beats[b.id]) > 0;
         return (
-          <li key={b.id} className={selected === b.id ? "is-sel" : ""} onClick={() => onSelect(b.id)}>
+          <li key={b.id} className={selected === b.id ? "is-sel" : ""} onClick={() => onSelect(b.id)} title={`e.g. ${b.ex}`}>
             <span className="beat-swatch" style={{ background: ACTS[b.act].color }} />
             <span className="beat-num">{i + 1}</span>
             <span className="beat-name">{b.name}</span>
+            <span className="beat-ex">{b.ex}</span>
             <span className={`beat-flag${has ? " on" : ""}`}>{has ? "●" : "○"}</span>
           </li>
         );
@@ -121,6 +122,7 @@ function BeatEditor({ beat, text, onChange }) {
     <div className="beat-editor">
       <h3>{beat.name}</h3>
       <p className="guide">{beat.guide}</p>
+      <p className="beat-ex-line">e.g. <em>{beat.ex}</em></p>
       <textarea value={text} placeholder="Write the scene, or just jot what has to happen…"
         onChange={e => onChange(e.target.value)} rows={12} />
       <div className="wc">{wordCount(text)} words</div>
@@ -377,6 +379,7 @@ button{font-family:inherit;cursor:pointer}
 .beat-swatch{width:8px;height:8px;border-radius:50%;flex:none}
 .beat-num{color:var(--dim);width:18px;flex:none;font-size:12px}
 .beat-name{flex:1}
+.beat-ex{color:var(--dim);font-size:11px;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
 .beat-flag{color:var(--dim);font-size:11px}
 .beat-flag.on{color:var(--gold)}
 .legend{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:4px}
@@ -387,7 +390,9 @@ button{font-family:inherit;cursor:pointer}
 .tabs button{background:transparent;border:none;color:var(--dim);font-size:13px;padding:6px 10px;border-radius:7px}
 .tabs button.is-sel{background:var(--panel2);color:var(--gold)}
 .beat-editor h3{font-family:'Fraunces',serif;margin:0 0 6px;font-size:20px;color:var(--gold)}
-.guide{color:var(--dim);font-size:13px;margin:0 0 12px;line-height:1.5}
+.guide{color:var(--dim);font-size:13px;margin:0 0 6px;line-height:1.5}
+.beat-ex-line{color:var(--gold);font-size:12px;margin:0 0 12px;opacity:.85}
+.beat-ex-line em{font-style:italic}
 .beat-editor textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;
   color:var(--ink);padding:12px;font-size:14px;line-height:1.6;font-family:'Fraunces',serif;resize:vertical}
 .wc{color:var(--dim);font-size:11px;margin-top:6px;text-align:right}
