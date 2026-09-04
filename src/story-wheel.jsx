@@ -343,25 +343,7 @@ function CompareView({ onClose }) {
   );
 }
 
-/* ===== beat list + editor ===== */
-function BeatList({ structure, project, selected, onSelect }) {
-  return (
-    <ol className="beat-list">
-      {structure.beats.map((b, i) => {
-        const has = wordCount(project.beats[b.id]) > 0;
-        return (
-          <li key={b.id} className={selected === b.id ? "is-sel" : ""} onClick={() => onSelect(b.id)} title={`e.g. ${b.ex}`}>
-            <span className="beat-swatch" style={{ background: ACTS[b.act].color }} />
-            <span className="beat-num">{i + 1}</span>
-            <span className="beat-name">{b.name}</span>
-            <span className="beat-ex">{b.ex}</span>
-            <span className={`beat-flag${has ? " on" : ""}`}>{has ? "●" : "○"}</span>
-          </li>
-        );
-      })}
-    </ol>
-  );
-}
+/* ===== beat editor ===== */
 
 function BeatEditor({ beat, text, onChange, plotType, example }) {
   return (
@@ -643,18 +625,15 @@ export default function StoryWheel() {
             arcCharacter={arcCharacter} selectedArcAct={selectedArcAct}
             onSelectArcAct={key => { setSelectedArcAct(key); setTab("arc"); }} />
 
+          <div className="legend">
+            {Object.values(ACTS).map(a => (
+              <span key={a.label} className="legend-item"><i style={{ background: a.color }} />{a.label}</span>
+            ))}
+          </div>
+
           <ActTable structure={structure} plotType={plotType} plotTypeExample={plotTypeExample} structureExample={structureExample} />
 
           <main className="layout">
-            <div className="beatlist-col">
-              <BeatList structure={structure} project={project} selected={selected} onSelect={id => { setSelected(id); setTab("beat"); }} />
-              <div className="legend">
-                {Object.values(ACTS).map(a => (
-                  <span key={a.label} className="legend-item"><i style={{ background: a.color }} />{a.label}</span>
-                ))}
-              </div>
-            </div>
-
             <div className="side-col">
               <div className="tabs">
                 <button className={tab === "beat" ? "is-sel" : ""} onClick={() => setTab("beat")}>Beat</button>
@@ -721,10 +700,8 @@ button{font-family:inherit;cursor:pointer}
 .primary-btn:hover{filter:brightness(1.08)}
 .icon-btn{background:transparent;border:none;color:var(--dim);font-size:14px;padding:4px 6px;border-radius:6px}
 .icon-btn:hover{color:var(--ember)}
-.layout{display:grid;grid-template-columns:minmax(320px,460px) 1fr;gap:24px;align-items:start}
-@media (max-width: 860px){ .layout{grid-template-columns:1fr} }
+.layout{display:flex;justify-content:center}
 @media (max-width: 480px){ .tl-label{width:44px;font-size:9px} .tl-clip-label{font-size:10px} }
-.beatlist-col{display:flex;flex-direction:column;align-items:stretch;gap:12px;width:100%}
 .timeline{width:100%;max-width:960px;margin:0 auto 24px;display:flex;flex-direction:column;gap:2px}
 .tl-summary{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
 .tl-summary-title{font-family:'Fraunces',serif;font-size:16px;color:var(--ink)}
@@ -748,17 +725,7 @@ button{font-family:inherit;cursor:pointer}
 .tl-lane-acts .tl-clip{background:var(--panel2);border:1px solid var(--border);cursor:default}
 .tl-lane-acts .tl-clip-label{color:var(--gold)}
 .tl-lane-arc .tl-clip{border-radius:3px}
-.beat-list{list-style:none;margin:0;padding:0;width:100%;max-width:420px;display:flex;flex-direction:column;gap:2px}
-.beat-list li{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:7px;cursor:pointer;font-size:13px}
-.beat-list li:hover{background:var(--panel)}
-.beat-list li.is-sel{background:var(--panel2)}
-.beat-swatch{width:8px;height:8px;border-radius:50%;flex:none}
-.beat-num{color:var(--dim);width:18px;flex:none;font-size:12px}
-.beat-name{flex:1}
-.beat-ex{color:var(--dim);font-size:11px;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
-.beat-flag{color:var(--dim);font-size:11px}
-.beat-flag.on{color:var(--gold)}
-.legend{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:4px}
+.legend{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:4px 0 20px}
 .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--dim)}
 .legend-item i{width:9px;height:9px;border-radius:3px;display:inline-block}
 .plot-type-hint{text-transform:none;letter-spacing:normal;font-size:11px;opacity:.7}
@@ -797,7 +764,8 @@ button{font-family:inherit;cursor:pointer}
 .example-note-tag{color:var(--ember);font-weight:600}
 .example-line{font-size:12px;color:var(--dim);margin-top:4px;line-height:1.5}
 .example-line span{color:var(--ember);font-weight:600}
-.side-col{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;min-height:420px}
+.side-col{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;
+  min-height:420px;width:100%;max-width:720px}
 .tabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:10px}
 .tabs button{background:transparent;border:none;color:var(--dim);font-size:13px;padding:6px 10px;border-radius:7px}
 .tabs button.is-sel{background:var(--panel2);color:var(--gold)}

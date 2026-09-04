@@ -6,7 +6,7 @@ Structure, Kishōtenketsu, the Fichtean Curve, Dan Harmon's Story Circle, the Ei
 Structure, Weiland's Structure, Truby's 22 Steps, the Pixar Story Spine, The Virgin's Promise, The
 Heroine's Journey, Todorov's Equilibrium Theory, Frame Narrative, and Propp's 31 Functions — and a
 horizontal timeline lays out its beats as clips, sized by how much of the story each one typically
-takes up. Click a beat (in the timeline or the list) to see its guidance and write the scene. A
+takes up. Click a beat to see its guidance and write the scene. A
 **Compare** view stacks any two of them — structures, plot types, or one of each — as two
 horizontal tracks with ribbons linking their matching acts, to see how they relate.
 
@@ -51,8 +51,8 @@ horizontal tracks with ribbons linking their matching acts, to see how they rela
   finer set of beats without picking anything again. **Every one of the 17 structures and all 73
   plot types has at least one worked example** (90 in total), each checked programmatically
   against the target's actual beat/act ids so nothing is mismatched or missing
-- **Beat editor** — a distraction-free textarea per beat with a live word count; the timeline and beat
-  list mark which beats have been written
+- **Beat editor** — a distraction-free textarea per beat with a live word count; the timeline's
+  Written track marks which beats have been written
 - **Characters** — a simple roster (name, role, one-line notes) alongside the outline, with an
   optional per-act change arc for whichever one is tracked in the timeline
 - **Logline & notes** — a genre field and a logline/premise textarea per story
