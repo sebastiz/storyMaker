@@ -47,7 +47,9 @@ horizontal tracks with ribbons linking their matching acts, to see how they rela
   match) — always this same breakdown, regardless of which of the 17 structures the current story
   actually uses (that's shown live in the arrangement view above instead), so every plot type gets
   the same simple, concrete reference. Once you've picked a plot type and its own example (*Jaws*,
-  *Alice in Wonderland*, *Macbeth*…), that appears as a third column, grouped by the same acts.
+  *Alice in Wonderland*, *Macbeth*…), that appears as a third column split into the same eight
+  Three-Act subsections — not just one paragraph per act, but a distinct sentence for Opening
+  Image, Inciting Incident, Reaction to Incident and so on, for every one of the 73 plot types.
   Every structure and plot type separately ships with its own worked example too — shown inline in
   the beat editor as you write (*Star Wars* on the Hero's Journey, *The Godfather* on Truby's 22
   Steps, *Cinderella* on Propp's 31 Functions…), no picker needed.

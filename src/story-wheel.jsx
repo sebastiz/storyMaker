@@ -243,7 +243,9 @@ function PlotTypePanel({ plotType, example }) {
 // the grid always breaks the Three-Act Structure's own sections into their four acts — one fixed,
 // simple reference for any plot type, independent of whichever of the 17 structures the current
 // story actually uses (that's shown live in the arrangement view instead, above). A plot type's
-// own example, when picked, appears alongside it, still grouped by the same acts.
+// own example, when picked, appears alongside it, split into the same eight subsections — every
+// plotType example carries a `sections` field (beat-id keyed, alongside its original act-keyed
+// `beats` field used elsewhere, e.g. the Compare view) purely for this finer breakdown.
 const GRID_STRUCTURE = structureById("three-act");
 function ActTable({ plotTypeExample }) {
   return (
@@ -277,7 +279,23 @@ function ActTable({ plotTypeExample }) {
                     </ul>
                   )}
                 </td>
-                {plotTypeExample && <td>{plotTypeExample.beats[key]}</td>}
+                {plotTypeExample && (
+                  <td>
+                    {beats.length === 0 ? "—" : (
+                      <ul className="act-table-list">
+                        {beats.map(b => (
+                          <li key={b.id}>
+                            <span className="act-breakdown-swatch" style={{ background: ACTS[key].color }} />
+                            <span>
+                              <span className="act-table-beat-name">{b.name}</span>
+                              <span>{plotTypeExample.sections[b.id]}</span>
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </td>
+                )}
               </tr>
             );
           })}
