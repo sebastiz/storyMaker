@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ACTS, STRUCTURES, structureById } from "./structures.js";
 import { PLOT_TYPES, plotTypeById, plotTypesByTaxonomy } from "./plot-types.js";
 import { examplesFor, exampleById } from "./examples.js";
-// Story Wheel — a circular story-structure sketchpad
+// Story Wheel — a linear, Arrangement-View-style story-structure sketchpad
 const APP_VERSION = "dev";   // replaced with package.json version at build time (scripts/build.mjs)
 
 /* ===== storage ===== */
@@ -36,39 +36,28 @@ function newProject(structureId = "three-act") {
   };
 }
 
-/* ===== geometry ===== */
-function polar(cx, cy, r, angleDeg) {
-  const a = ((angleDeg - 90) * Math.PI) / 180;
-  return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
-}
-function donutSlice(cx, cy, rInner, rOuter, a0, a1) {
-  const large = a1 - a0 > 180 ? 1 : 0;
-  const p0o = polar(cx, cy, rOuter, a0), p1o = polar(cx, cy, rOuter, a1);
-  const p0i = polar(cx, cy, rInner, a0), p1i = polar(cx, cy, rInner, a1);
-  return [
-    `M ${p0o.x} ${p0o.y}`, `A ${rOuter} ${rOuter} 0 ${large} 1 ${p1o.x} ${p1o.y}`,
-    `L ${p1i.x} ${p1i.y}`, `A ${rInner} ${rInner} 0 ${large} 0 ${p0i.x} ${p0i.y}`, "Z",
-  ].join(" ");
-}
-// each slice is drawn at least MIN_SHARE wide so a single-beat "moment" (a 1%-of-story catalyst)
-// stays clickable and legible — the wheel reads proportionally without any wedge going to a sliver
+/* ===== geometry =====
+   Everything downstream works in plain 0-100 percentages of the timeline's width — no angles, no
+   polar math. A beat's a0/a1 is just "starts at this % across, ends at that %". */
+// each segment is drawn at least MIN_SHARE wide so a single-beat "moment" (a 1%-of-story catalyst)
+// stays clickable and legible — the timeline reads proportionally without any clip vanishing
 const MIN_SHARE = 4;
-function wedges(beats) {
+function segments(beats) {
   const shares = beats.map(b => Math.max(b.pct, MIN_SHARE));
   const total = shares.reduce((s, n) => s + n, 0);
-  let angle = 0;
+  let pos = 0;
   return beats.map((b, i) => {
-    const span = (shares[i] / total) * 360;
-    const a0 = angle, a1 = angle + span;
-    angle = a1;
+    const span = (shares[i] / total) * 100;
+    const a0 = pos, a1 = pos + span;
+    pos = a1;
     return { beat: b, a0, a1, mid: (a0 + a1) / 2 };
   });
 }
 const wordCount = s => (s && s.trim() ? s.trim().split(/\s+/).length : 0);
 const ACT3_LABEL = { 1: "Act 1", 2: "Act 2", 3: "Act 3" };
-// groups a wheel's slices into contiguous runs sharing the same key (beats are authored in
+// groups a timeline's segments into contiguous runs sharing the same key (beats are authored in
 // non-decreasing threeAct AND act order, so this always yields clean runs, not scattered ones) —
-// used both for the outer three-act ring and for lining up two structures' acts in Compare view
+// used both for the Acts track and for lining up two structures' acts in Compare view
 function groupSlices(slices, keyFn) {
   const groups = [];
   for (const s of slices) {
@@ -80,131 +69,132 @@ function groupSlices(slices, keyFn) {
   return groups;
 }
 
-/* ===== wheel =====
-   Laid out as concentric tracks, the way Ableton's Arrangement View stacks parallel tracks over
-   one shared timeline — here the "timeline" is angle-around-the-circle instead of left-to-right.
-   Track order, innermost to outermost: Beats (the primary track) -> Written (a per-beat clip/empty-
-   slot overlay of the same track) -> Acts (a 3-clip summary track) -> Plot Type (an external
-   4-clip track, only present once one's picked; a highlighted border marks a clip that also has a
-   real-world example). A hairline ring divides each track from the next, like a lane separator. */
-function Wheel({ structure, project, selected, onSelect, plotType, plotTypeExample }) {
-  const size = 580, cx = size / 2, cy = size / 2;
-  const rHub = 100;
-  const rBeatIn = 104, rBeatOut = 189;
-  const rWrittenIn = 193, rWrittenOut = 207;
-  const rActIn = 211, rActOut = 227;
-  const rActLabel = 239;
-  const rPlotIn = 247, rPlotOut = 263;
-  const slices = useMemo(() => wedges(structure.beats), [structure]);
+/* ===== timeline =====
+   A linear Arrangement-View layout: horizontal tracks stacked top to bottom over one shared
+   timeline (the story, left = start, right = end). Track order: Beats (the primary track) ->
+   Written (a per-beat clip/empty-slot overlay of the same track) -> Acts (a 3-clip summary
+   track) -> Plot Type (an external 4-clip track, only present once one's picked; a highlighted
+   border marks a clip that also has a real-world example). */
+function Timeline({ structure, project, selected, onSelect, plotType, plotTypeExample }) {
+  const slices = useMemo(() => segments(structure.beats), [structure]);
   const acts3 = useMemo(() => groupSlices(slices, b => b.threeAct), [slices]);
   const actGroups = useMemo(() => groupSlices(slices, b => b.act), [slices]);
   const done = structure.beats.filter(b => wordCount(project.beats[b.id]) > 0).length;
   return (
-    <svg viewBox={`0 0 ${size} ${size}`} className="wheel" role="img" aria-label={`${structure.name} wheel`}>
-      {plotType && actGroups.map(({ key, a0, a1 }) => (
-        <path key={key} d={donutSlice(cx, cy, rPlotIn, rPlotOut, a0 + 1, a1 - 1)}
-          fill={ACTS[key].color} opacity={0.8}
-          className={`plot-ring-seg${plotTypeExample ? " has-example" : ""}`} />
-      ))}
-      {acts3.map(({ key, a0, a1 }) => {
-        const p = polar(cx, cy, rActLabel, (a0 + a1) / 2);
-        return (
-          <g key={key} className="act-ring-group">
-            <path d={donutSlice(cx, cy, rActIn, rActOut, a0 + 1, a1 - 1)} className="act-ring" />
-            <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle" className="act-ring-label">
-              {ACT3_LABEL[key]}
-            </text>
-          </g>
-        );
-      })}
-      {slices.map(({ beat, a0, a1 }) => {
-        const hasText = wordCount(project.beats[beat.id]) > 0;
-        return hasText ? (
-          <path key={beat.id} d={donutSlice(cx, cy, rWrittenIn, rWrittenOut, a0 + 1, a1 - 1)}
-            fill={ACTS[beat.act].color} className="written-block" />
-        ) : (
-          <path key={beat.id} d={donutSlice(cx, cy, rWrittenIn, rWrittenOut, a0 + 1, a1 - 1)}
-            className="written-empty" />
-        );
-      })}
-      {slices.map(({ beat, a0, a1, mid }, i) => {
-        const isSel = selected === beat.id;
-        const hasText = wordCount(project.beats[beat.id]) > 0;
-        const p = polar(cx, cy, (rBeatIn + rBeatOut) / 2, mid);
-        const wide = a1 - a0 > 14;
-        return (
-          <g key={beat.id} className={`slice${isSel ? " is-sel" : ""}`} onClick={() => onSelect(beat.id)}>
-            <path d={donutSlice(cx, cy, rBeatIn, rBeatOut, a0 + 0.6, a1 - 0.6)}
-              fill={ACTS[beat.act].color} opacity={isSel ? 1 : hasText ? 0.82 : 0.42} />
-            {wide && (
-              <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle" className="slice-num">
-                {i + 1}
-              </text>
-            )}
-          </g>
-        );
-      })}
-      <circle cx={cx} cy={cy} r={rBeatOut + 2} className="track-divider" />
-      <circle cx={cx} cy={cy} r={rWrittenOut + 2} className="track-divider" />
-      <circle cx={cx} cy={cy} r={rActOut + 2} className="track-divider" />
-      <circle cx={cx} cy={cy} r={rHub - 4} className="hub" />
-      <text x={cx} y={cy - 10} textAnchor="middle" className="hub-title">{project.title || "Untitled Story"}</text>
-      <text x={cx} y={cy + 14} textAnchor="middle" className="hub-sub">{done} / {structure.beats.length} beats</text>
-    </svg>
+    <div className="timeline" role="img" aria-label={`${structure.name} timeline`}>
+      <div className="tl-summary">
+        <span className="tl-summary-title">{project.title || "Untitled Story"}</span>
+        <span className="tl-summary-sub">{done} / {structure.beats.length} beats</span>
+      </div>
+
+      <div className="tl-track">
+        <div className="tl-label">Beats</div>
+        <div className="tl-lane tl-lane-beats">
+          {slices.map(({ beat, a0, a1 }, i) => {
+            const isSel = selected === beat.id;
+            const hasText = wordCount(project.beats[beat.id]) > 0;
+            return (
+              <div key={beat.id} className={`tl-clip${isSel ? " is-sel" : ""}`}
+                style={{ left: a0 + "%", width: (a1 - a0) + "%", background: ACTS[beat.act].color, opacity: isSel ? 1 : hasText ? 0.88 : 0.45 }}
+                onClick={() => onSelect(beat.id)} title={beat.name}>
+                {a1 - a0 > 4 && <span className="tl-clip-label">{i + 1}</span>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="tl-track tl-track-thin">
+        <div className="tl-label">Written</div>
+        <div className="tl-lane tl-lane-written">
+          {slices.map(({ beat, a0, a1 }) => {
+            const hasText = wordCount(project.beats[beat.id]) > 0;
+            return hasText ? (
+              <div key={beat.id} className="tl-clip tl-clip-filled"
+                style={{ left: a0 + "%", width: (a1 - a0) + "%", background: ACTS[beat.act].color }} />
+            ) : (
+              <div key={beat.id} className="tl-clip tl-clip-empty" style={{ left: a0 + "%", width: (a1 - a0) + "%" }} />
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="tl-track">
+        <div className="tl-label">Acts</div>
+        <div className="tl-lane tl-lane-acts">
+          {acts3.map(({ key, a0, a1 }) => (
+            <div key={key} className="tl-clip tl-clip-act" style={{ left: a0 + "%", width: (a1 - a0) + "%" }}>
+              <span className="tl-clip-label">{ACT3_LABEL[key]}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {plotType && (
+        <div className="tl-track">
+          <div className="tl-label">Plot Type</div>
+          <div className="tl-lane tl-lane-plottype">
+            {actGroups.map(({ key, a0, a1 }) => (
+              <div key={key} className={`tl-clip tl-clip-plottype${plotTypeExample ? " has-example" : ""}`}
+                style={{ left: a0 + "%", width: (a1 - a0) + "%", background: ACTS[key].color }}>
+                <span className="tl-clip-label">{ACTS[key].label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
-/* ===== compare view — two structures as concentric wheels, ribbons linking their acts ===== */
-function ribbonPath(cx, cy, rA, gA, rB, gB) {
-  const iA0 = polar(cx, cy, rA, gA.a0), iA1 = polar(cx, cy, rA, gA.a1);
-  const oB0 = polar(cx, cy, rB, gB.a0), oB1 = polar(cx, cy, rB, gB.a1);
-  const largeA = gA.a1 - gA.a0 > 180 ? 1 : 0, largeB = gB.a1 - gB.a0 > 180 ? 1 : 0;
-  return [
-    `M ${iA0.x} ${iA0.y}`, `A ${rA} ${rA} 0 ${largeA} 1 ${iA1.x} ${iA1.y}`,
-    `L ${oB1.x} ${oB1.y}`, `A ${rB} ${rB} 0 ${largeB} 0 ${oB0.x} ${oB0.y}`, "Z",
-  ].join(" ");
-}
-// a plot type has no beats of its own — represented here as a 4-equal-wedge pseudo-structure
-// (one wedge per shared act-phase) so it can be dropped straight into CompareWheel/ribbon math
-// alongside a real structure, with no separate code path
+/* ===== compare view — two timelines stacked, ribbons linking their matching acts ===== */
+// a plot type has no beats of its own — represented here as 4 equal-share pseudo-beats (one per
+// shared act-phase) so it can be dropped straight into CompareTimeline/ribbon math alongside a
+// real structure, with no separate code path
 function plotTypeAsWheel(plotType) {
   return {
     id: plotType.id, name: plotType.name,
     beats: Object.keys(ACTS).map(key => ({ id: key, name: ACTS[key].label, pct: 25, act: key })),
   };
 }
-function CompareWheel({ structA, structB, numberedA = true, numberedB = true }) {
-  const size = 640, cx = size / 2, cy = size / 2;
-  const rInnerA = 40, rOuterA = 128, rInnerB = 172, rOuterB = 260;
-  const slicesA = useMemo(() => wedges(structA.beats), [structA]);
-  const slicesB = useMemo(() => wedges(structB.beats), [structB]);
+// a smooth Sankey-style ribbon linking a span on the bottom edge of the top track to a span on
+// the top edge of the bottom track — both spans given as 0-100 percentages of the shared width
+function ribbonPathLinear(xA0, xA1, yA, xB0, xB1, yB) {
+  const midY = (yA + yB) / 2;
+  return [
+    `M ${xA0} ${yA}`, `C ${xA0} ${midY} ${xB0} ${midY} ${xB0} ${yB}`,
+    `L ${xB1} ${yB}`, `C ${xB1} ${midY} ${xA1} ${midY} ${xA1} ${yA}`, "Z",
+  ].join(" ");
+}
+function CompareTimeline({ structA, structB, numberedA = true, numberedB = true }) {
+  const W = 1000, trackH = 60, gap = 120;
+  const yA0 = 0, yA1 = trackH, yB0 = trackH + gap, yB1 = trackH + gap + trackH;
+  const slicesA = useMemo(() => segments(structA.beats), [structA]);
+  const slicesB = useMemo(() => segments(structB.beats), [structB]);
   const groupsA = useMemo(() => groupSlices(slicesA, b => b.act), [slicesA]);
   const groupsB = useMemo(() => groupSlices(slicesB, b => b.act), [slicesB]);
   const ribbons = useMemo(() => groupsA
-    .map(gA => { const gB = groupsB.find(g => g.key === gA.key); return gB && { act: gA.key, d: ribbonPath(cx, cy, rOuterA, gA, rInnerB, gB) }; })
+    .map(gA => { const gB = groupsB.find(g => g.key === gA.key); return gB && { act: gA.key, d: ribbonPathLinear(gA.a0 * 10, gA.a1 * 10, yA1, gB.a0 * 10, gB.a1 * 10, yB0) }; })
     .filter(Boolean), [groupsA, groupsB]);
   return (
-    <svg viewBox={`0 0 ${size} ${size}`} className="compare-wheel" role="img" aria-label="Structure comparison wheel">
+    <svg viewBox={`0 0 ${W} ${yB1}`} className="compare-timeline" role="img" aria-label="Structure comparison timeline" preserveAspectRatio="none">
+      {slicesA.map(({ beat, a0, a1 }, i) => (
+        <g key={beat.id}>
+          <rect x={a0 * 10} y={yA0} width={(a1 - a0) * 10} height={trackH} fill={ACTS[beat.act].color} opacity={0.85} />
+          {numberedA && (a1 - a0) * 10 > 24 && (
+            <text x={a0 * 10 + (a1 - a0) * 5} y={yA0 + trackH / 2} textAnchor="middle" dominantBaseline="middle" className="slice-num">{i + 1}</text>
+          )}
+        </g>
+      ))}
       {ribbons.map(r => <path key={r.act} d={r.d} fill={ACTS[r.act].color} className="ribbon" />)}
-      {slicesB.map(({ beat, a0, a1, mid }, i) => {
-        const p = polar(cx, cy, (rInnerB + rOuterB) / 2, mid);
-        return (
-          <g key={beat.id}>
-            <path d={donutSlice(cx, cy, rInnerB, rOuterB, a0 + 0.5, a1 - 0.5)} fill={ACTS[beat.act].color} opacity={0.85} />
-            {numberedB && a1 - a0 > 10 && <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle" className="slice-num">{i + 1}</text>}
-          </g>
-        );
-      })}
-      {slicesA.map(({ beat, a0, a1, mid }, i) => {
-        const p = polar(cx, cy, (rInnerA + rOuterA) / 2, mid);
-        return (
-          <g key={beat.id}>
-            <path d={donutSlice(cx, cy, rInnerA, rOuterA, a0 + 0.5, a1 - 0.5)} fill={ACTS[beat.act].color} opacity={0.85} />
-            {numberedA && a1 - a0 > 16 && <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle" className="slice-num">{i + 1}</text>}
-          </g>
-        );
-      })}
-      <circle cx={cx} cy={cy} r={rInnerA - 6} className="hub" />
+      {slicesB.map(({ beat, a0, a1 }, i) => (
+        <g key={beat.id}>
+          <rect x={a0 * 10} y={yB0} width={(a1 - a0) * 10} height={trackH} fill={ACTS[beat.act].color} opacity={0.85} />
+          {numberedB && (a1 - a0) * 10 > 24 && (
+            <text x={a0 * 10 + (a1 - a0) * 5} y={yB0 + trackH / 2} textAnchor="middle" dominantBaseline="middle" className="slice-num">{i + 1}</text>
+          )}
+        </g>
+      ))}
     </svg>
   );
 }
@@ -317,13 +307,13 @@ function CompareView({ onClose }) {
   return (
     <div className="compare-view">
       <div className="compare-head">
-        <SidePicker label="Inner wheel" kind={aKind} onKind={changeKindA} id={aId} onId={setAId} />
-        <SidePicker label="Outer wheel" kind={bKind} onKind={changeKindB} id={bId} onId={setBId} />
+        <SidePicker label="Top track" kind={aKind} onKind={changeKindA} id={aId} onId={setAId} />
+        <SidePicker label="Bottom track" kind={bKind} onKind={changeKindB} id={bId} onId={setBId} />
         <button className="ghost-btn" onClick={onClose}>← Back to editor</button>
       </div>
-      <p className="blurb">Ribbons connect each act to its counterpart on the other wheel. A structure's ribbon width is that act's real share of its story; a plot type's four acts are conceptual, not timed, so its wedges are always even — it's the shape of a plot type's ribbons meeting a structure's real proportions that's worth reading.</p>
+      <p className="blurb">Ribbons connect each act to its counterpart on the other track. A structure's ribbon width is that act's real share of its story; a plot type's four acts are conceptual, not timed, so its segments are always even — it's the shape of a plot type's ribbons meeting a structure's real proportions that's worth reading.</p>
       <div className="compare-body">
-        <CompareWheel structA={structA} structB={structB} numberedA={aKind === "structure"} numberedB={bKind === "structure"} />
+        <CompareTimeline structA={structA} structB={structB} numberedA={aKind === "structure"} numberedB={bKind === "structure"} />
         <div className="compare-legends">
           {aKind === "structure" ? <ActBreakdown structure={structA} /> : <PlotTypePanel plotType={plotTypeById(aId)} />}
           {bKind === "structure" ? <ActBreakdown structure={structB} /> : <PlotTypePanel plotType={plotTypeById(bId)} />}
@@ -564,7 +554,7 @@ export default function StoryWheel() {
           <p className="blurb">{structure.blurb}</p>
 
           <div className="plot-type-top">
-            <label className="plot-type-top-picker">Plot type <span className="plot-type-hint">(pick one to see it against the wheel below)</span>
+            <label className="plot-type-top-picker">Plot type <span className="plot-type-hint">(pick one to see it against the timeline below)</span>
               <select value={project.plotType} onChange={e => update({ plotType: e.target.value })}>
                 <option value="">None</option>
                 {plotTypesByTaxonomy().map(g => (
@@ -588,8 +578,8 @@ export default function StoryWheel() {
           </div>
 
           <main className="layout">
-            <div className="wheel-col">
-              <Wheel structure={structure} project={project} selected={selected} onSelect={id => { setSelected(id); setTab("beat"); }}
+            <div className="timeline-col">
+              <Timeline structure={structure} project={project} selected={selected} onSelect={id => { setSelected(id); setTab("beat"); }}
                 plotType={plotType} plotTypeExample={plotTypeExample} />
               <BeatList structure={structure} project={project} selected={selected} onSelect={id => { setSelected(id); setTab("beat"); }} />
               <div className="legend">
@@ -666,23 +656,33 @@ button{font-family:inherit;cursor:pointer}
 .icon-btn:hover{color:var(--ember)}
 .layout{display:grid;grid-template-columns:minmax(320px,460px) 1fr;gap:24px;align-items:start}
 @media (max-width: 860px){ .layout{grid-template-columns:1fr} }
-.wheel-col{display:flex;flex-direction:column;align-items:center;gap:12px}
-.wheel{width:100%;max-width:420px}
-.act-ring{fill:var(--gold);opacity:.14;stroke:var(--gold);stroke-width:.5;stroke-opacity:.4}
-.act-ring-label{font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;fill:var(--gold);opacity:.75;
-  letter-spacing:.04em;text-transform:uppercase;pointer-events:none}
-.slice{cursor:pointer;transition:opacity .15s}
-.slice:hover path{opacity:1}
-.slice.is-sel path{filter:drop-shadow(0 0 6px rgba(233,200,138,.55))}
-.slice-num{font-family:'Archivo',sans-serif;font-size:13px;font-weight:700;fill:#120E1C;pointer-events:none}
-.track-divider{fill:none;stroke:var(--bg);stroke-width:2;pointer-events:none}
-.written-block{opacity:.95}
-.written-empty{fill:none;stroke:var(--border);stroke-width:1;pointer-events:none}
-.plot-ring-seg{stroke:var(--border);stroke-width:1}
-.plot-ring-seg.has-example{stroke:var(--ember);stroke-width:2}
-.hub{fill:var(--panel);stroke:var(--border);stroke-width:1}
-.hub-title{font-family:'Fraunces',serif;font-size:16px;fill:var(--ink);pointer-events:none}
-.hub-sub{font-size:11px;fill:var(--dim);pointer-events:none}
+@media (max-width: 480px){ .tl-label{width:44px;font-size:9px} .tl-clip-label{font-size:10px} }
+.timeline-col{display:flex;flex-direction:column;align-items:stretch;gap:12px;width:100%}
+.timeline{width:100%;max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:2px}
+.tl-summary{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.tl-summary-title{font-family:'Fraunces',serif;font-size:16px;color:var(--ink)}
+.tl-summary-sub{font-size:11px;color:var(--dim)}
+.tl-track{display:flex;align-items:stretch;gap:8px}
+.tl-track-thin{height:14px}
+.tl-track-thin .tl-lane{height:14px}
+.tl-label{width:64px;flex:none;font-size:10px;color:var(--dim);text-transform:uppercase;
+  letter-spacing:.04em;display:flex;align-items:center}
+.tl-lane{position:relative;flex:1;height:38px;background:var(--panel);border-radius:6px;overflow:hidden;
+  border:1px solid var(--border)}
+.tl-clip{position:absolute;top:0;bottom:0;cursor:pointer;transition:opacity .15s,filter .15s;
+  display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px var(--bg);overflow:hidden}
+.tl-clip:hover{opacity:1!important}
+.tl-clip.is-sel{filter:drop-shadow(0 0 6px rgba(233,200,138,.65));z-index:1}
+.tl-clip-label{font-family:'Archivo',sans-serif;font-size:11px;font-weight:700;color:#120E1C;pointer-events:none;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;padding:0 3px}
+.tl-lane-written{background:transparent;border:none}
+.tl-clip-filled{opacity:.9}
+.tl-clip-empty{background:transparent;border:1px solid var(--border);border-radius:3px}
+.tl-lane-acts .tl-clip{background:var(--panel2);border:1px solid var(--border);cursor:default}
+.tl-lane-acts .tl-clip-label{color:var(--gold)}
+.tl-lane-plottype .tl-clip{cursor:default;opacity:.8}
+.tl-lane-plottype .tl-clip.has-example{box-shadow:inset 0 0 0 2px var(--ember)}
+.tl-lane-plottype .tl-clip-label{color:#120E1C}
 .beat-list{list-style:none;margin:0;padding:0;width:100%;max-width:420px;display:flex;flex-direction:column;gap:2px}
 .beat-list li{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:7px;cursor:pointer;font-size:13px}
 .beat-list li:hover{background:var(--panel)}
@@ -773,8 +773,9 @@ button{font-family:inherit;cursor:pointer}
 .compare-kind-toggle button.is-sel{background:var(--panel2);color:var(--gold);border-color:var(--gold)}
 .compare-picker select{background:var(--panel);border:1px solid var(--border);color:var(--ink);border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;text-transform:none;letter-spacing:normal;min-width:200px}
 .compare-body{display:flex;flex-direction:column;align-items:center;gap:24px}
-.compare-wheel{width:100%;max-width:560px}
+.compare-timeline{width:100%;max-width:820px}
 .ribbon{opacity:.28}
+.slice-num{font-family:'Archivo',sans-serif;font-size:26px;font-weight:700;fill:#120E1C;pointer-events:none}
 .compare-legends{display:grid;grid-template-columns:1fr 1fr;gap:24px;width:100%;max-width:900px}
 @media (max-width: 700px){ .compare-legends{grid-template-columns:1fr} }
 .act-breakdown h4{font-family:'Fraunces',serif;color:var(--gold);margin:0 0 10px;font-size:16px}
