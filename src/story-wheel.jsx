@@ -298,7 +298,11 @@ function PlotTypePanel({ plotType, example }) {
 // plotType example carries a `sections` field (beat-id keyed, alongside its original act-keyed
 // `beats` field used elsewhere, e.g. the Compare view) purely for this finer breakdown.
 const GRID_STRUCTURE = structureById("three-act");
-function ActTable({ plotTypeExample }) {
+function ActTable({ structure, plotTypeExample }) {
+  // if the current story is itself using the Three-Act Structure, its beats are exactly what
+  // column 1 already shows — an extra column would just repeat it, so it only appears for the
+  // other 16 structures
+  const showStructureCol = structure.id !== GRID_STRUCTURE.id;
   return (
     <div className="act-table-wrap">
       <table className="act-table">
@@ -306,11 +310,13 @@ function ActTable({ plotTypeExample }) {
           <tr>
             <th>Act</th>
             {plotTypeExample && <th>In {plotTypeExample.title}</th>}
+            {showStructureCol && <th>{structure.name} sections</th>}
           </tr>
         </thead>
         <tbody>
           {Object.keys(ACTS).map(key => {
             const beats = GRID_STRUCTURE.beats.filter(b => b.act === key);
+            const structureBeats = structure.beats.filter(b => b.act === key);
             return (
               <tr key={key}>
                 <td className="act-table-act">
@@ -340,6 +346,20 @@ function ActTable({ plotTypeExample }) {
                               <span className="act-table-beat-name">{b.name}</span>
                               <span>{plotTypeExample.sections[b.id]}</span>
                             </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </td>
+                )}
+                {showStructureCol && (
+                  <td>
+                    {structureBeats.length === 0 ? "—" : (
+                      <ul className="act-table-list">
+                        {structureBeats.map(b => (
+                          <li key={b.id}>
+                            <span className="act-breakdown-swatch" style={{ background: ACTS[key].color }} />
+                            {b.name}
                           </li>
                         ))}
                       </ul>
@@ -765,7 +785,7 @@ export default function StoryWheel() {
             ))}
           </div>
 
-          <ActTable plotTypeExample={plotTypeExample} />
+          <ActTable structure={structure} plotTypeExample={plotTypeExample} />
 
           <main className="layout">
             <div className="side-col">

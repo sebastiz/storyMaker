@@ -59,7 +59,11 @@ horizontal tracks with ribbons linking their matching acts, to see how they rela
   type and its own example (*Jaws*, *Alice in Wonderland*, *Macbeth*…), that appears as a second
   column split into the same eight Three-Act subsections — not just one paragraph per act, but a
   distinct sentence for Opening Image, Inciting Incident, Reaction to Incident and so on, for every
-  one of the 73 plot types. Every structure and plot type separately ships with its own worked
+  one of the 73 plot types. Whenever the story's actual structure isn't the Three-Act Structure
+  itself, its own beats appear too, in one more bulleted, act-grouped column of their own — so
+  switching to, say, the Hero's Journey adds an "Ordinary World / Call to Adventure…" column
+  without disturbing the fixed Three-Act reference the rest of the grid is built on. Every structure
+  and plot type separately ships with its own worked
   example too — shown inline in the beat editor as you write, both at once when applicable (*Jaws*
   next to *Die Hard* on the Three-Act Structure, say) — *Star Wars* on the Hero's Journey, *The
   Godfather* on Truby's 22 Steps, *Cinderella* on Propp's 31 Functions… — no picker needed.
