@@ -11,10 +11,10 @@
   },
   "license": "MIT",
   "author": "Sebastian Zeki",
-  "homepage": "https://sebastiz.github.io/storymaker/",
+  "homepage": "https://sebastiz.github.io/storyMaker/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sebastiz/storymaker.git"
+    "url": "https://github.com/sebastiz/storyMaker.git"
   },
   "keywords": [
     "writing",

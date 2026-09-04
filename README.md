@@ -6,7 +6,7 @@ its beats, sized by how much of the story each one typically takes up. Click a b
 or in the list) to see its guidance and write the scene.
 
 **Live app:** open `index.html` directly, or enable GitHub Pages (Settings → Pages → deploy from
-`main`, root) to serve it at `https://sebastiz.github.io/storymaker/`.
+`main`, root) to serve it at `https://sebastiz.github.io/storyMaker/`.
 
 ## Features
 
