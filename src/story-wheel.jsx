@@ -63,14 +63,16 @@ function wedges(beats) {
 }
 const wordCount = s => (s && s.trim() ? s.trim().split(/\s+/).length : 0);
 const ACT3_LABEL = { 1: "Act 1", 2: "Act 2", 3: "Act 3" };
-// groups the wheel's slices into contiguous three-act runs (beats are authored in non-decreasing
-// threeAct order) so the outer ring's boundaries land exactly on the beat wedges beneath it
-function actGroups(slices) {
+// groups a wheel's slices into contiguous runs sharing the same key (beats are authored in
+// non-decreasing threeAct AND act order, so this always yields clean runs, not scattered ones) —
+// used both for the outer three-act ring and for lining up two structures' acts in Compare view
+function groupSlices(slices, keyFn) {
   const groups = [];
   for (const s of slices) {
+    const key = keyFn(s.beat);
     const last = groups[groups.length - 1];
-    if (last && last.threeAct === s.beat.threeAct) last.a1 = s.a1;
-    else groups.push({ threeAct: s.beat.threeAct, a0: s.a0, a1: s.a1 });
+    if (last && last.key === key) last.a1 = s.a1;
+    else groups.push({ key, a0: s.a0, a1: s.a1 });
   }
   return groups;
 }
@@ -80,17 +82,17 @@ function Wheel({ structure, project, selected, onSelect }) {
   const size = 540, cx = size / 2, cy = size / 2, rOuter = 200, rInner = 108;
   const ringInner = rOuter + 6, ringOuter = rOuter + 22, ringLabelR = rOuter + 34;
   const slices = useMemo(() => wedges(structure.beats), [structure]);
-  const acts3 = useMemo(() => actGroups(slices), [slices]);
+  const acts3 = useMemo(() => groupSlices(slices, b => b.threeAct), [slices]);
   const done = structure.beats.filter(b => wordCount(project.beats[b.id]) > 0).length;
   return (
     <svg viewBox={`0 0 ${size} ${size}`} className="wheel" role="img" aria-label={`${structure.name} wheel`}>
-      {acts3.map(({ threeAct, a0, a1 }) => {
+      {acts3.map(({ key, a0, a1 }) => {
         const p = polar(cx, cy, ringLabelR, (a0 + a1) / 2);
         return (
-          <g key={threeAct} className="act-ring-group">
+          <g key={key} className="act-ring-group">
             <path d={donutSlice(cx, cy, ringInner, ringOuter, a0 + 1, a1 - 1)} className="act-ring" />
             <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle" className="act-ring-label">
-              {ACT3_LABEL[threeAct]}
+              {ACT3_LABEL[key]}
             </text>
           </g>
         );
@@ -119,6 +121,100 @@ function Wheel({ structure, project, selected, onSelect }) {
       <text x={cx} y={cy - 10} textAnchor="middle" className="hub-title">{project.title || "Untitled Story"}</text>
       <text x={cx} y={cy + 14} textAnchor="middle" className="hub-sub">{done} / {structure.beats.length} beats</text>
     </svg>
+  );
+}
+
+/* ===== compare view — two structures as concentric wheels, ribbons linking their acts ===== */
+function ribbonPath(cx, cy, rA, gA, rB, gB) {
+  const iA0 = polar(cx, cy, rA, gA.a0), iA1 = polar(cx, cy, rA, gA.a1);
+  const oB0 = polar(cx, cy, rB, gB.a0), oB1 = polar(cx, cy, rB, gB.a1);
+  const largeA = gA.a1 - gA.a0 > 180 ? 1 : 0, largeB = gB.a1 - gB.a0 > 180 ? 1 : 0;
+  return [
+    `M ${iA0.x} ${iA0.y}`, `A ${rA} ${rA} 0 ${largeA} 1 ${iA1.x} ${iA1.y}`,
+    `L ${oB1.x} ${oB1.y}`, `A ${rB} ${rB} 0 ${largeB} 0 ${oB0.x} ${oB0.y}`, "Z",
+  ].join(" ");
+}
+function CompareWheel({ structA, structB }) {
+  const size = 640, cx = size / 2, cy = size / 2;
+  const rInnerA = 40, rOuterA = 128, rInnerB = 172, rOuterB = 260;
+  const slicesA = useMemo(() => wedges(structA.beats), [structA]);
+  const slicesB = useMemo(() => wedges(structB.beats), [structB]);
+  const groupsA = useMemo(() => groupSlices(slicesA, b => b.act), [slicesA]);
+  const groupsB = useMemo(() => groupSlices(slicesB, b => b.act), [slicesB]);
+  const ribbons = useMemo(() => groupsA
+    .map(gA => { const gB = groupsB.find(g => g.key === gA.key); return gB && { act: gA.key, d: ribbonPath(cx, cy, rOuterA, gA, rInnerB, gB) }; })
+    .filter(Boolean), [groupsA, groupsB]);
+  return (
+    <svg viewBox={`0 0 ${size} ${size}`} className="compare-wheel" role="img" aria-label="Structure comparison wheel">
+      {ribbons.map(r => <path key={r.act} d={r.d} fill={ACTS[r.act].color} className="ribbon" />)}
+      {slicesB.map(({ beat, a0, a1, mid }, i) => {
+        const p = polar(cx, cy, (rInnerB + rOuterB) / 2, mid);
+        return (
+          <g key={beat.id}>
+            <path d={donutSlice(cx, cy, rInnerB, rOuterB, a0 + 0.5, a1 - 0.5)} fill={ACTS[beat.act].color} opacity={0.85} />
+            {a1 - a0 > 10 && <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle" className="slice-num">{i + 1}</text>}
+          </g>
+        );
+      })}
+      {slicesA.map(({ beat, a0, a1, mid }, i) => {
+        const p = polar(cx, cy, (rInnerA + rOuterA) / 2, mid);
+        return (
+          <g key={beat.id}>
+            <path d={donutSlice(cx, cy, rInnerA, rOuterA, a0 + 0.5, a1 - 0.5)} fill={ACTS[beat.act].color} opacity={0.85} />
+            {a1 - a0 > 16 && <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle" className="slice-num">{i + 1}</text>}
+          </g>
+        );
+      })}
+      <circle cx={cx} cy={cy} r={rInnerA - 6} className="hub" />
+    </svg>
+  );
+}
+function ActBreakdown({ structure }) {
+  const groups = Object.keys(ACTS)
+    .map(key => ({ key, beats: structure.beats.filter(b => b.act === key) }))
+    .filter(g => g.beats.length);
+  return (
+    <div className="act-breakdown">
+      <h4>{structure.name}</h4>
+      {groups.map(g => (
+        <div className="act-breakdown-row" key={g.key}>
+          <span className="act-breakdown-swatch" style={{ background: ACTS[g.key].color }} />
+          <div>
+            <div className="act-breakdown-label">{ACTS[g.key].label}</div>
+            <div className="act-breakdown-beats">{g.beats.map(b => b.name).join(", ")}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+function CompareView({ onClose }) {
+  const [aId, setAId] = useState(STRUCTURES[0].id);
+  const [bId, setBId] = useState(STRUCTURES[1].id);
+  return (
+    <div className="compare-view">
+      <div className="compare-head">
+        <label className="compare-picker">Inner wheel
+          <select value={aId} onChange={e => setAId(e.target.value)}>
+            {STRUCTURES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+        </label>
+        <label className="compare-picker">Outer wheel
+          <select value={bId} onChange={e => setBId(e.target.value)}>
+            {STRUCTURES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+        </label>
+        <button className="ghost-btn" onClick={onClose}>← Back to editor</button>
+      </div>
+      <p className="blurb">Ribbons connect each act to its counterpart in the other structure — a ribbon's width is that act's share of its own story, so a twist shows the two structures giving that act different weight.</p>
+      <div className="compare-body">
+        <CompareWheel structA={structureById(aId)} structB={structureById(bId)} />
+        <div className="compare-legends">
+          <ActBreakdown structure={structureById(aId)} />
+          <ActBreakdown structure={structureById(bId)} />
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -250,6 +346,7 @@ export default function StoryWheel() {
   const [selected, setSelected] = useState(null);
   const [tab, setTab] = useState("beat"); // beat | characters | notes
   const [showStories, setShowStories] = useState(false);
+  const [compareOpen, setCompareOpen] = useState(false);
   const booted = useRef(false);
 
   useEffect(() => {
@@ -308,59 +405,70 @@ export default function StoryWheel() {
       <style>{CSS}</style>
       <header className="topbar">
         <div className="brand">✦ Story Wheel</div>
-        <input className="title-input" value={project.title}
-          onChange={e => update({ title: e.target.value })} placeholder="Story title" />
-        <select className="struct-select" value={project.structureId}
-          onChange={e => update({ structureId: e.target.value })}>
-          {STRUCTURES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-        </select>
-        <button className="ghost-btn" onClick={() => setShowStories(true)}>My Stories</button>
-        <button className="primary-btn" onClick={() => download(`${(project.title || "story").replace(/\s+/g, "-")}.md`, toMarkdown(project, structure))}>
-          Export
-        </button>
+        {!compareOpen && (
+          <>
+            <input className="title-input" value={project.title}
+              onChange={e => update({ title: e.target.value })} placeholder="Story title" />
+            <select className="struct-select" value={project.structureId}
+              onChange={e => update({ structureId: e.target.value })}>
+              {STRUCTURES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+            <button className="ghost-btn" onClick={() => setShowStories(true)}>My Stories</button>
+            <button className="ghost-btn" onClick={() => setCompareOpen(true)}>Compare Structures</button>
+            <button className="primary-btn" onClick={() => download(`${(project.title || "story").replace(/\s+/g, "-")}.md`, toMarkdown(project, structure))}>
+              Export
+            </button>
+          </>
+        )}
       </header>
 
-      <p className="blurb">{structure.blurb}</p>
+      {compareOpen ? (
+        <CompareView onClose={() => setCompareOpen(false)} />
+      ) : (
+        <>
+          <p className="blurb">{structure.blurb}</p>
 
-      <main className="layout">
-        <div className="wheel-col">
-          <Wheel structure={structure} project={project} selected={selected} onSelect={id => { setSelected(id); setTab("beat"); }} />
-          <BeatList structure={structure} project={project} selected={selected} onSelect={id => { setSelected(id); setTab("beat"); }} />
-          <div className="legend">
-            {Object.values(ACTS).map(a => (
-              <span key={a.label} className="legend-item"><i style={{ background: a.color }} />{a.label}</span>
-            ))}
-          </div>
-        </div>
-
-        <div className="side-col">
-          <div className="tabs">
-            <button className={tab === "beat" ? "is-sel" : ""} onClick={() => setTab("beat")}>Beat</button>
-            <button className={tab === "characters" ? "is-sel" : ""} onClick={() => setTab("characters")}>Characters</button>
-            <button className={tab === "notes" ? "is-sel" : ""} onClick={() => setTab("notes")}>Logline &amp; Notes</button>
-          </div>
-          {tab === "beat" && beat && (
-            <BeatEditor beat={beat} text={project.beats[beat.id] || ""}
-              onChange={text => update({ beats: { ...project.beats, [beat.id]: text } })} />
-          )}
-          {tab === "characters" && (
-            <Characters characters={project.characters} onChange={characters => update({ characters })} />
-          )}
-          {tab === "notes" && (
-            <div className="notes-panel">
-              <label>Genre</label>
-              <input value={project.genre} onChange={e => update({ genre: e.target.value })} placeholder="e.g. mystery, literary fiction, YA fantasy" />
-              <label>Logline</label>
-              <textarea value={project.logline} onChange={e => update({ logline: e.target.value })} rows={5}
-                placeholder="One or two sentences: who wants what, and what's stopping them." />
+          <main className="layout">
+            <div className="wheel-col">
+              <Wheel structure={structure} project={project} selected={selected} onSelect={id => { setSelected(id); setTab("beat"); }} />
+              <BeatList structure={structure} project={project} selected={selected} onSelect={id => { setSelected(id); setTab("beat"); }} />
+              <div className="legend">
+                {Object.values(ACTS).map(a => (
+                  <span key={a.label} className="legend-item"><i style={{ background: a.color }} />{a.label}</span>
+                ))}
+              </div>
             </div>
-          )}
-        </div>
-      </main>
 
-      {showStories && (
-        <StoryPanel projects={projects} activeId={activeId} onOpen={openStory} onNew={newStory}
-          onRename={renameStory} onDuplicate={duplicateStory} onDelete={deleteStory} onClose={() => setShowStories(false)} />
+            <div className="side-col">
+              <div className="tabs">
+                <button className={tab === "beat" ? "is-sel" : ""} onClick={() => setTab("beat")}>Beat</button>
+                <button className={tab === "characters" ? "is-sel" : ""} onClick={() => setTab("characters")}>Characters</button>
+                <button className={tab === "notes" ? "is-sel" : ""} onClick={() => setTab("notes")}>Logline &amp; Notes</button>
+              </div>
+              {tab === "beat" && beat && (
+                <BeatEditor beat={beat} text={project.beats[beat.id] || ""}
+                  onChange={text => update({ beats: { ...project.beats, [beat.id]: text } })} />
+              )}
+              {tab === "characters" && (
+                <Characters characters={project.characters} onChange={characters => update({ characters })} />
+              )}
+              {tab === "notes" && (
+                <div className="notes-panel">
+                  <label>Genre</label>
+                  <input value={project.genre} onChange={e => update({ genre: e.target.value })} placeholder="e.g. mystery, literary fiction, YA fantasy" />
+                  <label>Logline</label>
+                  <textarea value={project.logline} onChange={e => update({ logline: e.target.value })} rows={5}
+                    placeholder="One or two sentences: who wants what, and what's stopping them." />
+                </div>
+              )}
+            </div>
+          </main>
+
+          {showStories && (
+            <StoryPanel projects={projects} activeId={activeId} onOpen={openStory} onNew={newStory}
+              onRename={renameStory} onDuplicate={duplicateStory} onDelete={deleteStory} onClose={() => setShowStories(false)} />
+          )}
+        </>
       )}
     </div>
   );
@@ -445,4 +553,17 @@ button{font-family:inherit;cursor:pointer}
 .struct-pick{display:flex;flex-direction:column;gap:8px}
 .struct-opt{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:10px 12px}
 .struct-opt span{color:var(--dim);font-size:12px}
+.compare-head{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:8px}
+.compare-picker{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em}
+.compare-picker select{background:var(--panel);border:1px solid var(--border);color:var(--ink);border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;text-transform:none;letter-spacing:normal}
+.compare-body{display:flex;flex-direction:column;align-items:center;gap:24px}
+.compare-wheel{width:100%;max-width:560px}
+.ribbon{opacity:.28}
+.compare-legends{display:grid;grid-template-columns:1fr 1fr;gap:24px;width:100%;max-width:900px}
+@media (max-width: 700px){ .compare-legends{grid-template-columns:1fr} }
+.act-breakdown h4{font-family:'Fraunces',serif;color:var(--gold);margin:0 0 10px;font-size:16px}
+.act-breakdown-row{display:flex;gap:10px;margin-bottom:10px}
+.act-breakdown-swatch{width:10px;height:10px;border-radius:3px;flex:none;margin-top:4px}
+.act-breakdown-label{font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+.act-breakdown-beats{font-size:13px;line-height:1.5}
 `;
