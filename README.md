@@ -33,20 +33,17 @@ horizontal tracks with ribbons linking their matching acts, to see how they rela
   Story Shapes, or the MICE Quotient (73 entries total, grouped by taxonomy). It works with any of
   the 17 structures at once, since it maps onto the four acts they all share rather than onto
   specific beats
-- **The grid** — below the timeline, one row per act: what the chosen plot type says happens there,
-  what a real example (*Jaws*, *Alice in Wonderland*, *Macbeth*…) actually does there, and which
-  of the *current* structure's beats fall in that act — so switching structures re-splits the same
-  plot type and example across a different, finer set of beats without picking anything again. If
-  you've also picked a beat-level "See it in" example, the grid shows it too: each beat, listed
-  under its act, gets its own line of *that* story — e.g. pick the Hero's Journey and *Star Wars*
-  and the Setup row spells out Luke's ordinary world, his call to adventure, his refusal, and
-  meeting Obi-Wan, each under the beat it belongs to
-- **See it in** — a second, independent picker (next to the structure timeline) shows a real example
-  mapped beat-by-beat onto the whole structure itself — e.g. *Star Wars* onto the Hero's Journey's
-  12 beats, *The Godfather* onto Truby's 22 Steps, *Cinderella* onto Propp's 31 Functions —
-  surfaced inline in the beat editor and, per beat, in the grid below. **Every one of the 17
-  structures and all 73 plot types has at least one worked example** (90 in total), each checked
-  programmatically against the target's actual beat/act ids so nothing is mismatched or missing
+- **The grid** — directly under the timeline, one row per act: what the chosen plot type says
+  happens there, what a real example (*Jaws*, *Alice in Wonderland*, *Macbeth*…) actually does
+  there, which of the *current* structure's beats fall in that act, and — its own column — the
+  parts of a real literary/film example that correspond to those exact beats. Every structure
+  ships with one worked example (*Star Wars* on the Hero's Journey, *The Godfather* on Truby's 22
+  Steps, *Cinderella* on Propp's 31 Functions…), shown automatically — no picker needed — both
+  inline in the beat editor and, spelled out beat by beat, right here in the grid; switching
+  structures re-splits the same plot type, example, and literature column across a different,
+  finer set of beats without picking anything again. **Every one of the 17 structures and all 73
+  plot types has at least one worked example** (90 in total), each checked programmatically
+  against the target's actual beat/act ids so nothing is mismatched or missing
 - **Beat editor** — a distraction-free textarea per beat with a live word count; the timeline and beat
   list mark which beats have been written
 - **Characters** — a simple roster (name, role, one-line notes) alongside the outline

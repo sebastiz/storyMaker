@@ -31,7 +31,7 @@ function newProject(structureId = "three-act") {
   const now = Date.now();
   return {
     id: uid(), title: "Untitled Story", structureId, genre: "", logline: "", plotType: "",
-    structureExample: "", plotTypeExample: "",
+    plotTypeExample: "",
     beats: {}, characters: [], createdAt: now, updatedAt: now,
   };
 }
@@ -236,12 +236,11 @@ function PlotTypePanel({ plotType, example }) {
   );
 }
 // the unified grid: one row per shared act, showing (as columns exist) the plot type's own
-// description of that act, a plot-type example's version of it, and which of the CURRENT
-// structure's beats fall in that act — the join key throughout is the act, so this works for any
-// structure without per-structure content, and shows a plot-type example "split" across a finer
-// structure. When a structure-level example is picked too (keyed by beat id, not act), its line
-// is shown right under the beat it belongs to, so the same table also spells out how that real
-// story maps onto the chosen structure's actual beats.
+// description of that act, a plot-type example's version of it, which of the CURRENT structure's
+// beats fall in that act, and — its own column — the parts of the structure-level literature
+// example that correspond to those same beats. The join key throughout is the act, so this works
+// for any structure without per-structure content, and the literature column re-splits itself
+// automatically whenever a different structure re-groups the same beats into different acts.
 function ActTable({ structure, plotType, plotTypeExample, structureExample }) {
   return (
     <div className="act-table-wrap">
@@ -251,7 +250,8 @@ function ActTable({ structure, plotType, plotTypeExample, structureExample }) {
             <th>Act</th>
             {plotType && <th>{plotType.name}</th>}
             {plotTypeExample && <th>In {plotTypeExample.title}</th>}
-            <th>{structure.name} beats{structureExample && <span className="act-table-th-sub"> — in {structureExample.title}</span>}</th>
+            <th>{structure.name} beats</th>
+            {structureExample && <th>In {structureExample.title}</th>}
           </tr>
         </thead>
         <tbody>
@@ -265,16 +265,16 @@ function ActTable({ structure, plotType, plotTypeExample, structureExample }) {
                 </td>
                 {plotType && <td>{plotType.acts[key]}</td>}
                 {plotTypeExample && <td>{plotTypeExample.beats[key]}</td>}
-                <td>
-                  {beats.length === 0 ? "—" : beats.map(b => (
-                    <div key={b.id} className="act-table-beat-row">
-                      <span className="act-table-beat-name">{b.name}</span>
-                      {structureExample && (
-                        <span className="act-table-beat-example">{structureExample.beats[b.id]}</span>
-                      )}
-                    </div>
-                  ))}
-                </td>
+                <td>{beats.map(b => b.name).join(", ") || "—"}</td>
+                {structureExample && (
+                  <td>
+                    {beats.length === 0 ? "—" : beats.map(b => (
+                      <div key={b.id} className="act-table-beat-row">
+                        <span className="act-table-beat-name">{b.name}:</span> {structureExample.beats[b.id]}
+                      </div>
+                    ))}
+                  </td>
+                )}
               </tr>
             );
           })}
@@ -452,7 +452,7 @@ function toMarkdown(project, structure) {
   lines.push(`_Structure: ${structure.name}_`, "");
   const plotType = plotTypeById(project.plotType);
   if (plotType) lines.push(`_Plot type: ${plotType.name} (${plotType.taxonomy})_`, "");
-  const structureExample = exampleById(project.structureExample);
+  const structureExample = examplesFor("structure", structure.id)[0];
   if (structureExample) lines.push(`_Studying: ${structureExample.title} (${structureExample.creator})_`, "");
   if (project.characters.length) {
     lines.push("## Characters", "");
@@ -511,9 +511,11 @@ export default function StoryWheel() {
 
   const beat = structure.beats.find(b => b.id === selected);
   const plotType = plotTypeById(project.plotType);
-  const structureExamples = examplesFor("structure", structure.id);
+  // every structure ships with exactly one worked literature example, so it's shown automatically
+  // rather than picked from a dropdown — see it inline in the beat editor and split across the
+  // grid below the timeline
+  const structureExample = examplesFor("structure", structure.id)[0] || null;
   const plotTypeExamples = plotType ? examplesFor("plotType", plotType.id) : [];
-  const structureExample = structureExamples.some(e => e.id === project.structureExample) ? exampleById(project.structureExample) : null;
   const plotTypeExample = plotTypeExamples.some(e => e.id === project.plotTypeExample) ? exampleById(project.plotTypeExample) : null;
 
   const openStory = id => { setActiveId(id); setShowStories(false); };
@@ -592,24 +594,19 @@ export default function StoryWheel() {
             )}
           </div>
 
+          <Timeline structure={structure} project={project} selected={selected} onSelect={id => { setSelected(id); setTab("beat"); }}
+            plotType={plotType} plotTypeExample={plotTypeExample} />
+
+          <ActTable structure={structure} plotType={plotType} plotTypeExample={plotTypeExample} structureExample={structureExample} />
+
           <main className="layout">
-            <div className="timeline-col">
-              <Timeline structure={structure} project={project} selected={selected} onSelect={id => { setSelected(id); setTab("beat"); }}
-                plotType={plotType} plotTypeExample={plotTypeExample} />
+            <div className="beatlist-col">
               <BeatList structure={structure} project={project} selected={selected} onSelect={id => { setSelected(id); setTab("beat"); }} />
               <div className="legend">
                 {Object.values(ACTS).map(a => (
                   <span key={a.label} className="legend-item"><i style={{ background: a.color }} />{a.label}</span>
                 ))}
               </div>
-              {structureExamples.length > 0 && (
-                <label className="plot-type-picker">See it in <span className="plot-type-hint">(a real example, mapped beat-by-beat)</span>
-                  <select value={project.structureExample} onChange={e => update({ structureExample: e.target.value })}>
-                    <option value="">None</option>
-                    {structureExamples.map(ex => <option key={ex.id} value={ex.id}>{ex.title}</option>)}
-                  </select>
-                </label>
-              )}
             </div>
 
             <div className="side-col">
@@ -637,8 +634,6 @@ export default function StoryWheel() {
               )}
             </div>
           </main>
-
-          <ActTable structure={structure} plotType={plotType} plotTypeExample={plotTypeExample} structureExample={structureExample} />
 
           {showStories && (
             <StoryPanel projects={projects} activeId={activeId} onOpen={openStory} onNew={newStory}
@@ -672,8 +667,8 @@ button{font-family:inherit;cursor:pointer}
 .layout{display:grid;grid-template-columns:minmax(320px,460px) 1fr;gap:24px;align-items:start}
 @media (max-width: 860px){ .layout{grid-template-columns:1fr} }
 @media (max-width: 480px){ .tl-label{width:44px;font-size:9px} .tl-clip-label{font-size:10px} }
-.timeline-col{display:flex;flex-direction:column;align-items:stretch;gap:12px;width:100%}
-.timeline{width:100%;max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:2px}
+.beatlist-col{display:flex;flex-direction:column;align-items:stretch;gap:12px;width:100%}
+.timeline{width:100%;max-width:960px;margin:0 auto 24px;display:flex;flex-direction:column;gap:2px}
 .tl-summary{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
 .tl-summary-title{font-family:'Fraunces',serif;font-size:16px;color:var(--ink)}
 .tl-summary-sub{font-size:11px;color:var(--dim)}
@@ -711,11 +706,7 @@ button{font-family:inherit;cursor:pointer}
 .legend{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:4px}
 .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--dim)}
 .legend-item i{width:9px;height:9px;border-radius:3px;display:inline-block}
-.plot-type-picker{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--dim);
-  text-transform:uppercase;letter-spacing:.04em;width:100%;max-width:420px;margin-top:4px}
 .plot-type-hint{text-transform:none;letter-spacing:normal;font-size:11px;opacity:.7}
-.plot-type-picker select{background:var(--panel);border:1px solid var(--border);color:var(--ink);
-  border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;text-transform:none;letter-spacing:normal}
 .plot-type-top{display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px;margin:4px 0 18px;
   padding:14px 16px;background:var(--panel);border:1px solid var(--border);border-radius:12px}
 .plot-type-top-picker{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--dim);
@@ -727,19 +718,16 @@ button{font-family:inherit;cursor:pointer}
 .plot-type-top-blurb span{color:var(--gold);text-transform:uppercase;font-size:10px;letter-spacing:.05em}
 .plot-type-top-blurb em{font-style:italic;display:block;margin-top:2px;color:var(--ink)}
 .act-table-wrap{width:100%;overflow-x:auto;margin-top:24px}
-.act-table{width:100%;border-collapse:collapse;font-size:13px}
+.act-table{width:100%;min-width:760px;border-collapse:collapse;font-size:13px}
 .act-table th{text-align:left;font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;
   font-weight:600;padding:0 14px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
 .act-table td{vertical-align:top;padding:14px;border-bottom:1px solid var(--border);line-height:1.5}
 .act-table tr:last-child td{border-bottom:none}
 .act-table-act{white-space:nowrap;font-weight:600;color:var(--gold)}
 .act-table-act .act-breakdown-swatch{display:inline-block;vertical-align:middle;margin:0 8px 2px 0}
-.act-table-th-sub{display:block;white-space:normal;font-weight:400;text-transform:none;
-  letter-spacing:normal;color:var(--ember);opacity:.85;margin-top:2px}
 .act-table-beat-row{margin-bottom:8px}
 .act-table-beat-row:last-child{margin-bottom:0}
-.act-table-beat-name{font-weight:600;display:block}
-.act-table-beat-example{display:block;color:var(--dim);font-size:12px;font-style:italic;margin-top:1px}
+.act-table-beat-name{font-weight:600;color:var(--ember)}
 .plot-type-panel{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--border);
   border-radius:12px;padding:14px 16px}
 .plot-type-taxonomy{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
