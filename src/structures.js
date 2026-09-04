@@ -22,7 +22,7 @@ export const STRUCTURES = [
       { id: "plot-point-1", name: "Reaction to Incident", pct: 8,  act: "setup",  guide: "The point of no return — the protagonist commits to the journey.", ex: "Hero grabs sword" },
       { id: "rising",       name: "Getting Friends",    pct: 20, act: "rise",   guide: "Obstacles escalate, stakes climb, the protagonist learns the rules of the new world.", ex: "Gathers allies, trains" },
       { id: "midpoint",     name: "Extent of the Evil", pct: 8,  act: "rise",   guide: "A false victory or false defeat that shifts the story's direction and raises the stakes.", ex: "Discovers evil's scale" },
-      { id: "plot-point-2", name: "Second Plot Point",  pct: 12, act: "climax", guide: "Everything falls apart. The lowest point, right before the final push.", ex: "Ally betrays hero" },
+      { id: "plot-point-2", name: "Almost Failure",     pct: 12, act: "climax", guide: "Everything falls apart. The lowest point, right before the final push.", ex: "Ally betrays hero" },
       { id: "climax",       name: "Final Fight",        pct: 15, act: "climax", guide: "The final confrontation. The protagonist's central struggle is decided here.", ex: "Duels dragon alone" },
       { id: "resolution",   name: "Resolution",         pct: 25, act: "fall",   guide: "The new normal. Loose threads tie off and the story's change is shown, not told.", ex: "Village rebuilds, thrives" },
     ],
