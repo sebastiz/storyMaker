@@ -1,0 +1,27 @@
+{
+  "name": "storymaker",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "A circular story-structure sketchpad — pick a structure template, the wheel lays out the beats, and you fill in the story.",
+  "scripts": {
+    "build": "node scripts/build.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  },
+  "license": "MIT",
+  "author": "Sebastian Zeki",
+  "homepage": "https://sebastiz.github.io/storymaker/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sebastiz/storymaker.git"
+  },
+  "keywords": [
+    "writing",
+    "story-structure",
+    "plotting",
+    "outlining",
+    "screenwriting",
+    "novel-writing"
+  ]
+}
