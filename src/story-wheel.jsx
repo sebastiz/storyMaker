@@ -62,14 +62,39 @@ function wedges(beats) {
   });
 }
 const wordCount = s => (s && s.trim() ? s.trim().split(/\s+/).length : 0);
+const ACT3_LABEL = { 1: "Act 1", 2: "Act 2", 3: "Act 3" };
+// groups the wheel's slices into contiguous three-act runs (beats are authored in non-decreasing
+// threeAct order) so the outer ring's boundaries land exactly on the beat wedges beneath it
+function actGroups(slices) {
+  const groups = [];
+  for (const s of slices) {
+    const last = groups[groups.length - 1];
+    if (last && last.threeAct === s.beat.threeAct) last.a1 = s.a1;
+    else groups.push({ threeAct: s.beat.threeAct, a0: s.a0, a1: s.a1 });
+  }
+  return groups;
+}
 
 /* ===== wheel ===== */
 function Wheel({ structure, project, selected, onSelect }) {
-  const size = 420, cx = size / 2, cy = size / 2, rOuter = 200, rInner = 108;
+  const size = 540, cx = size / 2, cy = size / 2, rOuter = 200, rInner = 108;
+  const ringInner = rOuter + 6, ringOuter = rOuter + 22, ringLabelR = rOuter + 34;
   const slices = useMemo(() => wedges(structure.beats), [structure]);
+  const acts3 = useMemo(() => actGroups(slices), [slices]);
   const done = structure.beats.filter(b => wordCount(project.beats[b.id]) > 0).length;
   return (
     <svg viewBox={`0 0 ${size} ${size}`} className="wheel" role="img" aria-label={`${structure.name} wheel`}>
+      {acts3.map(({ threeAct, a0, a1 }) => {
+        const p = polar(cx, cy, ringLabelR, (a0 + a1) / 2);
+        return (
+          <g key={threeAct} className="act-ring-group">
+            <path d={donutSlice(cx, cy, ringInner, ringOuter, a0 + 1, a1 - 1)} className="act-ring" />
+            <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle" className="act-ring-label">
+              {ACT3_LABEL[threeAct]}
+            </text>
+          </g>
+        );
+      })}
       {slices.map(({ beat, a0, a1, mid }, i) => {
         const isSel = selected === beat.id;
         const hasText = wordCount(project.beats[beat.id]) > 0;
@@ -364,6 +389,9 @@ button{font-family:inherit;cursor:pointer}
 @media (max-width: 860px){ .layout{grid-template-columns:1fr} }
 .wheel-col{display:flex;flex-direction:column;align-items:center;gap:12px}
 .wheel{width:100%;max-width:420px}
+.act-ring{fill:var(--gold);opacity:.14;stroke:var(--gold);stroke-width:.5;stroke-opacity:.4}
+.act-ring-label{font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;fill:var(--gold);opacity:.75;
+  letter-spacing:.04em;text-transform:uppercase;pointer-events:none}
 .slice{cursor:pointer;transition:opacity .15s}
 .slice:hover path{opacity:1}
 .slice.is-sel path{filter:drop-shadow(0 0 6px rgba(233,200,138,.55))}
