@@ -240,12 +240,11 @@ function PlotTypePanel({ plotType, example }) {
     </div>
   );
 }
-// the grid always illustrates through the Three-Act Structure's own sections and its own worked
-// example (Die Hard) — one fixed, simple reference for any plot type, independent of whichever of
-// the 17 structures the current story actually uses (that's shown live in the arrangement view
-// instead, above). A plot type's own example, when picked, appears in its own column at the end.
+// the grid always breaks the Three-Act Structure's own sections into their four acts — one fixed,
+// simple reference for any plot type, independent of whichever of the 17 structures the current
+// story actually uses (that's shown live in the arrangement view instead, above). A plot type's
+// own example, when picked, appears alongside it, still grouped by the same acts.
 const GRID_STRUCTURE = structureById("three-act");
-const GRID_EXAMPLE = examplesFor("structure", "three-act")[0];
 function ActTable({ plotTypeExample }) {
   return (
     <div className="act-table-wrap">
@@ -254,7 +253,6 @@ function ActTable({ plotTypeExample }) {
           <tr>
             <th>Act</th>
             <th>{GRID_STRUCTURE.name} sections</th>
-            {GRID_EXAMPLE && <th>In {GRID_EXAMPLE.title}</th>}
             {plotTypeExample && <th>In {plotTypeExample.title}</th>}
           </tr>
         </thead>
@@ -279,23 +277,6 @@ function ActTable({ plotTypeExample }) {
                     </ul>
                   )}
                 </td>
-                {GRID_EXAMPLE && (
-                  <td>
-                    {beats.length === 0 ? "—" : (
-                      <ul className="act-table-list">
-                        {beats.map(b => (
-                          <li key={b.id}>
-                            <span className="act-breakdown-swatch" style={{ background: ACTS[key].color }} />
-                            <span>
-                              <span className="act-table-beat-name">{b.name}</span>
-                              <span>{GRID_EXAMPLE.beats[b.id]}</span>
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </td>
-                )}
                 {plotTypeExample && <td>{plotTypeExample.beats[key]}</td>}
               </tr>
             );
