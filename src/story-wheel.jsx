@@ -135,7 +135,16 @@ function ribbonPath(cx, cy, rA, gA, rB, gB) {
     `L ${oB1.x} ${oB1.y}`, `A ${rB} ${rB} 0 ${largeB} 0 ${oB0.x} ${oB0.y}`, "Z",
   ].join(" ");
 }
-function CompareWheel({ structA, structB }) {
+// a plot type has no beats of its own — represented here as a 4-equal-wedge pseudo-structure
+// (one wedge per shared act-phase) so it can be dropped straight into CompareWheel/ribbon math
+// alongside a real structure, with no separate code path
+function plotTypeAsWheel(plotType) {
+  return {
+    id: plotType.id, name: plotType.name,
+    beats: Object.keys(ACTS).map(key => ({ id: key, name: ACTS[key].label, pct: 25, act: key })),
+  };
+}
+function CompareWheel({ structA, structB, numberedA = true, numberedB = true }) {
   const size = 640, cx = size / 2, cy = size / 2;
   const rInnerA = 40, rOuterA = 128, rInnerB = 172, rOuterB = 260;
   const slicesA = useMemo(() => wedges(structA.beats), [structA]);
@@ -153,7 +162,7 @@ function CompareWheel({ structA, structB }) {
         return (
           <g key={beat.id}>
             <path d={donutSlice(cx, cy, rInnerB, rOuterB, a0 + 0.5, a1 - 0.5)} fill={ACTS[beat.act].color} opacity={0.85} />
-            {a1 - a0 > 10 && <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle" className="slice-num">{i + 1}</text>}
+            {numberedB && a1 - a0 > 10 && <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle" className="slice-num">{i + 1}</text>}
           </g>
         );
       })}
@@ -162,7 +171,7 @@ function CompareWheel({ structA, structB }) {
         return (
           <g key={beat.id}>
             <path d={donutSlice(cx, cy, rInnerA, rOuterA, a0 + 0.5, a1 - 0.5)} fill={ACTS[beat.act].color} opacity={0.85} />
-            {a1 - a0 > 16 && <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle" className="slice-num">{i + 1}</text>}
+            {numberedA && a1 - a0 > 16 && <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle" className="slice-num">{i + 1}</text>}
           </g>
         );
       })}
@@ -206,30 +215,55 @@ function PlotTypePanel({ plotType }) {
     </div>
   );
 }
+function SidePicker({ label, kind, onKind, id, onId }) {
+  return (
+    <div className="compare-picker">
+      <span className="compare-picker-label">{label}</span>
+      <div className="compare-kind-toggle">
+        <button className={kind === "structure" ? "is-sel" : ""} onClick={() => onKind("structure")}>Structure</button>
+        <button className={kind === "plotType" ? "is-sel" : ""} onClick={() => onKind("plotType")}>Plot type</button>
+      </div>
+      {kind === "structure" ? (
+        <select value={id} onChange={e => onId(e.target.value)}>
+          {STRUCTURES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
+      ) : (
+        <select value={id} onChange={e => onId(e.target.value)}>
+          {plotTypesByTaxonomy().map(g => (
+            <optgroup key={g.taxonomy} label={g.taxonomy}>
+              {g.items.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </optgroup>
+          ))}
+        </select>
+      )}
+    </div>
+  );
+}
 function CompareView({ onClose }) {
-  const [aId, setAId] = useState(STRUCTURES[0].id);
-  const [bId, setBId] = useState(STRUCTURES[1].id);
+  const [aKind, setAKind] = useState("plotType");
+  const [aId, setAId] = useState(PLOT_TYPES[0].id);
+  const [bKind, setBKind] = useState("structure");
+  const [bId, setBId] = useState(STRUCTURES[0].id);
+
+  const changeKindA = kind => { setAKind(kind); setAId(kind === "structure" ? STRUCTURES[0].id : PLOT_TYPES[0].id); };
+  const changeKindB = kind => { setBKind(kind); setBId(kind === "structure" ? STRUCTURES[0].id : PLOT_TYPES[0].id); };
+
+  const structA = aKind === "structure" ? structureById(aId) : plotTypeAsWheel(plotTypeById(aId));
+  const structB = bKind === "structure" ? structureById(bId) : plotTypeAsWheel(plotTypeById(bId));
+
   return (
     <div className="compare-view">
       <div className="compare-head">
-        <label className="compare-picker">Inner wheel
-          <select value={aId} onChange={e => setAId(e.target.value)}>
-            {STRUCTURES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
-        </label>
-        <label className="compare-picker">Outer wheel
-          <select value={bId} onChange={e => setBId(e.target.value)}>
-            {STRUCTURES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
-        </label>
+        <SidePicker label="Inner wheel" kind={aKind} onKind={changeKindA} id={aId} onId={setAId} />
+        <SidePicker label="Outer wheel" kind={bKind} onKind={changeKindB} id={bId} onId={setBId} />
         <button className="ghost-btn" onClick={onClose}>← Back to editor</button>
       </div>
-      <p className="blurb">Ribbons connect each act to its counterpart in the other structure — a ribbon's width is that act's share of its own story, so a twist shows the two structures giving that act different weight.</p>
+      <p className="blurb">Ribbons connect each act to its counterpart on the other wheel. A structure's ribbon width is that act's real share of its story; a plot type's four acts are conceptual, not timed, so its wedges are always even — it's the shape of a plot type's ribbons meeting a structure's real proportions that's worth reading.</p>
       <div className="compare-body">
-        <CompareWheel structA={structureById(aId)} structB={structureById(bId)} />
+        <CompareWheel structA={structA} structB={structB} numberedA={aKind === "structure"} numberedB={bKind === "structure"} />
         <div className="compare-legends">
-          <ActBreakdown structure={structureById(aId)} />
-          <ActBreakdown structure={structureById(bId)} />
+          {aKind === "structure" ? <ActBreakdown structure={structA} /> : <PlotTypePanel plotType={plotTypeById(aId)} />}
+          {bKind === "structure" ? <ActBreakdown structure={structB} /> : <PlotTypePanel plotType={plotTypeById(bId)} />}
         </div>
       </div>
     </div>
@@ -441,7 +475,7 @@ export default function StoryWheel() {
               {STRUCTURES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
             <button className="ghost-btn" onClick={() => setShowStories(true)}>My Stories</button>
-            <button className="ghost-btn" onClick={() => setCompareOpen(true)}>Compare Structures</button>
+            <button className="ghost-btn" onClick={() => setCompareOpen(true)}>Compare</button>
             <button className="primary-btn" onClick={() => download(`${(project.title || "story").replace(/\s+/g, "-")}.md`, toMarkdown(project, structure))}>
               Export
             </button>
@@ -606,8 +640,12 @@ button{font-family:inherit;cursor:pointer}
 .struct-opt{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:10px 12px}
 .struct-opt span{color:var(--dim);font-size:12px}
 .compare-head{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:8px}
-.compare-picker{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em}
-.compare-picker select{background:var(--panel);border:1px solid var(--border);color:var(--ink);border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;text-transform:none;letter-spacing:normal}
+.compare-picker{display:flex;flex-direction:column;gap:6px}
+.compare-picker-label{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em}
+.compare-kind-toggle{display:flex;gap:4px}
+.compare-kind-toggle button{background:transparent;border:1px solid var(--border);color:var(--dim);font-size:11px;padding:4px 9px;border-radius:6px}
+.compare-kind-toggle button.is-sel{background:var(--panel2);color:var(--gold);border-color:var(--gold)}
+.compare-picker select{background:var(--panel);border:1px solid var(--border);color:var(--ink);border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;text-transform:none;letter-spacing:normal;min-width:200px}
 .compare-body{display:flex;flex-direction:column;align-items:center;gap:24px}
 .compare-wheel{width:100%;max-width:560px}
 .ribbon{opacity:.28}

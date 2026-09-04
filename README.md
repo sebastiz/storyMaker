@@ -6,8 +6,8 @@ Dan Harmon's Story Circle, the Eight-Sequence Structure, Weiland's Structure, Tr
 Pixar Story Spine, The Virgin's Promise, The Heroine's Journey, Todorov's Equilibrium Theory, Frame
 Narrative, and Propp's 31 Functions — and the wheel lays out its beats, sized by how much of the
 story each one typically takes up. Click a beat (on the wheel or in the list) to see its guidance
-and write the scene. A **Compare** view draws any two structures as concentric wheels with ribbons
-linking their matching acts, to see how they relate.
+and write the scene. A **Compare** view draws any two of them — structures, plot types, or one of
+each — as concentric wheels with ribbons linking their matching acts, to see how they relate.
 
 **Live app:** open `index.html` directly, or enable GitHub Pages (Settings → Pages → deploy from
 `main`, root) to serve it at `https://sebastiz.github.io/storyMaker/`.
@@ -19,8 +19,11 @@ linking their matching acts, to see how they relate.
 - **The wheel** — beats drawn as a donut chart sized by their share of the story, colour-coded by
   act (setup / rising action / confrontation / resolution), with an outer ring showing where each
   beat falls on the classic three-act spine, and a live progress count in the hub
-- **Compare view** — draw any two structures as concentric wheels; ribbons connect each one's four
-  acts to its counterpart in the other, sized by that act's own share of its story
+- **Compare view** — draw any two structures, plot types, or a structure against a plot type, as
+  concentric wheels; ribbons connect each one's four acts to its counterpart in the other, sized
+  by that act's own share of its story (a plot type's four acts are conceptual, so its wedges are
+  always even — it's the shape of its ribbons meeting a structure's real proportions that's worth
+  reading)
 - **Plot type** — tag a story with a plot-type taxonomy: Booker's 7 Basic Plots, Tobias' 20 Master
   Plots, Polti's 36 Dramatic Situations, Vonnegut's 6 Story Shapes, or the MICE Quotient (73
   entries total, grouped by taxonomy in the picker). A panel below the wheel shows what that
