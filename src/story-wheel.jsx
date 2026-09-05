@@ -73,7 +73,8 @@ function groupSlices(slices, keyFn) {
    A linear Arrangement-View layout: horizontal tracks stacked top to bottom over one shared
    timeline (the story, left = start, right = end). Track order: Beats (the primary track) ->
    Written (a per-beat clip/empty-slot overlay of the same track) -> Acts (a 3-clip summary
-   track) -> Character arcs (a line-layer track, always on, one line per character category). */
+   track) -> two Character arcs line-layer tracks, always on: the chosen example's characters,
+   then — kept visually separate rather than overlaid — the story's own. */
 function Timeline({ structure, project, selected, onSelect, plotTypeExample }) {
   // which lines are hidden, keyed "ref:<category>" for the chosen example's characters and
   // "char:<id>" for the story's own — plain UI state, not worth persisting to the project
@@ -152,32 +153,47 @@ function Timeline({ structure, project, selected, onSelect, plotTypeExample }) {
         </div>
       </div>
 
+      <ArcTrack trackLabel="Character arcs" legendPrefix={plotTypeExample ? `In ${plotTypeExample.title}:` : ""}
+        emptyMessage="Pick a plot type and an example above to see its characters' arcs here."
+        items={referenceCharacters.map(c => ({ key: c.name, category: c.category, values: c.values,
+          label: `${c.name} (${CATEGORY_LABELS[c.category]})` }))}
+        keyPrefix="ref" dashed hiddenLines={hiddenLines} toggleLine={toggleLine} arcX={arcX} arcY={arcY} />
+
+      <ArcTrack trackLabel="Your characters" legendPrefix="Your characters:"
+        emptyMessage="Give a character a fortune value in the Characters tab to see their arc here."
+        items={arcLineCharacters.map(c => ({ key: c.id, category: c.category, values: c.arcValue,
+          label: c.name || "Unnamed" }))}
+        keyPrefix="char" hiddenLines={hiddenLines} toggleLine={toggleLine} arcX={arcX} arcY={arcY}
+        interactionActs={interactionActs} />
+    </div>
+  );
+}
+
+// one arc-lines track (an SVG lane of polylines, one per character) plus its click-to-toggle legend
+// below — used once for the chosen example's reference characters and again, separately, for the
+// story's own, so the two never visually blend into a single ambiguous tangle of lines
+function ArcTrack({ trackLabel, legendPrefix, emptyMessage, items, keyPrefix, dashed, hiddenLines, toggleLine, arcX, arcY, interactionActs }) {
+  return (
+    <>
       <div className="tl-track tl-track-arclines">
-        <div className="tl-label">Character arcs</div>
+        <div className="tl-label">{trackLabel}</div>
         <div className="tl-lane tl-lane-arclines">
           <svg viewBox="0 0 1000 200" preserveAspectRatio="none" className="arcline-svg" aria-hidden="true">
             <line x1="0" y1="100" x2="1000" y2="100" className="arcline-midline" />
-            {interactionActs.map(key => (
+            {interactionActs?.map(key => (
               <line key={key} x1={arcX(key)} y1="4" x2={arcX(key)} y2="196" className="arcline-interaction" />
             ))}
-            {referenceCharacters.map(c => {
-              const key = `ref:${c.category}`;
-              if (hiddenLines.has(key)) return null;
-              const color = CATEGORY_COLORS[c.category];
-              const points = Object.keys(ACTS).map(k => [arcX(k), arcY(c.values[k])]);
-              return (
-                <polyline key={key} points={points.map(p => p.join(",")).join(" ")}
-                  className="arcline-path arcline-reference" stroke={color} />
-              );
-            })}
-            {arcLineCharacters.map(c => {
-              const key = `char:${c.id}`;
-              if (hiddenLines.has(key)) return null;
+            {items.map(c => {
+              const lineKey = `${keyPrefix}:${c.key}`;
+              if (hiddenLines.has(lineKey)) return null;
               const color = CATEGORY_COLORS[c.category || "other"];
-              const points = Object.keys(ACTS).map(k => [arcX(k), arcY(c.arcValue?.[k] ?? 0)]);
-              return (
-                <g key={key}>
-                  <polyline points={points.map(p => p.join(",")).join(" ")} className="arcline-path" stroke={color} />
+              const points = Object.keys(ACTS).map(k => [arcX(k), arcY(c.values?.[k] ?? 0)]);
+              const pointsAttr = points.map(p => p.join(",")).join(" ");
+              return dashed ? (
+                <polyline key={lineKey} points={pointsAttr} className="arcline-path arcline-reference" stroke={color} />
+              ) : (
+                <g key={lineKey}>
+                  <polyline points={pointsAttr} className="arcline-path" stroke={color} />
                   {points.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="4" className="arcline-point" fill={color} />)}
                 </g>
               );
@@ -185,39 +201,25 @@ function Timeline({ structure, project, selected, onSelect, plotTypeExample }) {
           </svg>
         </div>
       </div>
-      {referenceCharacters.length > 0 && (
+      {items.length > 0 ? (
         <div className="legend arcline-legend">
-          <span className="arcline-legend-label">In {plotTypeExample.title}:</span>
-          {referenceCharacters.map(c => {
-            const key = `ref:${c.category}`;
-            const isOff = hiddenLines.has(key);
+          <span className="arcline-legend-label">{legendPrefix}</span>
+          {items.map(c => {
+            const lineKey = `${keyPrefix}:${c.key}`;
+            const isOff = hiddenLines.has(lineKey);
             return (
-              <button key={key} type="button" className={`legend-item legend-toggle${isOff ? " is-off" : ""}`}
-                onClick={() => toggleLine(key)} title={isOff ? "Click to show this line" : "Click to hide this line"}>
-                <i className="legend-swatch-dashed" style={{ background: CATEGORY_COLORS[c.category] }} />
-                {c.name} ({CATEGORY_LABELS[c.category]})
+              <button key={lineKey} type="button" className={`legend-item legend-toggle${isOff ? " is-off" : ""}`}
+                onClick={() => toggleLine(lineKey)} title={isOff ? "Click to show this line" : "Click to hide this line"}>
+                <i className={dashed ? "legend-swatch-dashed" : undefined} style={{ background: CATEGORY_COLORS[c.category || "other"] }} />
+                {c.label}
               </button>
             );
           })}
         </div>
+      ) : (
+        <p className="arcline-empty">{emptyMessage}</p>
       )}
-      {arcLineCharacters.length > 0 && (
-        <div className="legend arcline-legend">
-          <span className="arcline-legend-label">Your characters:</span>
-          {arcLineCharacters.map(c => {
-            const key = `char:${c.id}`;
-            const isOff = hiddenLines.has(key);
-            return (
-              <button key={key} type="button" className={`legend-item legend-toggle${isOff ? " is-off" : ""}`}
-                onClick={() => toggleLine(key)} title={isOff ? "Click to show this line" : "Click to hide this line"}>
-                <i style={{ background: CATEGORY_COLORS[c.category || "other"] }} />
-                {c.name || "Unnamed"}
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
+    </>
   );
 }
 
@@ -736,6 +738,8 @@ button{font-family:inherit;cursor:pointer}
 .arcline-legend{margin-top:-8px}
 .arcline-legend-label{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;
   display:flex;align-items:center;margin-right:4px}
+.arcline-empty{color:var(--dim);font-size:12px;margin:-8px 0 0}
+.arcline-legend + .tl-track-arclines, .arcline-empty + .tl-track-arclines{margin-top:14px}
 .legend{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center;margin:4px 0 20px}
 .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--dim)}
 .legend-item i{width:9px;height:9px;border-radius:3px;display:inline-block}
