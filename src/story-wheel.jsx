@@ -113,6 +113,10 @@ function Timeline({ structure, project, selected, onSelect, plotTypeExample }) {
     const g = actGroups.find(a => a.key === key);
     return g ? ((g.a0 + g.a1) / 2) * 10 : 0;
   };
+  // the same four act-group spans the Beats track colors by, converted to the 0-1000 scale the
+  // lanes below plot on — drawn as a faint background band per row so a character's line reads
+  // against the story's actual structure instead of floating on a blank axis of its own
+  const actBands = actGroups.map(g => ({ key: g.key, x0: g.a0 * 10, x1: g.a1 * 10 }));
   return (
     <div className="timeline" role="img" aria-label={`${structure.name} timeline`}>
       <div className="tl-summary">
@@ -166,12 +170,12 @@ function Timeline({ structure, project, selected, onSelect, plotTypeExample }) {
       <CharacterLanes trackLabel="Character arcs"
         emptyMessage="Pick a plot type and an example above to see its characters' arcs here."
         items={referenceCharacters.map(c => ({ key: c.name, category: c.category, values: c.values, name: c.name }))}
-        keyPrefix="ref" dashed hiddenLines={hiddenLines} toggleLine={toggleLine} arcX={arcX} />
+        keyPrefix="ref" dashed hiddenLines={hiddenLines} toggleLine={toggleLine} arcX={arcX} actBands={actBands} />
 
       <CharacterLanes trackLabel="Your characters"
         emptyMessage="Give a character a fortune value in the Characters tab to see their arc here."
         items={arcLineCharacters.map(c => ({ key: c.id, category: c.category, values: c.arcValue, name: c.name || "Unnamed" }))}
-        keyPrefix="char" hiddenLines={hiddenLines} toggleLine={toggleLine} arcX={arcX}
+        keyPrefix="char" hiddenLines={hiddenLines} toggleLine={toggleLine} arcX={arcX} actBands={actBands}
         interactionGroups={interactionGroups} />
     </div>
   );
@@ -182,7 +186,7 @@ function Timeline({ structure, project, selected, onSelect, plotTypeExample }) {
 // SVG overlay drawn on top spanning every row: a vertical connector between whichever rows meet in
 // a given act, so "who's on top" per act and "who meets whom" are both readable without one line's
 // shape ever being mistaken for another's on a shared axis
-function CharacterLanes({ trackLabel, emptyMessage, items, keyPrefix, dashed, hiddenLines, toggleLine, arcX, interactionGroups }) {
+function CharacterLanes({ trackLabel, emptyMessage, items, keyPrefix, dashed, hiddenLines, toggleLine, arcX, actBands, interactionGroups }) {
   const laneY = v => 50 - (clampArc(v) / 3) * 40;
   const rowOf = Object.fromEntries(items.map((c, i) => [c.key, i]));
   const connectors = interactionGroups ? Object.entries(interactionGroups)
@@ -207,13 +211,15 @@ function CharacterLanes({ trackLabel, emptyMessage, items, keyPrefix, dashed, hi
                 <button type="button" className="char-lane-label" onClick={() => toggleLine(lineKey)}
                   title={isOff ? "Click to show this line" : "Click to hide this line"}>
                   <i className={dashed ? "legend-swatch-dashed" : undefined} style={{ background: color }} />
-                  <span className="char-lane-label-text">
-                    <span className="char-lane-label-name">{c.name}</span>
-                    <span className="char-lane-label-cat">{catLabel(c)}</span>
-                  </span>
+                  {c.name} <span className="char-lane-label-cat">{catLabel(c)}</span>
                 </button>
+                {/* same width as the Beats/Acts lanes above (no side-by-side label eating into it) so
+                    a character's line always sits under the same x position as its actual beat */}
                 <div className="char-lane-chart">
                   <svg viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
+                    {actBands?.map(b => (
+                      <rect key={b.key} x={b.x0} y="0" width={b.x1 - b.x0} height="100" fill={ACTS[b.key].color} className="char-lane-band" />
+                    ))}
                     <line x1="0" y1="50" x2="1000" y2="50" className="char-lane-midline" />
                     <polyline points={pointsAttr} className={`char-lane-path${dashed ? " char-lane-path-dashed" : ""}`} stroke={color} />
                     {!dashed && points.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="4" className="char-lane-point" fill={color} />)}
@@ -863,21 +869,19 @@ button{font-family:inherit;cursor:pointer}
 .char-lanes-track{align-items:flex-start;margin-top:14px}
 .char-lanes{position:relative;flex:1;display:flex;flex-direction:column;background:var(--panel);
   border:1px solid var(--border);border-radius:6px;overflow:hidden}
-.char-lane{display:flex;align-items:stretch;height:44px;border-bottom:1px solid var(--border);
+.char-lane{display:flex;flex-direction:column;border-bottom:1px solid var(--border);
   transition:opacity .15s}
 .char-lane:last-child{border-bottom:none}
 .char-lane.is-off{opacity:.32}
-.char-lane-label{display:flex;align-items:center;gap:7px;width:168px;flex:none;padding:0 10px;
-  background:transparent;border:none;border-right:1px solid var(--border);color:var(--ink);
-  text-align:left;cursor:pointer;font-family:inherit;overflow:hidden}
-.char-lane-label:hover .char-lane-label-name{color:var(--gold)}
-.char-lane-label i{width:9px;height:9px;border-radius:3px;flex:none}
-.char-lane-label-text{display:flex;flex-direction:column;gap:1px;min-width:0}
-.char-lane-label-name{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.char-lane-label-cat{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.03em;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.char-lane-chart{flex:1;position:relative;min-width:0}
+.char-lane-label{display:flex;align-items:center;gap:6px;width:100%;padding:4px 10px 0;
+  background:transparent;border:none;color:var(--ink);font-size:11px;
+  text-align:left;cursor:pointer;font-family:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.char-lane-label:hover{color:var(--gold)}
+.char-lane-label i{width:8px;height:8px;border-radius:3px;flex:none}
+.char-lane-label-cat{color:var(--dim);text-transform:uppercase;letter-spacing:.03em;font-size:10px}
+.char-lane-chart{flex:none;height:40px;position:relative;min-width:0}
 .char-lane-chart svg{width:100%;height:100%;display:block}
+.char-lane-band{opacity:.1}
 .char-lane-midline{stroke:var(--border);stroke-width:1.5}
 .char-lane-path{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;opacity:.9}
 .char-lane-path-dashed{stroke-dasharray:6 5;opacity:.6}
