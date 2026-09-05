@@ -101,14 +101,18 @@ function Timeline({ structure, project, selected, onSelect, plotTypeExample }) {
   // a v1 visual marker only — an act where 2+ characters flagged "interacts here", not an attempt
   // to actually reconcile or force their lines together at that point. Keeps who, not just how
   // many, so the marker can name names on hover instead of just flagging that something happened.
-  const interactionGroups = useMemo(() => {
+  // Shared by both the story's own characters (keyed by id) and a chosen example's cast (keyed by
+  // name, since reference characters have no id of their own).
+  const groupInteractions = (chars, idOf) => {
     const groups = {};
     for (const key of Object.keys(ACTS)) {
-      const here = (project.characters || []).filter(c => c.interacts?.[key]);
-      if (here.length >= 2) groups[key] = here.map(c => ({ id: c.id, name: c.name || "Unnamed", color: CATEGORY_COLORS[c.category || "other"] }));
+      const here = (chars || []).filter(c => c.interacts?.[key]);
+      if (here.length >= 2) groups[key] = here.map(c => ({ id: idOf(c), name: c.name || "Unnamed", color: CATEGORY_COLORS[c.category || "other"] }));
     }
     return groups;
-  }, [project.characters]);
+  };
+  const interactionGroups = useMemo(() => groupInteractions(project.characters, c => c.id), [project.characters]);
+  const referenceInteractionGroups = useMemo(() => groupInteractions(referenceCharacters, c => c.name), [referenceCharacters]);
   const arcX = key => {
     const g = actGroups.find(a => a.key === key);
     return g ? ((g.a0 + g.a1) / 2) * 10 : 0;
@@ -170,7 +174,8 @@ function Timeline({ structure, project, selected, onSelect, plotTypeExample }) {
       <CharacterLanes trackLabel="Character arcs"
         emptyMessage="Pick a plot type and an example above to see its characters' arcs here."
         items={referenceCharacters.map(c => ({ key: c.name, category: c.category, values: c.values, name: c.name }))}
-        keyPrefix="ref" dashed hiddenLines={hiddenLines} toggleLine={toggleLine} arcX={arcX} actBands={actBands} />
+        keyPrefix="ref" dashed hiddenLines={hiddenLines} toggleLine={toggleLine} arcX={arcX} actBands={actBands}
+        interactionGroups={referenceInteractionGroups} />
 
       <CharacterLanes trackLabel="Your characters"
         emptyMessage="Give a character a fortune value in the Characters tab to see their arc here."
@@ -182,9 +187,9 @@ function Timeline({ structure, project, selected, onSelect, plotTypeExample }) {
 }
 
 // one row per character — its own small fortune sparkline, stacked rather than overlaid — plus,
-// when interactionGroups is given (only the story's own characters carry "interacts" flags), an
-// SVG overlay drawn on top spanning every row: a vertical connector between whichever rows meet in
-// a given act, so "who's on top" per act and "who meets whom" are both readable without one line's
+// when interactionGroups is given, an SVG overlay drawn on top spanning every row: a vertical
+// connector between whichever rows meet in a given act, so "who's on top" per act and "who meets
+// whom" are both readable without one line's
 // shape ever being mistaken for another's on a shared axis
 function CharacterLanes({ trackLabel, emptyMessage, items, keyPrefix, dashed, hiddenLines, toggleLine, arcX, actBands, interactionGroups }) {
   const laneY = v => 50 - (clampArc(v) / 3) * 40;
