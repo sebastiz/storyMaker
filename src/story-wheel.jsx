@@ -309,8 +309,8 @@ function ActTable({ structure, plotTypeExample }) {
         <thead>
           <tr>
             <th>Act</th>
-            {plotTypeExample && <th>In {plotTypeExample.title}</th>}
             {showStructureCol && <th>{structure.name} sections</th>}
+            {plotTypeExample && <th>In {plotTypeExample.title}</th>}
           </tr>
         </thead>
         <tbody>
@@ -335,6 +335,20 @@ function ActTable({ structure, plotTypeExample }) {
                     </ul>
                   )}
                 </td>
+                {showStructureCol && (
+                  <td>
+                    {structureBeats.length === 0 ? "—" : (
+                      <ul className="act-table-list">
+                        {structureBeats.map(b => (
+                          <li key={b.id}>
+                            <span className="act-breakdown-swatch" style={{ background: ACTS[key].color }} />
+                            {b.name}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </td>
+                )}
                 {plotTypeExample && (
                   <td>
                     {beats.length === 0 ? "—" : (
@@ -346,20 +360,6 @@ function ActTable({ structure, plotTypeExample }) {
                               <span className="act-table-beat-name">{b.name}</span>
                               <span>{plotTypeExample.sections[b.id]}</span>
                             </span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </td>
-                )}
-                {showStructureCol && (
-                  <td>
-                    {structureBeats.length === 0 ? "—" : (
-                      <ul className="act-table-list">
-                        {structureBeats.map(b => (
-                          <li key={b.id}>
-                            <span className="act-breakdown-swatch" style={{ background: ACTS[key].color }} />
-                            {b.name}
                           </li>
                         ))}
                       </ul>
