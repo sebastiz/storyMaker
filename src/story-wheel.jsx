@@ -14,7 +14,7 @@ function loadProjects() {
   try {
     const raw = localStorage.getItem(LS_PROJECTS);
     const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? parsed.map(withDefaults) : [];
   } catch { return []; }
 }
 function saveProjects(projects) {
@@ -30,11 +30,14 @@ function saveActiveId(id) {
 function newProject(structureId = "three-act") {
   const now = Date.now();
   return {
-    id: uid(), title: "Untitled Story", structureId, genre: "", logline: "", plotType: "",
+    id: uid(), title: "Untitled Story", structureId, seed: "", genre: "", logline: "", plotType: "",
     plotTypeExample: "",
     beats: {}, characters: [], createdAt: now, updatedAt: now,
   };
 }
+// fills in any field a newer app version added (e.g. `seed`) that an older saved/imported
+// project won't have, without disturbing anything the project already has
+const withDefaults = project => ({ ...newProject(project.structureId), ...project });
 
 /* ===== geometry =====
    Everything downstream works in plain 0-100 percentages of the timeline's width — no angles, no
@@ -95,9 +98,16 @@ function Timeline({ structure, project, selected, onSelect, plotTypeExample }) {
   const arcLineCharacters = useMemo(() => (project.characters || [])
     .filter(c => Object.values(c.arcValue || {}).some(v => clampArc(v) !== 0)), [project.characters]);
   // a v1 visual marker only — an act where 2+ characters flagged "interacts here", not an attempt
-  // to actually reconcile or force their lines together at that point
-  const interactionActs = useMemo(() => Object.keys(ACTS)
-    .filter(key => (project.characters || []).filter(c => c.interacts?.[key]).length >= 2), [project.characters]);
+  // to actually reconcile or force their lines together at that point. Keeps who, not just how
+  // many, so the marker can name names on hover instead of just flagging that something happened.
+  const interactionGroups = useMemo(() => {
+    const groups = {};
+    for (const key of Object.keys(ACTS)) {
+      const here = (project.characters || []).filter(c => c.interacts?.[key]);
+      if (here.length >= 2) groups[key] = here.map(c => ({ name: c.name || "Unnamed", color: CATEGORY_COLORS[c.category || "other"] }));
+    }
+    return groups;
+  }, [project.characters]);
   const arcX = key => {
     const g = actGroups.find(a => a.key === key);
     return g ? ((g.a0 + g.a1) / 2) * 10 : 0;
@@ -164,7 +174,7 @@ function Timeline({ structure, project, selected, onSelect, plotTypeExample }) {
         items={arcLineCharacters.map(c => ({ key: c.id, category: c.category, values: c.arcValue,
           label: c.name || "Unnamed" }))}
         keyPrefix="char" hiddenLines={hiddenLines} toggleLine={toggleLine} arcX={arcX} arcY={arcY}
-        interactionActs={interactionActs} />
+        interactionGroups={interactionGroups} />
     </div>
   );
 }
@@ -172,7 +182,7 @@ function Timeline({ structure, project, selected, onSelect, plotTypeExample }) {
 // one arc-lines track (an SVG lane of polylines, one per character) plus its click-to-toggle legend
 // below — used once for the chosen example's reference characters and again, separately, for the
 // story's own, so the two never visually blend into a single ambiguous tangle of lines
-function ArcTrack({ trackLabel, legendPrefix, emptyMessage, items, keyPrefix, dashed, hiddenLines, toggleLine, arcX, arcY, interactionActs }) {
+function ArcTrack({ trackLabel, legendPrefix, emptyMessage, items, keyPrefix, dashed, hiddenLines, toggleLine, arcX, arcY, interactionGroups }) {
   return (
     <>
       <div className="tl-track tl-track-arclines">
@@ -180,9 +190,17 @@ function ArcTrack({ trackLabel, legendPrefix, emptyMessage, items, keyPrefix, da
         <div className="tl-lane tl-lane-arclines">
           <svg viewBox="0 0 1000 200" preserveAspectRatio="none" className="arcline-svg" aria-hidden="true">
             <line x1="0" y1="100" x2="1000" y2="100" className="arcline-midline" />
-            {interactionActs?.map(key => (
-              <line key={key} x1={arcX(key)} y1="4" x2={arcX(key)} y2="196" className="arcline-interaction" />
-            ))}
+            {interactionGroups && Object.entries(interactionGroups).map(([key, who]) => {
+              const x = arcX(key);
+              return (
+                <g key={key}>
+                  <line x1={x} y1="4" x2={x} y2="196" className="arcline-interaction">
+                    <title>{who.map(c => c.name).join(" & ")} interact here</title>
+                  </line>
+                  {who.map((c, i) => <circle key={i} cx={x} cy={8 + i * 9} r="3" fill={c.color} className="arcline-interaction-dot" />)}
+                </g>
+              );
+            })}
             {items.map(c => {
               const lineKey = `${keyPrefix}:${c.key}`;
               if (hiddenLines.has(lineKey)) return null;
@@ -457,8 +475,14 @@ function Characters({ characters, onChange }) {
 }
 
 /* ===== story switcher ===== */
-function StoryPanel({ projects, activeId, onOpen, onNew, onRename, onDuplicate, onDelete, onClose }) {
+function StoryPanel({ projects, activeId, onOpen, onNew, onRename, onDuplicate, onDelete, onClose, onExportAll, onImport }) {
   const [picking, setPicking] = useState(false);
+  const fileInput = useRef(null);
+  const handleImportFile = e => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (file) onImport(file);
+  };
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
@@ -469,11 +493,14 @@ function StoryPanel({ projects, activeId, onOpen, onNew, onRename, onDuplicate, 
         <ul className="story-list">
           {projects.slice().sort((a, b) => b.updatedAt - a.updatedAt).map(p => (
             <li key={p.id} className={p.id === activeId ? "is-sel" : ""}>
-              <input value={p.title} onChange={e => onRename(p.id, e.target.value)} onClick={e => e.stopPropagation()} />
-              <span className="story-struct">{structureById(p.structureId).name}</span>
-              <button className="ghost-btn" onClick={() => onOpen(p.id)}>Open</button>
-              <button className="icon-btn" onClick={() => onDuplicate(p.id)} title="Duplicate">⎘</button>
-              <button className="icon-btn" onClick={() => onDelete(p.id)} title="Delete">🗑</button>
+              <div className="story-list-row">
+                <input value={p.title} onChange={e => onRename(p.id, e.target.value)} onClick={e => e.stopPropagation()} />
+                <span className="story-struct">{structureById(p.structureId).name}</span>
+                <button className="ghost-btn" onClick={() => onOpen(p.id)}>Open</button>
+                <button className="icon-btn" onClick={() => onDuplicate(p.id)} title="Duplicate">⎘</button>
+                <button className="icon-btn" onClick={() => onDelete(p.id)} title="Delete">🗑</button>
+              </div>
+              {p.seed && <p className="story-seed-preview">{p.seed}</p>}
             </li>
           ))}
         </ul>
@@ -489,6 +516,61 @@ function StoryPanel({ projects, activeId, onOpen, onNew, onRename, onDuplicate, 
             ))}
           </div>
         )}
+        <div className="backup-row">
+          <button className="ghost-btn" onClick={onExportAll}>⭳ Back up all stories</button>
+          <button className="ghost-btn" onClick={() => fileInput.current?.click()}>⭱ Restore from backup</button>
+          <input ref={fileInput} type="file" accept="application/json" hidden onChange={handleImportFile} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ===== example browser =====
+   A searchable index over all 73 plot-type examples (one worked example per plot type), grouped
+   by taxonomy — lets you jump straight to a plot type + example pair instead of hunting through
+   the two chained dropdowns above the timeline. Picking a row sets both at once. */
+function ExampleBrowser({ onPick, onClose }) {
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const groups = plotTypesByTaxonomy()
+    .map(g => ({
+      taxonomy: g.taxonomy,
+      items: g.items
+        .map(plotType => ({ plotType, example: examplesFor("plotType", plotType.id)[0] }))
+        .filter(it => it.example),
+    }))
+    .map(g => ({
+      ...g,
+      items: !q ? g.items : g.items.filter(({ plotType, example }) =>
+        [plotType.name, plotType.taxonomy, plotType.blurb, example.title, example.creator]
+          .some(s => s.toLowerCase().includes(q))),
+    }))
+    .filter(g => g.items.length > 0);
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal modal-wide" onClick={e => e.stopPropagation()}>
+        <div className="modal-head">
+          <h3>Browse Examples</h3>
+          <button className="icon-btn" onClick={onClose}>✕</button>
+        </div>
+        <input className="example-search" autoFocus value={query} onChange={e => setQuery(e.target.value)}
+          placeholder="Search by title, author, or plot type…" />
+        <div className="example-groups">
+          {groups.length === 0 && <p className="empty">No matches.</p>}
+          {groups.map(g => (
+            <div key={g.taxonomy} className="example-group">
+              <h4>{g.taxonomy}</h4>
+              {g.items.map(({ plotType, example }) => (
+                <button key={plotType.id} type="button" className="example-row" onClick={() => onPick(plotType.id, example.id)}>
+                  <span className="example-row-title">{example.title}</span>
+                  <span className="example-row-creator">{example.creator}</span>
+                  <span className="example-row-plottype">{plotType.name}</span>
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -497,6 +579,7 @@ function StoryPanel({ projects, activeId, onOpen, onNew, onRename, onDuplicate, 
 /* ===== markdown export ===== */
 function toMarkdown(project, structure) {
   const lines = [`# ${project.title || "Untitled Story"}`, ""];
+  if (project.seed) lines.push(`_Seed: ${project.seed}_`, "");
   if (project.genre) lines.push(`*Genre: ${project.genre}*`, "");
   if (project.logline) lines.push(`> ${project.logline}`, "");
   lines.push(`_Structure: ${structure.name}_`, "");
@@ -523,12 +606,20 @@ function toMarkdown(project, structure) {
   }
   return lines.join("\n");
 }
-function download(filename, text) {
-  const blob = new Blob([text], { type: "text/markdown" });
+function download(filename, text, type = "text/markdown") {
+  const blob = new Blob([text], { type });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url; a.download = filename; a.click();
   URL.revokeObjectURL(url);
+}
+function readFileAsText(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsText(file);
+  });
 }
 
 /* ===== app ===== */
@@ -538,6 +629,7 @@ export default function StoryWheel() {
   const [selected, setSelected] = useState(null);
   const [tab, setTab] = useState("beat"); // beat | characters | notes
   const [showStories, setShowStories] = useState(false);
+  const [showExamples, setShowExamples] = useState(false);
   const booted = useRef(false);
 
   useEffect(() => {
@@ -593,6 +685,32 @@ export default function StoryWheel() {
       return next;
     });
   };
+  const exportAllStories = () => {
+    const stamp = new Date().toISOString().slice(0, 10);
+    download(`story-wheel-backup-${stamp}.json`, JSON.stringify(projects, null, 2), "application/json");
+  };
+  const importStories = async file => {
+    let parsed;
+    try {
+      parsed = JSON.parse(await readFileAsText(file));
+    } catch {
+      alert("That file isn't valid Story Wheel backup JSON.");
+      return;
+    }
+    const incoming = Array.isArray(parsed) ? parsed : [parsed];
+    if (incoming.length === 0 || !incoming.every(p => p && typeof p === "object" && "beats" in p)) {
+      alert("That file isn't valid Story Wheel backup JSON.");
+      return;
+    }
+    // always minted fresh ids — restoring a backup should add stories alongside whatever's
+    // already here, never silently overwrite an existing one that happens to share an id
+    const now = Date.now();
+    const restored = incoming.map(p => ({ ...withDefaults(p), id: uid(), updatedAt: now }));
+    setProjects(ps => [...ps, ...restored]);
+    setActiveId(restored[0].id);
+    setShowStories(false);
+    alert(`Restored ${restored.length} ${restored.length === 1 ? "story" : "stories"}.`);
+  };
 
   return (
     <div className="app">
@@ -606,6 +724,7 @@ export default function StoryWheel() {
           {STRUCTURES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
         <button className="ghost-btn" onClick={() => setShowStories(true)}>My Stories</button>
+        <button className="ghost-btn" onClick={() => setShowExamples(true)}>Browse Examples</button>
         <button className="primary-btn" onClick={() => download(`${(project.title || "story").replace(/\s+/g, "-")}.md`, toMarkdown(project, structure))}>
           Export
         </button>
@@ -653,7 +772,7 @@ export default function StoryWheel() {
           <div className="tabs">
             <button className={tab === "beat" ? "is-sel" : ""} onClick={() => setTab("beat")}>Beat</button>
             <button className={tab === "characters" ? "is-sel" : ""} onClick={() => setTab("characters")}>Characters</button>
-            <button className={tab === "notes" ? "is-sel" : ""} onClick={() => setTab("notes")}>Logline &amp; Notes</button>
+            <button className={tab === "notes" ? "is-sel" : ""} onClick={() => setTab("notes")}>Seed &amp; Notes</button>
           </div>
           {tab === "beat" && beat && (
             <BeatEditor beat={beat} text={project.beats[beat.id] || ""}
@@ -665,6 +784,9 @@ export default function StoryWheel() {
           )}
           {tab === "notes" && (
             <div className="notes-panel">
+              <label>Seed</label>
+              <textarea value={project.seed} onChange={e => update({ seed: e.target.value })} rows={3}
+                placeholder="The spark this story started from — a line, an image, a 'what if…'." />
               <label>Genre</label>
               <input value={project.genre} onChange={e => update({ genre: e.target.value })} placeholder="e.g. mystery, literary fiction, YA fantasy" />
               <label>Logline</label>
@@ -677,7 +799,12 @@ export default function StoryWheel() {
 
       {showStories && (
         <StoryPanel projects={projects} activeId={activeId} onOpen={openStory} onNew={newStory}
-          onRename={renameStory} onDuplicate={duplicateStory} onDelete={deleteStory} onClose={() => setShowStories(false)} />
+          onRename={renameStory} onDuplicate={duplicateStory} onDelete={deleteStory} onClose={() => setShowStories(false)}
+          onExportAll={exportAllStories} onImport={importStories} />
+      )}
+      {showExamples && (
+        <ExampleBrowser onPick={(plotTypeId, exampleId) => { update({ plotType: plotTypeId, plotTypeExample: exampleId }); setShowExamples(false); }}
+          onClose={() => setShowExamples(false)} />
       )}
     </div>
   );
@@ -824,15 +951,31 @@ button{font-family:inherit;cursor:pointer}
   border-radius:8px;padding:10px 12px;font-size:14px;font-family:'Fraunces',serif}
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:10;padding:20px}
 .modal{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;width:100%;max-width:560px;max-height:80vh;overflow:auto}
+.modal-wide{max-width:720px}
 .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .modal-head h3{font-family:'Fraunces',serif;margin:0;color:var(--gold)}
-.story-list{list-style:none;margin:0 0 14px;padding:0;display:flex;flex-direction:column;gap:6px}
-.story-list li{display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px}
+.story-list{list-style:none;margin:0 0 14px;padding:0;display:flex;flex-direction:column;gap:2px}
+.story-list li{display:flex;flex-direction:column;gap:3px;padding:8px;border-radius:8px}
 .story-list li.is-sel{background:var(--panel2)}
+.story-list-row{display:flex;align-items:center;gap:8px}
 .story-list input{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--ink);border-radius:6px;padding:6px 8px;font-size:13px}
 .story-struct{color:var(--dim);font-size:11px;white-space:nowrap}
+.story-seed-preview{margin:0;padding:0 0 0 8px;font-size:12px;color:var(--dim);font-style:italic;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .struct-pick{display:flex;flex-direction:column;gap:8px}
 .struct-opt{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:10px 12px}
 .struct-opt span{color:var(--dim);font-size:12px}
+.backup-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
 .act-breakdown-swatch{width:10px;height:10px;border-radius:3px;flex:none;margin-top:4px}
+.example-search{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--ink);
+  border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;margin-bottom:14px}
+.example-groups{display:flex;flex-direction:column;gap:16px}
+.example-group h4{margin:0 0 6px;font-size:11px;color:var(--gold);text-transform:uppercase;letter-spacing:.05em}
+.example-row{display:flex;align-items:baseline;gap:8px;width:100%;background:transparent;border:1px solid transparent;
+  border-radius:7px;padding:7px 8px;font-family:inherit;text-align:left;color:var(--ink)}
+.example-row:hover{border-color:var(--border);background:var(--panel2)}
+.example-row-title{font-weight:600;color:var(--ember)}
+.example-row-creator{color:var(--dim);font-size:12px;flex:1}
+.example-row-plottype{color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+.arcline-interaction-dot{stroke:var(--panel);stroke-width:1}
 `;
