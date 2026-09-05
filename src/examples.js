@@ -80,6 +80,8 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "Chief Brody", values: { setup: -1, rise: -1, climax: -3, fall: 2 } },
       { category: "antagonist", name: "the shark", values: { setup: 2, rise: 3, climax: 3, fall: -3 } },
+      { category: "ally", name: "Hooper", values: { setup: 0, rise: 1, climax: -2, fall: 2 } },
+      { category: "ally", name: "Quint", values: { setup: 0, rise: 1, climax: -3, fall: -3 } },
     ],
     sections: {
       "status-quo": "Amity Island's beach season is about to open, and Chief Brody wants nothing more than a quiet summer.",
@@ -134,6 +136,8 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "Macbeth", values: { setup: 1, rise: 2, climax: 0, fall: -3 } },
       { category: "antagonist", name: "Macduff", values: { setup: 0, rise: -1, climax: -2, fall: 3 } },
+      { category: "ally", name: "Lady Macbeth", values: { setup: 1, rise: 2, climax: -2, fall: -3 } },
+      { category: "ally", name: "Banquo", values: { setup: 1, rise: 1, climax: -3, fall: -3 } },
     ],
     sections: {
       "status-quo": "Macbeth is a loyal, celebrated general returning from a hard-won victory for his king.",
@@ -161,6 +165,7 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "Cinderella", values: { setup: -3, rise: 1, climax: -1, fall: 3 } },
       { category: "love-interest", name: "the Prince", values: { setup: 0, rise: 2, climax: 0, fall: 3 } },
+      { category: "mentor", name: "the fairy godmother", values: { setup: 0, rise: 3, climax: 0, fall: 0 } },
     ],
     sections: {
       "status-quo": "Cinderella lives as an unpaid servant in her own home, worked to exhaustion by her stepmother and stepsisters.",
@@ -2097,6 +2102,7 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "Cinderella", values: { setup: -3, rise: 1, climax: -1, fall: 3 } },
       { category: "love-interest", name: "the Prince", values: { setup: 0, rise: 2, climax: 0, fall: 3 } },
+      { category: "mentor", name: "the fairy godmother", values: { setup: 0, rise: 3, climax: 0, fall: 0 } },
     ],
     sections: {
       "status-quo": "Cinderella lives as an unpaid servant in her own home, worked to exhaustion by her stepmother and stepsisters.",
