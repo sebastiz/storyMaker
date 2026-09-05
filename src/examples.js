@@ -465,6 +465,8 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "Frodo Baggins", values: { setup: -1, rise: -1, climax: -3, fall: 2 } },
       { category: "mentor", name: "Gandalf", values: { setup: 1, rise: -3, climax: -3, fall: -3 } },
+      { category: "ally", name: "Sam", values: { setup: 0, rise: 1, climax: -2, fall: 3 } },
+      { category: "other", name: "Gollum", values: { setup: 0, rise: 0, climax: 0, fall: -3 } },
     ],
     sections: {
       "status-quo": "Frodo Baggins lives a quiet, unremarkable life in the Shire, having inherited his uncle's old ring.",
@@ -518,6 +520,8 @@ export const EXAMPLES = [
     },
     characters: [
       { category: "protagonist", name: "Ebenezer Scrooge", values: { setup: -3, rise: -1, climax: -3, fall: 3 } },
+      { category: "mentor", name: "Marley's Ghost", values: { setup: -3, rise: -3, climax: -3, fall: -3 } },
+      { category: "other", name: "Tiny Tim", values: { setup: 0, rise: -2, climax: -3, fall: 1 } },
     ],
     sections: {
       "status-quo": "Ebenezer Scrooge is a miserly, joyless old man who despises Christmas and everyone who enjoys it.",
@@ -547,6 +551,8 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "Frodo Baggins", values: { setup: -1, rise: -1, climax: -3, fall: 2 } },
       { category: "mentor", name: "Gandalf", values: { setup: 1, rise: -3, climax: -3, fall: -3 } },
+      { category: "ally", name: "Sam", values: { setup: 0, rise: 1, climax: -2, fall: 3 } },
+      { category: "other", name: "Gollum", values: { setup: 0, rise: 0, climax: 0, fall: -3 } },
     ],
     sections: {
       "status-quo": "Frodo Baggins lives a quiet life in the Shire, unaware of what his uncle's old ring really is.",
@@ -601,6 +607,7 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "Dr. Richard Kimble", values: { setup: -3, rise: -1, climax: 1, fall: 3 } },
       { category: "antagonist", name: "Sam Gerard", values: { setup: 2, rise: 2, climax: 1, fall: 1 } },
+      { category: "antagonist", name: "the one-armed man", values: { setup: 1, rise: 1, climax: -2, fall: -3 } },
     ],
     sections: {
       "status-quo": "Dr. Richard Kimble is a respected Chicago surgeon with a happy marriage.",
@@ -867,6 +874,8 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "Scout Finch", values: { setup: 0, rise: -1, climax: -2, fall: 1 } },
       { category: "mentor", name: "Atticus Finch", values: { setup: 1, rise: 0, climax: -2, fall: 0 } },
+      { category: "other", name: "Tom Robinson", values: { setup: -2, rise: -2, climax: -3, fall: -3 } },
+      { category: "ally", name: "Boo Radley", values: { setup: 0, rise: 0, climax: 2, fall: 1 } },
     ],
     sections: {
       "status-quo": "Scout Finch is a young girl growing up in a small, sleepy Alabama town.",
@@ -921,6 +930,7 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "Romeo", values: { setup: 1, rise: 1, climax: -3, fall: -3 } },
       { category: "love-interest", name: "Juliet", values: { setup: 1, rise: 1, climax: -2, fall: -3 } },
+      { category: "antagonist", name: "Tybalt", values: { setup: 0, rise: 2, climax: -3, fall: -3 } },
     ],
     sections: {
       "status-quo": "The Montagues and Capulets are locked in a long-running, bitter feud across Verona.",
@@ -948,6 +958,7 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "Sydney Carton", values: { setup: -2, rise: -1, climax: 2, fall: 2 } },
       { category: "other", name: "Charles Darnay", values: { setup: 0, rise: -2, climax: -3, fall: 3 } },
+      { category: "love-interest", name: "Lucie Manette", values: { setup: 1, rise: -1, climax: -3, fall: 3 } },
     ],
     sections: {
       "status-quo": "Sydney Carton is a brilliant but dissolute lawyer who believes his life amounts to little.",
@@ -1001,6 +1012,7 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "Jay Gatsby", values: { setup: 1, rise: 0, climax: -2, fall: -3 } },
       { category: "love-interest", name: "Daisy Buchanan", values: { setup: 0, rise: 0, climax: -1, fall: -1 } },
+      { category: "antagonist", name: "Tom Buchanan", values: { setup: 1, rise: 1, climax: -1, fall: 1 } },
     ],
     sections: {
       "status-quo": "Jay Gatsby has built himself into a mysterious, fabulously wealthy figure on Long Island.",
@@ -1161,6 +1173,7 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "Michael Corleone", values: { setup: 0, rise: -1, climax: -1, fall: 3 } },
       { category: "other", name: "Vito Corleone", values: { setup: 1, rise: -3, climax: -1, fall: 1 } },
+      { category: "ally", name: "Sonny Corleone", values: { setup: 1, rise: 1, climax: -3, fall: -3 } },
     ],
     sections: {
       "status-quo": "The Corleone crime family holds an uneasy peace with New York's other families.",
@@ -1188,6 +1201,7 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "Dr. Richard Kimble", values: { setup: -3, rise: -1, climax: 0, fall: 3 } },
       { category: "antagonist", name: "Sam Gerard", values: { setup: 2, rise: 2, climax: 1, fall: 1 } },
+      { category: "antagonist", name: "the one-armed man", values: { setup: 1, rise: 1, climax: -2, fall: -3 } },
     ],
     sections: {
       "status-quo": "Dr. Richard Kimble is a respected Chicago surgeon with a happy marriage.",
@@ -1241,6 +1255,8 @@ export const EXAMPLES = [
     },
     characters: [
       { category: "protagonist", name: "Job", values: { setup: 3, rise: -3, climax: -2, fall: 2 } },
+      { category: "antagonist", name: "Satan", values: { setup: 2, rise: 1, climax: -1, fall: -2 } },
+      { category: "mentor", name: "God", values: { setup: 3, rise: 1, climax: 3, fall: 3 } },
     ],
     sections: {
       "status-quo": "Job is a righteous, prosperous man with a large family and great wealth.",
@@ -1268,6 +1284,8 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "Jean Valjean", values: { setup: 1, rise: -1, climax: 1, fall: 3 } },
       { category: "antagonist", name: "Inspector Javert", values: { setup: 2, rise: 1, climax: 0, fall: 0 } },
+      { category: "other", name: "Cosette", values: { setup: 0, rise: 1, climax: 1, fall: 3 } },
+      { category: "other", name: "Marius", values: { setup: 0, rise: 1, climax: -3, fall: 2 } },
     ],
     sections: {
       "status-quo": "Jean Valjean, an ex-convict, has rebuilt his life as a respected mayor under a false name.",
@@ -1349,6 +1367,7 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "Sherlock Holmes", values: { setup: 1, rise: 1, climax: 2, fall: 3 } },
       { category: "ally", name: "Dr. Watson", values: { setup: 0, rise: -1, climax: -2, fall: 2 } },
+      { category: "other", name: "Sir Henry", values: { setup: 0, rise: 0, climax: -3, fall: 1 } },
     ],
     sections: {
       "status-quo": "Sherlock Holmes is consulted about an old family legend of a supernatural hound.",
@@ -1403,6 +1422,8 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "Hamlet", values: { setup: -2, rise: -1, climax: 0, fall: -3 } },
       { category: "antagonist", name: "Claudius", values: { setup: 2, rise: 1, climax: -2, fall: -3 } },
+      { category: "other", name: "Polonius", values: { setup: 1, rise: 1, climax: -3, fall: -3 } },
+      { category: "foil", name: "Laertes", values: { setup: 0, rise: 0, climax: -1, fall: -3 } },
     ],
     sections: {
       "status-quo": "Prince Hamlet mourns his father's sudden death at the Danish court.",
@@ -1430,6 +1451,8 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "King Lear", values: { setup: 2, rise: -2, climax: -3, fall: -3 } },
       { category: "ally", name: "Cordelia", values: { setup: -1, rise: -2, climax: 1, fall: -3 } },
+      { category: "antagonist", name: "Goneril", values: { setup: 1, rise: 2, climax: -1, fall: -3 } },
+      { category: "antagonist", name: "Regan", values: { setup: 1, rise: 1, climax: -2, fall: -3 } },
     ],
     sections: {
       "status-quo": "King Lear rules a stable kingdom as an aging monarch with three daughters.",
@@ -1457,6 +1480,7 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "Walter Neff", values: { setup: 1, rise: 0, climax: -2, fall: -3 } },
       { category: "love-interest", name: "Phyllis Dietrichson", values: { setup: 0, rise: 1, climax: -2, fall: -3 } },
+      { category: "other", name: "Keyes", values: { setup: 0, rise: 1, climax: 2, fall: 3 } },
     ],
     sections: {
       "status-quo": "Walter Neff is a confident, successful insurance salesman.",
@@ -1537,6 +1561,7 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "Oedipus", values: { setup: 1, rise: 1, climax: -1, fall: -3 } },
       { category: "other", name: "Jocasta", values: { setup: 0, rise: 1, climax: -1, fall: -3 } },
+      { category: "other", name: "King Laius", values: { setup: 1, rise: -3, climax: -3, fall: -3 } },
     ],
     sections: {
       "status-quo": "Oedipus was raised far from Thebes, believing the king and queen of Corinth were his true parents.",
@@ -1591,6 +1616,7 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "Sydney Carton", values: { setup: -2, rise: 0, climax: 2, fall: 2 } },
       { category: "other", name: "Charles Darnay", values: { setup: 0, rise: -2, climax: -3, fall: 3 } },
+      { category: "love-interest", name: "Lucie Manette", values: { setup: 1, rise: -1, climax: -3, fall: 3 } },
     ],
     sections: {
       "status-quo": "Sydney Carton is a brilliant but dissolute lawyer who believes his life amounts to little.",
@@ -1618,6 +1644,7 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "Lily Potter", values: { setup: -1, rise: -3, climax: -3, fall: -3 } },
       { category: "other", name: "Harry Potter", values: { setup: -2, rise: 3, climax: 2, fall: 3 } },
+      { category: "antagonist", name: "Voldemort", values: { setup: 3, rise: -3, climax: -1, fall: -3 } },
     ],
     sections: {
       "status-quo": "Lily and James Potter are in hiding with their infant son Harry, marked for death by Voldemort.",
@@ -1645,6 +1672,7 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "Heathcliff", values: { setup: 1, rise: -2, climax: -2, fall: -3 } },
       { category: "love-interest", name: "Catherine Earnshaw", values: { setup: 1, rise: -1, climax: -3, fall: -3 } },
+      { category: "foil", name: "Edgar Linton", values: { setup: 0, rise: 1, climax: -2, fall: -2 } },
     ],
     sections: {
       "status-quo": "Heathcliff, a foundling, and Catherine Earnshaw grow up together as inseparable companions.",
@@ -1779,6 +1807,7 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "Othello", values: { setup: 2, rise: -1, climax: -3, fall: -3 } },
       { category: "love-interest", name: "Desdemona", values: { setup: 2, rise: -1, climax: -2, fall: -3 } },
+      { category: "antagonist", name: "Iago", values: { setup: 0, rise: 2, climax: 3, fall: -3 } },
     ],
     sections: {
       "status-quo": "Othello, a respected general, marries Desdemona in secret, trusting her completely.",
@@ -1806,6 +1835,8 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "Romeo", values: { setup: 1, rise: 1, climax: -3, fall: -3 } },
       { category: "love-interest", name: "Juliet", values: { setup: 1, rise: 1, climax: -2, fall: -3 } },
+      { category: "ally", name: "Mercutio", values: { setup: 1, rise: 2, climax: -3, fall: -3 } },
+      { category: "antagonist", name: "Tybalt", values: { setup: 0, rise: 1, climax: -3, fall: -3 } },
     ],
     sections: {
       "status-quo": "The Montagues and Capulets have fought a bitter, generations-old feud across Verona.",
@@ -1833,6 +1864,7 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "Juliet", values: { setup: 0, rise: 1, climax: -1, fall: -3 } },
       { category: "love-interest", name: "Romeo", values: { setup: 1, rise: 1, climax: -2, fall: -3 } },
+      { category: "antagonist", name: "Tybalt", values: { setup: 0, rise: 1, climax: -3, fall: -3 } },
     ],
     sections: {
       "status-quo": "Juliet is a Capulet, expected to marry well within her family's standing.",
@@ -1859,6 +1891,9 @@ export const EXAMPLES = [
     },
     characters: [
       { category: "protagonist", name: "Macbeth", values: { setup: 1, rise: 1, climax: -1, fall: -3 } },
+      { category: "ally", name: "Lady Macbeth", values: { setup: 1, rise: 2, climax: -2, fall: -3 } },
+      { category: "ally", name: "Banquo", values: { setup: 1, rise: 1, climax: -3, fall: -3 } },
+      { category: "antagonist", name: "Macduff", values: { setup: 0, rise: -1, climax: 1, fall: 3 } },
     ],
     sections: {
       "status-quo": "Macbeth is a loyal general, celebrated for his courage on the battlefield.",
@@ -1913,6 +1948,7 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "Othello", values: { setup: 2, rise: -1, climax: -3, fall: -3 } },
       { category: "love-interest", name: "Desdemona", values: { setup: 2, rise: -1, climax: -2, fall: -3 } },
+      { category: "antagonist", name: "Iago", values: { setup: 0, rise: 2, climax: 3, fall: -3 } },
     ],
     sections: {
       "status-quo": "Othello and Desdemona begin their marriage in complete mutual trust.",
@@ -1965,6 +2001,7 @@ export const EXAMPLES = [
     },
     characters: [
       { category: "protagonist", name: "Raskolnikov", values: { setup: -1, rise: -2, climax: -1, fall: 1 } },
+      { category: "love-interest", name: "Sonya", values: { setup: 0, rise: 0, climax: 2, fall: 1 } },
     ],
     sections: {
       "status-quo": "Raskolnikov, a poor former student, lives in isolation, nursing a theory that some people are above ordinary morality.",
@@ -1992,6 +2029,7 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "Odysseus", values: { setup: -1, rise: 0, climax: 1, fall: 3 } },
       { category: "love-interest", name: "Penelope", values: { setup: -1, rise: -1, climax: 0, fall: 3 } },
+      { category: "ally", name: "Telemachus", values: { setup: 0, rise: -1, climax: 1, fall: 3 } },
     ],
     sections: {
       "status-quo": "Odysseus has been gone from home for twenty years, presumed dead by most who knew him.",
@@ -2048,6 +2086,9 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "Dorothy", values: { setup: 0, rise: -2, climax: -3, fall: 3 } },
       { category: "antagonist", name: "the Wicked Witch of the West", values: { setup: 0, rise: 1, climax: 3, fall: -3 } },
+      { category: "ally", name: "the Scarecrow", values: { setup: 0, rise: 1, climax: -1, fall: 2 } },
+      { category: "ally", name: "the Tin Man", values: { setup: 0, rise: 1, climax: -2, fall: 2 } },
+      { category: "ally", name: "the Lion", values: { setup: -1, rise: 0, climax: -2, fall: 3 } },
     ],
     sections: {
       "status-quo": "Dorothy lives an ordinary, restless life on a Kansas farm.",
@@ -2130,6 +2171,7 @@ export const EXAMPLES = [
     characters: [
       { category: "protagonist", name: "George", values: { setup: 0, rise: -1, climax: -3, fall: -2 } },
       { category: "ally", name: "Lennie", values: { setup: 0, rise: -1, climax: -3, fall: -3 } },
+      { category: "other", name: "Curley's wife", values: { setup: 0, rise: 0, climax: -3, fall: -3 } },
     ],
     sections: {
       "status-quo": "George and Lennie, migrant workers, arrive at a new ranch hoping to save enough for a small farm of their own.",
@@ -2156,6 +2198,9 @@ export const EXAMPLES = [
     },
     characters: [
       { category: "protagonist", name: "Hamlet", values: { setup: -1, rise: -1, climax: -2, fall: 0 } },
+      { category: "antagonist", name: "Claudius", values: { setup: 2, rise: 1, climax: -2, fall: -3 } },
+      { category: "love-interest", name: "Ophelia", values: { setup: 0, rise: -1, climax: -3, fall: -3 } },
+      { category: "other", name: "Polonius", values: { setup: 1, rise: 1, climax: -3, fall: -3 } },
     ],
     sections: {
       "status-quo": "Hamlet mourns his father's death and his mother's swift remarriage to his uncle.",
@@ -2211,6 +2256,8 @@ export const EXAMPLES = [
     },
     characters: [
       { category: "protagonist", name: "Dorothy", values: { setup: 0, rise: -1, climax: 1, fall: 3 } },
+      { category: "antagonist", name: "the Wicked Witch of the West", values: { setup: 0, rise: 1, climax: -3, fall: -3 } },
+      { category: "other", name: "the Wizard", values: { setup: 0, rise: 1, climax: -2, fall: 0 } },
     ],
     sections: {
       "status-quo": "Dorothy lives an ordinary life on a Kansas farm, restless within its familiar limits.",
@@ -2264,6 +2311,7 @@ export const EXAMPLES = [
     },
     characters: [
       { category: "protagonist", name: "Ebenezer Scrooge", values: { setup: -3, rise: -1, climax: -3, fall: 3 } },
+      { category: "mentor", name: "Marley's Ghost", values: { setup: -3, rise: -3, climax: -3, fall: -3 } },
     ],
     sections: {
       "status-quo": "The story opens on Scrooge, thoroughly satisfied with the miser he's become.",
