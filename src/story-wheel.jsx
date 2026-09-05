@@ -195,7 +195,7 @@ function CharacterLanes({ trackLabel, emptyMessage, items, keyPrefix, dashed, hi
   const laneY = v => 50 - (clampArc(v) / 3) * 40;
   const rowOf = Object.fromEntries(items.map((c, i) => [c.key, i]));
   const connectors = interactionGroups ? Object.entries(interactionGroups)
-    .map(([act, who]) => ({ act, rows: who.map(c => rowOf[c.id]).filter(i => i !== undefined) }))
+    .map(([act, who]) => ({ act, rows: who.map(c => rowOf[c.id]).filter(i => i !== undefined).sort((a, b) => a - b) }))
     .filter(c => c.rows.length >= 2) : [];
   const catLabel = c => CATEGORY_LABELS[c.category || "other"];
   return (
@@ -204,6 +204,7 @@ function CharacterLanes({ trackLabel, emptyMessage, items, keyPrefix, dashed, hi
       {items.length === 0 ? (
         <p className="arcline-empty">{emptyMessage}</p>
       ) : (
+        <div className="char-lanes-col">
         <div className="char-lanes">
           {items.map(c => {
             const lineKey = `${keyPrefix}:${c.key}`;
@@ -252,6 +253,19 @@ function CharacterLanes({ trackLabel, emptyMessage, items, keyPrefix, dashed, hi
               })}
             </svg>
           )}
+        </div>
+        {connectors.length > 0 && (
+          // the dashed connector on the chart shows *that* something links two rows and roughly
+          // where, but two same-category ticks look identical and hover-only tooltips aren't
+          // discoverable (or usable on touch) — so who's actually meeting is spelled out here too
+          <p className="char-lane-interactions">
+            {connectors.map(({ act, rows }) => (
+              <span key={act} className="char-lane-interaction-note">
+                <b>{ACTS[act].label}:</b> {rows.map(i => items[i].name).join(" & ")}
+              </span>
+            ))}
+          </p>
+        )}
         </div>
       )}
     </div>
@@ -872,7 +886,8 @@ button{font-family:inherit;cursor:pointer}
 .tl-lane-acts .tl-clip-label{color:var(--gold)}
 .arcline-empty{color:var(--dim);font-size:12px;margin:0}
 .char-lanes-track{align-items:flex-start;margin-top:14px}
-.char-lanes{position:relative;flex:1;display:flex;flex-direction:column;background:var(--panel);
+.char-lanes-col{flex:1;display:flex;flex-direction:column;min-width:0}
+.char-lanes{position:relative;display:flex;flex-direction:column;background:var(--panel);
   border:1px solid var(--border);border-radius:6px;overflow:hidden}
 .char-lane{display:flex;flex-direction:column;border-bottom:1px solid var(--border);
   transition:opacity .15s}
@@ -895,6 +910,8 @@ button{font-family:inherit;cursor:pointer}
 .char-lane-connector,.char-lane-connector-tick{vector-effect:non-scaling-stroke}
 .char-lane-connector{stroke:var(--ember);stroke-width:2;stroke-dasharray:5 4;opacity:.85}
 .char-lane-connector-tick{stroke-width:3}
+.char-lane-interactions{display:flex;flex-direction:column;gap:2px;margin:6px 0 0;font-size:12px;color:var(--dim)}
+.char-lane-interaction-note b{color:var(--ember);font-weight:600}
 .legend{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center;margin:4px 0 20px}
 .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--dim)}
 .legend-item i{width:9px;height:9px;border-radius:3px;display:inline-block}
