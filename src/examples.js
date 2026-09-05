@@ -77,6 +77,10 @@ export const EXAMPLES = [
       climax: "The shark destroys the boat and attacks the crew directly, cornering Brody alone.",
       fall: "Brody kills the shark by shooting a pressurized tank in its mouth, and swims back to shore.",
     },
+    characters: [
+      { category: "protagonist", name: "Chief Brody", values: { setup: -1, rise: -1, climax: -3, fall: 2 } },
+      { category: "antagonist", name: "the shark", values: { setup: 2, rise: 3, climax: 3, fall: -3 } },
+    ],
     sections: {
       "status-quo": "Amity Island's beach season is about to open, and Chief Brody wants nothing more than a quiet summer.",
       "inciting": "A young swimmer is killed by a great white shark just offshore, and Brody wants to close the beaches.",
@@ -100,6 +104,10 @@ export const EXAMPLES = [
       climax: "The Queen of Hearts turns violently dangerous, putting Alice on trial and threatening her life.",
       fall: "Alice asserts herself against the Queen's tyranny and wakes up back home, the whole adventure behind her.",
     },
+    characters: [
+      { category: "protagonist", name: "Alice", values: { setup: 0, rise: 1, climax: -3, fall: 2 } },
+      { category: "antagonist", name: "the Queen of Hearts", values: { setup: 1, rise: 1, climax: 3, fall: -3 } },
+    ],
     sections: {
       "status-quo": "Alice sits bored on a riverbank on an ordinary afternoon, half-listening to her sister read.",
       "inciting": "A white rabbit runs past muttering about being late, and Alice follows it down a hole.",
@@ -123,6 +131,10 @@ export const EXAMPLES = [
       climax: "Macbeth's paranoia drives him to murder more and more to secure his rule, including his friend Banquo.",
       fall: "Macbeth's tyranny collapses under rebellion; he is killed by Macduff, his ambition having cost him everything.",
     },
+    characters: [
+      { category: "protagonist", name: "Macbeth", values: { setup: 1, rise: 2, climax: 0, fall: -3 } },
+      { category: "antagonist", name: "Macduff", values: { setup: 0, rise: -1, climax: -2, fall: 3 } },
+    ],
     sections: {
       "status-quo": "Macbeth is a loyal, celebrated general returning from a hard-won victory for his king.",
       "inciting": "Three witches greet him on the road with a prophecy that he will become king himself.",
@@ -146,6 +158,10 @@ export const EXAMPLES = [
       climax: "The Prince's search for the slipper's owner puts Cinderella's fate in the hands of a single, decisive test.",
       fall: "The slipper fits; Cinderella marries the Prince, her worth finally recognized beyond her circumstances.",
     },
+    characters: [
+      { category: "protagonist", name: "Cinderella", values: { setup: -3, rise: 1, climax: -1, fall: 3 } },
+      { category: "love-interest", name: "the Prince", values: { setup: 0, rise: 2, climax: 0, fall: 3 } },
+    ],
     sections: {
       "status-quo": "Cinderella lives as an unpaid servant in her own home, worked to exhaustion by her stepmother and stepsisters.",
       "inciting": "An invitation arrives to a royal ball, and her stepfamily forbids her from going.",
@@ -441,6 +457,10 @@ export const EXAMPLES = [
       climax: "Frodo and Sam reach the edge of Mount Doom, exhausted and consumed by the Ring's corrupting will.",
       fall: "The Ring is destroyed, Sauron's power collapses, and Frodo returns home forever changed by what the journey cost him.",
     },
+    characters: [
+      { category: "protagonist", name: "Frodo Baggins", values: { setup: -1, rise: -1, climax: -3, fall: 2 } },
+      { category: "mentor", name: "Gandalf", values: { setup: 1, rise: -3, climax: -3, fall: -3 } },
+    ],
     sections: {
       "status-quo": "Frodo Baggins lives a quiet, unremarkable life in the Shire, having inherited his uncle's old ring.",
       "inciting": "Gandalf reveals the ring is the One Ring, and that Sauron's forces are already hunting for it.",
@@ -464,6 +484,10 @@ export const EXAMPLES = [
       climax: "The confusion peaks in a tangle of jealousy and accusation among the four, none of them understanding why.",
       fall: "The fairy king sets things right, the correct couples are reunited, and the play ends in a triple wedding.",
     },
+    characters: [
+      { category: "protagonist", name: "Oberon", values: { setup: 1, rise: -1, climax: -2, fall: 3 } },
+      { category: "other", name: "Puck", values: { setup: 0, rise: -2, climax: -3, fall: 1 } },
+    ],
     sections: {
       "status-quo": "Four young Athenians are tangled in mismatched affections, with a wedding just days away.",
       "inciting": "Two of the lovers flee into an enchanted forest to escape a forced marriage, pursued by the other two.",
@@ -487,6 +511,9 @@ export const EXAMPLES = [
       climax: "Scrooge sees his own unmourned death and the destruction his greed has caused those around him.",
       fall: "Terrified into change, Scrooge wakes transformed — generous, warm, and eager to make amends.",
     },
+    characters: [
+      { category: "protagonist", name: "Ebenezer Scrooge", values: { setup: -3, rise: -1, climax: -3, fall: 3 } },
+    ],
     sections: {
       "status-quo": "Ebenezer Scrooge is a miserly, joyless old man who despises Christmas and everyone who enjoys it.",
       "inciting": "The ghost of his late partner Marley appears, warning that three more spirits will visit him that night.",
@@ -512,6 +539,10 @@ export const EXAMPLES = [
       climax: "Frodo and Sam reach the edge of Mount Doom, exhausted and consumed by the Ring's corrupting will.",
       fall: "The Ring is destroyed and Sauron's power collapses, though Frodo returns home forever changed.",
     },
+    characters: [
+      { category: "protagonist", name: "Frodo Baggins", values: { setup: -1, rise: -1, climax: -3, fall: 2 } },
+      { category: "mentor", name: "Gandalf", values: { setup: 1, rise: -3, climax: -3, fall: -3 } },
+    ],
     sections: {
       "status-quo": "Frodo Baggins lives a quiet life in the Shire, unaware of what his uncle's old ring really is.",
       "inciting": "Gandalf returns and reveals it as the One Ring, with Sauron's forces already searching for it.",
@@ -535,6 +566,10 @@ export const EXAMPLES = [
       climax: "Indy risks everything in a commando raid to steal the Ark back from a moving Nazi convoy.",
       fall: "He survives the Ark's terrible power unleashed on his enemies, delivering it — bruised but victorious — to safety.",
     },
+    characters: [
+      { category: "protagonist", name: "Indiana Jones", values: { setup: 0, rise: 1, climax: 2, fall: 3 } },
+      { category: "antagonist", name: "the Nazis", values: { setup: 1, rise: 2, climax: -1, fall: -3 } },
+    ],
     sections: {
       "status-quo": "Indiana Jones is a professor of archaeology moonlighting as a relic hunter.",
       "inciting": "Army intelligence recruits him to find the Ark of the Covenant before the Nazis can use its power.",
@@ -558,6 +593,10 @@ export const EXAMPLES = [
       climax: "Kimble and Gerard's cat-and-mouse chase converges as Kimble closes in on the real killer.",
       fall: "Kimble proves his innocence and exposes the real killer, with Gerard finally on his side.",
     },
+    characters: [
+      { category: "protagonist", name: "Dr. Richard Kimble", values: { setup: -3, rise: -1, climax: 1, fall: 3 } },
+      { category: "antagonist", name: "Sam Gerard", values: { setup: 2, rise: 2, climax: 1, fall: 1 } },
+    ],
     sections: {
       "status-quo": "Dr. Richard Kimble is a respected Chicago surgeon with a happy marriage.",
       "inciting": "His wife is murdered by an intruder, and circumstantial evidence points to Kimble himself.",
@@ -581,6 +620,10 @@ export const EXAMPLES = [
       climax: "He infiltrates the trafficking ring's stronghold in a final, violent confrontation to reach his daughter.",
       fall: "Bryan rescues Kim and brings her home safely, the ordeal reshaping their relationship.",
     },
+    characters: [
+      { category: "protagonist", name: "Bryan Mills", values: { setup: 0, rise: 1, climax: 2, fall: 3 } },
+      { category: "other", name: "Kim Mills", values: { setup: 1, rise: -3, climax: -2, fall: 3 } },
+    ],
     sections: {
       "status-quo": "Bryan Mills, a retired covert operative, tries to stay close to his teenage daughter Kim.",
       "inciting": "Kim is kidnapped by human traffickers minutes after arriving in Paris with a friend.",
@@ -604,6 +647,9 @@ export const EXAMPLES = [
       climax: "Andy makes his escape through the prison's sewage pipe during a single stormy night.",
       fall: "He emerges free, exposes the warden's corruption, and starts a new life on a beach in Mexico.",
     },
+    characters: [
+      { category: "protagonist", name: "Andy Dufresne", values: { setup: -3, rise: -1, climax: 2, fall: 3 } },
+    ],
     sections: {
       "status-quo": "Andy Dufresne, a mild-mannered banker, begins a life sentence at Shawshank for a murder he didn't commit.",
       "inciting": "He survives the prison's brutality by quietly making himself useful to the guards and warden.",
@@ -627,6 +673,9 @@ export const EXAMPLES = [
       climax: "He methodically destroys the men who betrayed him, one by one, using their own weaknesses against them.",
       fall: "Having taken his revenge, Dantès must decide whether it has left him anything worth living for.",
     },
+    characters: [
+      { category: "protagonist", name: "Edmond Dantès", values: { setup: -3, rise: 0, climax: 2, fall: 1 } },
+    ],
     sections: {
       "status-quo": "Edmond Dantès is a young sailor about to marry the woman he loves.",
       "inciting": "Jealous rivals falsely accuse him of treason, and he's imprisoned without trial on the eve of his wedding.",
@@ -650,6 +699,10 @@ export const EXAMPLES = [
       climax: "The final clues point to a truth that threatens to upend centuries of religious history.",
       fall: "The mystery is solved, revealing a secret Langdon must decide what to do with.",
     },
+    characters: [
+      { category: "protagonist", name: "Robert Langdon", values: { setup: 0, rise: 0, climax: 1, fall: 2 } },
+      { category: "ally", name: "Sophie Neveu", values: { setup: 0, rise: 1, climax: 0, fall: 2 } },
+    ],
     sections: {
       "status-quo": "Robert Langdon, a Harvard symbologist, is lecturing in Paris.",
       "inciting": "He's called to the Louvre, where a curator has been murdered and left a coded message.",
@@ -673,6 +726,10 @@ export const EXAMPLES = [
       climax: "Salieri schemes to destroy Mozart, secretly commissioning a requiem meant for Mozart's own funeral.",
       fall: "Mozart dies in poverty and obscurity while Salieri lives on, tormented by having engineered it.",
     },
+    characters: [
+      { category: "protagonist", name: "Antonio Salieri", values: { setup: 2, rise: -1, climax: -2, fall: -3 } },
+      { category: "foil", name: "Mozart", values: { setup: 1, rise: 3, climax: -1, fall: -3 } },
+    ],
     sections: {
       "status-quo": "Antonio Salieri is the Viennese court's celebrated composer, devoted to God and to music.",
       "inciting": "The young, vulgar, wildly gifted Mozart arrives at court and immediately outshines him.",
@@ -696,6 +753,10 @@ export const EXAMPLES = [
       climax: "Rocky goes the distance against champion Apollo Creed, a fight no one expected him to survive.",
       fall: "He loses the decision but proves to himself and everyone else that he was never really the underdog he seemed.",
     },
+    characters: [
+      { category: "protagonist", name: "Rocky Balboa", values: { setup: -2, rise: 0, climax: 1, fall: 2 } },
+      { category: "antagonist", name: "Apollo Creed", values: { setup: 3, rise: 2, climax: 0, fall: 1 } },
+    ],
     sections: {
       "status-quo": "Rocky Balboa is a small-time club boxer scraping by as a debt collector in Philadelphia.",
       "inciting": "Heavyweight champion Apollo Creed picks him, almost as a publicity stunt, for a title shot.",
@@ -719,6 +780,9 @@ export const EXAMPLES = [
       climax: "The portrait grows monstrous, reflecting the full horror of the life Dorian has actually lived.",
       fall: "Dorian destroys the painting in a final act, and his own body instantly bears all the years and sins he'd escaped.",
     },
+    characters: [
+      { category: "protagonist", name: "Dorian Gray", values: { setup: 2, rise: 3, climax: -2, fall: -3 } },
+    ],
     sections: {
       "status-quo": "Dorian Gray is a beautiful, impressionable young man newly introduced to high society.",
       "inciting": "He wishes aloud that his portrait would age instead of him — and the wish, unnoticed, comes true.",
@@ -742,6 +806,9 @@ export const EXAMPLES = [
       climax: "Gregor's increasing alienation from his family reaches a breaking point after an incident terrifies them further.",
       fall: "Gregor dies, unmourned by a family relieved to be free of him, who move on without him.",
     },
+    characters: [
+      { category: "protagonist", name: "Gregor Samsa", values: { setup: -1, rise: -2, climax: -3, fall: -3 } },
+    ],
     sections: {
       "status-quo": "Gregor Samsa works tirelessly as a traveling salesman to support his family.",
       "inciting": "He wakes one morning transformed into a giant insect, unable to explain it to anyone.",
@@ -765,6 +832,10 @@ export const EXAMPLES = [
       climax: "The Beast releases Belle to save her father, risking losing her forever just as he's learned to love.",
       fall: "Belle returns to save him, and her love breaks the curse, transforming him back into a man.",
     },
+    characters: [
+      { category: "protagonist", name: "Belle", values: { setup: 0, rise: -1, climax: -2, fall: 3 } },
+      { category: "love-interest", name: "the Beast", values: { setup: -3, rise: 0, climax: -3, fall: 3 } },
+    ],
     sections: {
       "status-quo": "Belle lives contentedly in her village, considered odd for loving books more than suitors.",
       "inciting": "Her father is imprisoned by a cursed Beast for trespassing in his castle.",
@@ -788,6 +859,10 @@ export const EXAMPLES = [
       climax: "Despite Atticus's defense, the all-white jury convicts an innocent man, and violence follows.",
       fall: "Scout comes away with a harder, truer understanding of justice, courage, and the adult world's failures.",
     },
+    characters: [
+      { category: "protagonist", name: "Scout Finch", values: { setup: 0, rise: -1, climax: -2, fall: 1 } },
+      { category: "mentor", name: "Atticus Finch", values: { setup: 1, rise: 0, climax: -2, fall: 0 } },
+    ],
     sections: {
       "status-quo": "Scout Finch is a young girl growing up in a small, sleepy Alabama town.",
       "inciting": "Her father Atticus agrees to defend Tom Robinson, a Black man falsely accused of rape.",
@@ -811,6 +886,10 @@ export const EXAMPLES = [
       climax: "Darcy's quiet intervention to save Elizabeth's sister's reputation forces Elizabeth to see him differently.",
       fall: "Both having overcome their own flaws, Elizabeth and Darcy finally admit their feelings and marry.",
     },
+    characters: [
+      { category: "protagonist", name: "Elizabeth Bennet", values: { setup: 0, rise: -1, climax: 1, fall: 3 } },
+      { category: "love-interest", name: "Mr. Darcy", values: { setup: -1, rise: -1, climax: 2, fall: 3 } },
+    ],
     sections: {
       "status-quo": "Elizabeth Bennet and her four sisters live under pressure to marry well.",
       "inciting": "Elizabeth meets the wealthy, aloof Mr. Darcy at a country ball, and takes an instant dislike to him.",
@@ -834,6 +913,10 @@ export const EXAMPLES = [
       climax: "A fatal duel forces Romeo into exile just as their secret marriage should have offered them a future.",
       fall: "A plan to reunite them collapses into tragedy, and both die rather than live without each other.",
     },
+    characters: [
+      { category: "protagonist", name: "Romeo", values: { setup: 1, rise: 1, climax: -3, fall: -3 } },
+      { category: "love-interest", name: "Juliet", values: { setup: 1, rise: 1, climax: -2, fall: -3 } },
+    ],
     sections: {
       "status-quo": "The Montagues and Capulets are locked in a long-running, bitter feud across Verona.",
       "inciting": "Romeo, a Montague, sneaks into a Capulet party and falls for Juliet at first sight.",
@@ -857,6 +940,10 @@ export const EXAMPLES = [
       climax: "Carton switches places with Darnay in prison, sacrificing himself to save the man Lucie loves.",
       fall: "Carton goes to the guillotine in Darnay's place, finding peace in the meaning of his sacrifice.",
     },
+    characters: [
+      { category: "protagonist", name: "Sydney Carton", values: { setup: -2, rise: -1, climax: 2, fall: 2 } },
+      { category: "other", name: "Charles Darnay", values: { setup: 0, rise: -2, climax: -3, fall: 3 } },
+    ],
     sections: {
       "status-quo": "Sydney Carton is a brilliant but dissolute lawyer who believes his life amounts to little.",
       "inciting": "He meets Lucie Manette and falls in love with her, though she loves and marries Charles Darnay instead.",
@@ -880,6 +967,9 @@ export const EXAMPLES = [
       climax: "Truman sails to the edge of his artificial world and finds the literal wall of the dome enclosing it.",
       fall: "He chooses to walk out the studio door into the real world, leaving his entire manufactured life behind.",
     },
+    characters: [
+      { category: "protagonist", name: "Truman Burbank", values: { setup: 1, rise: -1, climax: -2, fall: 3 } },
+    ],
     sections: {
       "status-quo": "Truman Burbank lives an apparently ordinary, cheerful life in the town of Seahaven.",
       "inciting": "A studio light falls from the sky, unexplained, the first crack in the world he's always trusted.",
@@ -903,6 +993,10 @@ export const EXAMPLES = [
       climax: "Gatsby's carefully built world collapses when Daisy chooses not to leave her husband for him after all.",
       fall: "Gatsby is killed for a crime that wasn't his, his funeral attended by almost no one from the world he built.",
     },
+    characters: [
+      { category: "protagonist", name: "Jay Gatsby", values: { setup: 1, rise: 0, climax: -2, fall: -3 } },
+      { category: "love-interest", name: "Daisy Buchanan", values: { setup: 0, rise: 0, climax: -1, fall: -1 } },
+    ],
     sections: {
       "status-quo": "Jay Gatsby has built himself into a mysterious, fabulously wealthy figure on Long Island.",
       "inciting": "He throws lavish, extravagant parties purely in hopes his lost love Daisy will one day walk through the door.",
@@ -926,6 +1020,9 @@ export const EXAMPLES = [
       climax: "Chris pushes through his hardest, most exhausting stretch, right before the internship's outcome is decided.",
       fall: "He's offered a full-time position, the reward for a climb that nearly broke him.",
     },
+    characters: [
+      { category: "protagonist", name: "Chris Gardner", values: { setup: -3, rise: -1, climax: -2, fall: 3 } },
+    ],
     sections: {
       "status-quo": "Chris Gardner struggles to sell bone-density scanners no one wants to buy.",
       "inciting": "His wife leaves, and Chris is left to raise their young son largely alone and broke.",
@@ -949,6 +1046,9 @@ export const EXAMPLES = [
       climax: "Walter's lies and violence catch up with him, costing him his family, his safety, and nearly everyone he once protected.",
       fall: "He dies alone, having become the very danger he once told himself he was protecting his family from.",
     },
+    characters: [
+      { category: "protagonist", name: "Walter White", values: { setup: -1, rise: 2, climax: -2, fall: -3 } },
+    ],
     sections: {
       "status-quo": "Walter White is a mild-mannered, underpaid high school chemistry teacher.",
       "inciting": "A terminal cancer diagnosis leaves him desperate to provide for his family before he's gone.",
@@ -974,6 +1074,9 @@ export const EXAMPLES = [
       climax: "Sold into apprenticeship and later drawn into a gang of pickpockets, Oliver has no power to change his circumstances himself.",
       fall: "Kind strangers eventually intervene on his behalf, rescuing him from the life he was powerless to escape alone.",
     },
+    characters: [
+      { category: "protagonist", name: "Oliver Twist", values: { setup: -3, rise: -2, climax: -2, fall: 2 } },
+    ],
     sections: {
       "status-quo": "Oliver Twist is an orphan raised in a workhouse that barely keeps him alive.",
       "inciting": "Starving, he's chosen by the other boys to ask the master for more food.",
@@ -997,6 +1100,10 @@ export const EXAMPLES = [
       climax: "The ten plagues devastate Egypt until Pharaoh finally, briefly, relents.",
       fall: "Moses leads the Israelites out of Egypt and through the parted sea to freedom.",
     },
+    characters: [
+      { category: "protagonist", name: "Moses", values: { setup: 0, rise: -1, climax: 1, fall: 3 } },
+      { category: "antagonist", name: "Pharaoh", values: { setup: 2, rise: 1, climax: -2, fall: -3 } },
+    ],
     sections: {
       "status-quo": "The Israelites live enslaved in Egypt, generations deep into Pharaoh's harsh rule.",
       "inciting": "Moses, raised in Pharaoh's own household, is called by God to demand their freedom.",
@@ -1020,6 +1127,9 @@ export const EXAMPLES = [
       climax: "He methodically destroys the men who betrayed him, one by one, using their own weaknesses against them.",
       fall: "Having taken his revenge, Dantès must decide whether it has left him anything worth living for.",
     },
+    characters: [
+      { category: "protagonist", name: "Edmond Dantès", values: { setup: -3, rise: 0, climax: 2, fall: 1 } },
+    ],
     sections: {
       "status-quo": "Edmond Dantès is a young sailor about to marry the woman he loves.",
       "inciting": "Jealous rivals falsely accuse him of treason, and he's imprisoned without trial on the eve of his wedding.",
@@ -1043,6 +1153,10 @@ export const EXAMPLES = [
       climax: "A war between crime families escalates, with each side's kin becoming targets in turn.",
       fall: "Michael settles every score at once, striking against the heads of the rival families that wronged his own.",
     },
+    characters: [
+      { category: "protagonist", name: "Michael Corleone", values: { setup: 0, rise: -1, climax: -1, fall: 3 } },
+      { category: "other", name: "Vito Corleone", values: { setup: 1, rise: -3, climax: -1, fall: 1 } },
+    ],
     sections: {
       "status-quo": "The Corleone crime family holds an uneasy peace with New York's other families.",
       "inciting": "Vito Corleone is shot and nearly killed by a rival family after refusing to enter the drug trade.",
@@ -1066,6 +1180,10 @@ export const EXAMPLES = [
       climax: "U.S. Marshal Sam Gerard closes in on Kimble at every turn, forcing increasingly desperate evasions.",
       fall: "Kimble finally corners the real killer himself, proving his innocence to the marshal who'd hunted him.",
     },
+    characters: [
+      { category: "protagonist", name: "Dr. Richard Kimble", values: { setup: -3, rise: -1, climax: 0, fall: 3 } },
+      { category: "antagonist", name: "Sam Gerard", values: { setup: 2, rise: 2, climax: 1, fall: 1 } },
+    ],
     sections: {
       "status-quo": "Dr. Richard Kimble is a respected Chicago surgeon with a happy marriage.",
       "inciting": "His wife is murdered by an intruder, and circumstantial evidence points to Kimble himself.",
@@ -1089,6 +1207,10 @@ export const EXAMPLES = [
       climax: "As the ship breaks apart and sinks, passengers scramble for the too-few lifeboats.",
       fall: "Over 1,500 people die in the freezing water, and the survivors are left to carry what they witnessed.",
     },
+    characters: [
+      { category: "protagonist", name: "Jack Dawson", values: { setup: 0, rise: -1, climax: -3, fall: -3 } },
+      { category: "love-interest", name: "Rose DeWitt Bukater", values: { setup: 0, rise: -1, climax: -2, fall: 1 } },
+    ],
     sections: {
       "status-quo": "The “unsinkable” RMS Titanic sets sail on its maiden voyage, carrying passengers of every class.",
       "inciting": "Lookouts spot an iceberg too late, and the ship strikes it in the dark of night.",
@@ -1112,6 +1234,9 @@ export const EXAMPLES = [
       climax: "Job's friends insist he must have sinned to deserve this, while Job insists on his own innocence.",
       fall: "Job's fortunes are eventually restored, though the suffering itself is never fully explained to him.",
     },
+    characters: [
+      { category: "protagonist", name: "Job", values: { setup: 3, rise: -3, climax: -2, fall: 2 } },
+    ],
     sections: {
       "status-quo": "Job is a righteous, prosperous man with a large family and great wealth.",
       "inciting": "Satan wagers with God that Job's faith depends entirely on his good fortune.",
@@ -1135,6 +1260,10 @@ export const EXAMPLES = [
       climax: "The students build a barricade and revolt against the government, most of them dying in the failed uprising.",
       fall: "Valjean survives, having saved the wounded revolutionary Marius, and finds peace before his death.",
     },
+    characters: [
+      { category: "protagonist", name: "Jean Valjean", values: { setup: 1, rise: -1, climax: 1, fall: 3 } },
+      { category: "antagonist", name: "Inspector Javert", values: { setup: 2, rise: 1, climax: 0, fall: 0 } },
+    ],
     sections: {
       "status-quo": "Jean Valjean, an ex-convict, has rebuilt his life as a respected mayor under a false name.",
       "inciting": "Inspector Javert, obsessed with the law, grows suspicious that the mayor is the convict he's hunted for years.",
@@ -1158,6 +1287,10 @@ export const EXAMPLES = [
       climax: "The crew and mission control attempt a dangerous engine burn to slingshot them back toward Earth.",
       fall: "Against the odds, all three astronauts make it home safely.",
     },
+    characters: [
+      { category: "protagonist", name: "Jim Lovell", values: { setup: 1, rise: -2, climax: -2, fall: 3 } },
+      { category: "ally", name: "Mission Control", values: { setup: 0, rise: -1, climax: 1, fall: 3 } },
+    ],
     sections: {
       "status-quo": "The Apollo 13 crew launches toward the moon on what should be a routine mission.",
       "inciting": "An oxygen tank explodes two days in, crippling the spacecraft far from Earth.",
@@ -1181,6 +1314,10 @@ export const EXAMPLES = [
       climax: "He infiltrates the trafficking ring's stronghold in a final, violent confrontation to reach his daughter.",
       fall: "Bryan rescues Kim and brings her home safely, the ordeal reshaping their relationship.",
     },
+    characters: [
+      { category: "protagonist", name: "Bryan Mills", values: { setup: 0, rise: 1, climax: 2, fall: 3 } },
+      { category: "other", name: "Kim Mills", values: { setup: 1, rise: -3, climax: -2, fall: 3 } },
+    ],
     sections: {
       "status-quo": "Bryan Mills, a retired covert operative, tries to stay close to his teenage daughter Kim.",
       "inciting": "Kim is kidnapped by human traffickers minutes after arriving in Paris with a friend.",
@@ -1204,6 +1341,10 @@ export const EXAMPLES = [
       climax: "Holmes reveals himself to have been secretly investigating all along, just as the real hound attacks.",
       fall: "The hound is revealed to be a real dog, disguised to exploit the legend, and the culprit behind it is exposed.",
     },
+    characters: [
+      { category: "protagonist", name: "Sherlock Holmes", values: { setup: 1, rise: 1, climax: 2, fall: 3 } },
+      { category: "ally", name: "Dr. Watson", values: { setup: 0, rise: -1, climax: -2, fall: 2 } },
+    ],
     sections: {
       "status-quo": "Sherlock Holmes is consulted about an old family legend of a supernatural hound.",
       "inciting": "Sir Charles Baskerville is found dead on the moor, his face frozen in terror.",
@@ -1227,6 +1368,10 @@ export const EXAMPLES = [
       climax: "He finds it first, only to have Belloq and the Nazis seize it from him at gunpoint.",
       fall: "A daring raid lets Indy reclaim the Ark, delivering it to safety despite everything stacked against him.",
     },
+    characters: [
+      { category: "protagonist", name: "Indiana Jones", values: { setup: 0, rise: 1, climax: -2, fall: 3 } },
+      { category: "antagonist", name: "Belloq", values: { setup: 0, rise: 1, climax: 3, fall: -3 } },
+    ],
     sections: {
       "status-quo": "Indiana Jones is a professor of archaeology moonlighting as a relic hunter.",
       "inciting": "Army intelligence recruits him to find the Ark of the Covenant before the Nazis do.",
@@ -1250,6 +1395,10 @@ export const EXAMPLES = [
       climax: "Hamlet's staged play provokes Claudius into revealing his guilt, and the plots between them multiply.",
       fall: "Nearly the entire royal family dies in the final confrontation, kinsman against kinsman.",
     },
+    characters: [
+      { category: "protagonist", name: "Hamlet", values: { setup: -2, rise: -1, climax: 0, fall: -3 } },
+      { category: "antagonist", name: "Claudius", values: { setup: 2, rise: 1, climax: -2, fall: -3 } },
+    ],
     sections: {
       "status-quo": "Prince Hamlet mourns his father's sudden death at the Danish court.",
       "inciting": "His father's ghost appears, revealing that his uncle Claudius murdered him to seize the throne.",
@@ -1273,6 +1422,10 @@ export const EXAMPLES = [
       climax: "Betrayal and rivalry among the sisters spirals into open war and murder within the family.",
       fall: "Nearly the whole family, including Lear and his loyal youngest daughter Cordelia, dies before the kingdom is restored to order.",
     },
+    characters: [
+      { category: "protagonist", name: "King Lear", values: { setup: 2, rise: -2, climax: -3, fall: -3 } },
+      { category: "ally", name: "Cordelia", values: { setup: -1, rise: -2, climax: 1, fall: -3 } },
+    ],
     sections: {
       "status-quo": "King Lear rules a stable kingdom as an aging monarch with three daughters.",
       "inciting": "He decides to divide his kingdom based on which daughter flatters him most convincingly.",
@@ -1296,6 +1449,10 @@ export const EXAMPLES = [
       climax: "Suspicion from Walter's colleague closes in as the two conspirators begin to turn on each other.",
       fall: "The scheme collapses in mutual betrayal and violence, exposing the murder they thought was perfect.",
     },
+    characters: [
+      { category: "protagonist", name: "Walter Neff", values: { setup: 1, rise: 0, climax: -2, fall: -3 } },
+      { category: "love-interest", name: "Phyllis Dietrichson", values: { setup: 0, rise: 1, climax: -2, fall: -3 } },
+    ],
     sections: {
       "status-quo": "Walter Neff is a confident, successful insurance salesman.",
       "inciting": "He meets Phyllis Dietrichson while renewing her husband's policy, and the two begin an affair.",
@@ -1319,6 +1476,9 @@ export const EXAMPLES = [
       climax: "She becomes convinced a woman is trapped behind the wallpaper's pattern, trying to break free.",
       fall: "She descends fully into madness, tearing at the wallpaper convinced she has freed the woman within — who is herself.",
     },
+    characters: [
+      { category: "protagonist", name: "the narrator", values: { setup: -1, rise: -2, climax: -3, fall: -3 } },
+    ],
     sections: {
       "status-quo": "A woman is confined by her physician husband to a single room for a “rest cure.”",
       "inciting": "Forbidden from working, writing, or leaving, she becomes fixated on the room's strange yellow wallpaper.",
@@ -1342,6 +1502,10 @@ export const EXAMPLES = [
       climax: "Horrified by what he's made, he abandons it — a careless decision that turns the creature toward vengeance.",
       fall: "Victor's failure to think through the consequences of his experiment costs him everyone he loves.",
     },
+    characters: [
+      { category: "protagonist", name: "Victor Frankenstein", values: { setup: 1, rise: 0, climax: -2, fall: -3 } },
+      { category: "foil", name: "the creature", values: { setup: 0, rise: -2, climax: 1, fall: 2 } },
+    ],
     sections: {
       "status-quo": "Victor Frankenstein is a brilliant, driven student of natural philosophy.",
       "inciting": "He becomes obsessed with discovering the secret of animating dead tissue.",
@@ -1365,6 +1529,10 @@ export const EXAMPLES = [
       climax: "A plague on the city drives Oedipus to investigate its cause, uncovering the truth of what he's done.",
       fall: "Oedipus realizes the stranger was his father and the queen his mother — the love that undid him was never a knowing crime.",
     },
+    characters: [
+      { category: "protagonist", name: "Oedipus", values: { setup: 1, rise: 1, climax: -1, fall: -3 } },
+      { category: "other", name: "Jocasta", values: { setup: 0, rise: 1, climax: -1, fall: -3 } },
+    ],
     sections: {
       "status-quo": "Oedipus was raised far from Thebes, believing the king and queen of Corinth were his true parents.",
       "inciting": "An oracle warns him he's fated to kill his father and marry his mother, so he flees Corinth to avoid it.",
@@ -1388,6 +1556,10 @@ export const EXAMPLES = [
       climax: "Years later, investigating a plague on his city, Oedipus is forced to trace the identity of the man he killed.",
       fall: "The stranger is revealed to have been his true father, King Laius — the kinsman Oedipus slew without recognizing him.",
     },
+    characters: [
+      { category: "protagonist", name: "Oedipus", values: { setup: 1, rise: 0, climax: -1, fall: -2 } },
+      { category: "other", name: "King Laius", values: { setup: 1, rise: -3, climax: -3, fall: -3 } },
+    ],
     sections: {
       "status-quo": "Oedipus grows up in Corinth, believing himself safely far from a prophecy that he'll kill his father.",
       "inciting": "He learns of the prophecy directly and flees Corinth, determined never to let it come true.",
@@ -1411,6 +1583,10 @@ export const EXAMPLES = [
       climax: "When her husband Darnay is condemned to the guillotine, Carton resolves to take his place.",
       fall: "Carton dies for the ideal he's chosen, finding meaning in the sacrifice his own life never gave him.",
     },
+    characters: [
+      { category: "protagonist", name: "Sydney Carton", values: { setup: -2, rise: 0, climax: 2, fall: 2 } },
+      { category: "other", name: "Charles Darnay", values: { setup: 0, rise: -2, climax: -3, fall: 3 } },
+    ],
     sections: {
       "status-quo": "Sydney Carton is a brilliant but dissolute lawyer who believes his life amounts to little.",
       "inciting": "He meets Lucie Manette and comes to love her, though she chooses to marry Charles Darnay instead.",
@@ -1434,6 +1610,10 @@ export const EXAMPLES = [
       climax: "Years later, that same protection burns Voldemort's servant when he tries to harm Harry directly.",
       fall: "Harry survives because of a sacrifice he doesn't even remember, carried by a love more powerful than any spell.",
     },
+    characters: [
+      { category: "protagonist", name: "Lily Potter", values: { setup: -1, rise: -3, climax: -3, fall: -3 } },
+      { category: "other", name: "Harry Potter", values: { setup: -2, rise: 3, climax: 2, fall: 3 } },
+    ],
     sections: {
       "status-quo": "Lily and James Potter are in hiding with their infant son Harry, marked for death by Voldemort.",
       "inciting": "Voldemort finds their hiding place and comes to kill the child himself.",
@@ -1457,6 +1637,10 @@ export const EXAMPLES = [
       climax: "Heathcliff spends years destroying the lives of everyone connected to Catherine, unable to let go of his passion.",
       fall: "He dies still consumed by her memory, having sacrificed every relationship and any peace for a love that outlasted her.",
     },
+    characters: [
+      { category: "protagonist", name: "Heathcliff", values: { setup: 1, rise: -2, climax: -2, fall: -3 } },
+      { category: "love-interest", name: "Catherine Earnshaw", values: { setup: 1, rise: -1, climax: -3, fall: -3 } },
+    ],
     sections: {
       "status-quo": "Heathcliff, a foundling, and Catherine Earnshaw grow up together as inseparable companions.",
       "inciting": "As they grow older, their bond deepens into a consuming, uncontrollable love.",
@@ -1480,6 +1664,9 @@ export const EXAMPLES = [
       climax: "Sophie is forced to choose which of her two children will be sent to the gas chamber, and which will live.",
       fall: "She survives the war physically, but the choice she was forced to make haunts and ultimately destroys her.",
     },
+    characters: [
+      { category: "protagonist", name: "Sophie", values: { setup: 0, rise: -2, climax: -3, fall: -3 } },
+    ],
     sections: {
       "status-quo": "Sophie, a Polish mother, is arrested with her two young children during the war.",
       "inciting": "They arrive together at a concentration camp, under the control of a Nazi officer.",
@@ -1503,6 +1690,10 @@ export const EXAMPLES = [
       climax: "The two finally meet in the ring, Rocky's grit tested against Creed's superior skill.",
       fall: "Rocky loses the decision but goes the distance — the assumed hierarchy between them shaken, if not overturned.",
     },
+    characters: [
+      { category: "protagonist", name: "Rocky Balboa", values: { setup: -2, rise: 0, climax: 1, fall: 2 } },
+      { category: "antagonist", name: "Apollo Creed", values: { setup: 3, rise: 2, climax: 0, fall: 1 } },
+    ],
     sections: {
       "status-quo": "Rocky Balboa is a small-time club boxer, unranked and unnoticed outside his neighborhood.",
       "inciting": "Heavyweight champion Apollo Creed picks him for a title shot, mostly as a publicity gimmick.",
@@ -1526,6 +1717,10 @@ export const EXAMPLES = [
       climax: "Isolated, scandalized, and increasingly paranoid about losing Vronsky's love, Anna's situation grows desperate.",
       fall: "Unable to see a way out of her isolation, Anna takes her own life.",
     },
+    characters: [
+      { category: "protagonist", name: "Anna Karenina", values: { setup: 0, rise: -1, climax: -3, fall: -3 } },
+      { category: "love-interest", name: "Count Vronsky", values: { setup: 0, rise: 1, climax: 0, fall: -1 } },
+    ],
     sections: {
       "status-quo": "Anna Karenina is married to a respectable, emotionally distant government official.",
       "inciting": "She meets the dashing Count Vronsky at a train station, and the two are instantly drawn to each other.",
@@ -1549,6 +1744,10 @@ export const EXAMPLES = [
       climax: "Carmen loses interest in José and turns her attention to a bullfighter, provoking José's jealous rage.",
       fall: "José kills Carmen rather than let her go, a crime born entirely from a love he couldn't control.",
     },
+    characters: [
+      { category: "protagonist", name: "Don José", values: { setup: 1, rise: -1, climax: -2, fall: -3 } },
+      { category: "love-interest", name: "Carmen", values: { setup: 1, rise: 0, climax: 1, fall: -3 } },
+    ],
     sections: {
       "status-quo": "Don José is a disciplined soldier stationed in Seville.",
       "inciting": "He meets Carmen, a free-spirited factory worker, who deliberately draws his attention.",
@@ -1572,6 +1771,10 @@ export const EXAMPLES = [
       climax: "Othello becomes convinced of Desdemona's betrayal, his trust in her collapsing entirely.",
       fall: "Othello kills Desdemona, only to learn moments later that Iago's evidence was a complete fabrication.",
     },
+    characters: [
+      { category: "protagonist", name: "Othello", values: { setup: 2, rise: -1, climax: -3, fall: -3 } },
+      { category: "love-interest", name: "Desdemona", values: { setup: 2, rise: -1, climax: -2, fall: -3 } },
+    ],
     sections: {
       "status-quo": "Othello, a respected general, marries Desdemona in secret, trusting her completely.",
       "inciting": "His ensign Iago, resentful over a denied promotion, resolves to destroy their marriage.",
@@ -1595,6 +1798,10 @@ export const EXAMPLES = [
       climax: "Romeo's exile after a fatal duel puts the final, seemingly insurmountable obstacle between them.",
       fall: "A plan to reunite them fails to reach Romeo in time, and the obstacle proves fatal to them both.",
     },
+    characters: [
+      { category: "protagonist", name: "Romeo", values: { setup: 1, rise: 1, climax: -3, fall: -3 } },
+      { category: "love-interest", name: "Juliet", values: { setup: 1, rise: 1, climax: -2, fall: -3 } },
+    ],
     sections: {
       "status-quo": "The Montagues and Capulets have fought a bitter, generations-old feud across Verona.",
       "inciting": "Romeo and Juliet fall for each other at a party, unaware — then all too aware — of whose families they belong to.",
@@ -1618,6 +1825,10 @@ export const EXAMPLES = [
       climax: "Romeo's killing of her cousin Tybalt forces Juliet to choose openly between her family's hatred and her love.",
       fall: "She stays loyal to Romeo to the end, her love for the 'enemy' outlasting even her own life.",
     },
+    characters: [
+      { category: "protagonist", name: "Juliet", values: { setup: 0, rise: 1, climax: -1, fall: -3 } },
+      { category: "love-interest", name: "Romeo", values: { setup: 1, rise: 1, climax: -2, fall: -3 } },
+    ],
     sections: {
       "status-quo": "Juliet is a Capulet, expected to marry well within her family's standing.",
       "inciting": "At a party, she falls for a masked stranger, only to learn afterward that he's Romeo — a Montague.",
@@ -1641,6 +1852,9 @@ export const EXAMPLES = [
       climax: "He murders more and more to protect his stolen crown, his ambition consuming everyone around him.",
       fall: "His ambition finally collapses under rebellion, and he is killed by the men he wronged to get there.",
     },
+    characters: [
+      { category: "protagonist", name: "Macbeth", values: { setup: 1, rise: 1, climax: -1, fall: -3 } },
+    ],
     sections: {
       "status-quo": "Macbeth is a loyal general, celebrated for his courage on the battlefield.",
       "inciting": "Three witches greet him with a prophecy that he is destined to become king.",
@@ -1664,6 +1878,10 @@ export const EXAMPLES = [
       climax: "Zeus punishes Prometheus by chaining him to a rock, where an eagle eats his regenerating liver each day.",
       fall: "Prometheus endures his eternal punishment, humanity's gift of fire an irreversible act of defiance against the gods.",
     },
+    characters: [
+      { category: "protagonist", name: "Prometheus", values: { setup: 0, rise: 1, climax: -3, fall: -2 } },
+      { category: "antagonist", name: "Zeus", values: { setup: 2, rise: -1, climax: 3, fall: 3 } },
+    ],
     sections: {
       "status-quo": "Prometheus, a Titan, watches humanity struggle in cold darkness, without fire or craft.",
       "inciting": "Zeus forbids the gods from giving mortals fire, wanting them kept weak and dependent.",
@@ -1687,6 +1905,10 @@ export const EXAMPLES = [
       climax: "Othello's jealousy, entirely built on lies, drives him to violence against the wife he loves.",
       fall: "Only after killing Desdemona does Othello learn the truth, and take his own life in grief and horror.",
     },
+    characters: [
+      { category: "protagonist", name: "Othello", values: { setup: 2, rise: -1, climax: -3, fall: -3 } },
+      { category: "love-interest", name: "Desdemona", values: { setup: 2, rise: -1, climax: -2, fall: -3 } },
+    ],
     sections: {
       "status-quo": "Othello and Desdemona begin their marriage in complete mutual trust.",
       "inciting": "Iago, resentful over a denied promotion, begins quietly working to destroy that trust.",
@@ -1710,6 +1932,9 @@ export const EXAMPLES = [
       climax: "John Proctor, trying to expose the girls' lies, is himself accused and arrested.",
       fall: "Proctor is executed rather than falsely confess, a victim of a judgment built entirely on deception.",
     },
+    characters: [
+      { category: "protagonist", name: "John Proctor", values: { setup: 0, rise: -1, climax: -3, fall: -3 } },
+    ],
     sections: {
       "status-quo": "A group of girls in Salem is caught dancing in the woods, a serious offense in the strict Puritan town.",
       "inciting": "To avoid punishment, the girls claim they were compelled by witchcraft, and begin naming names.",
@@ -1733,6 +1958,9 @@ export const EXAMPLES = [
       climax: "His remorse grows unbearable, driving him toward confession despite having nearly gotten away with it.",
       fall: "Raskolnikov confesses and accepts his punishment, finding a path toward redemption through suffering.",
     },
+    characters: [
+      { category: "protagonist", name: "Raskolnikov", values: { setup: -1, rise: -2, climax: -1, fall: 1 } },
+    ],
     sections: {
       "status-quo": "Raskolnikov, a poor former student, lives in isolation, nursing a theory that some people are above ordinary morality.",
       "inciting": "He murders an elderly pawnbroker to test that theory, and kills her sister when she stumbles on the scene.",
@@ -1756,6 +1984,10 @@ export const EXAMPLES = [
       climax: "Odysseus finally reaches Ithaca in disguise, testing who around him has stayed loyal.",
       fall: "He reveals himself to Penelope and Telemachus, reunited with the family he never stopped trying to reach.",
     },
+    characters: [
+      { category: "protagonist", name: "Odysseus", values: { setup: -1, rise: 0, climax: 1, fall: 3 } },
+      { category: "love-interest", name: "Penelope", values: { setup: -1, rise: -1, climax: 0, fall: 3 } },
+    ],
     sections: {
       "status-quo": "Odysseus has been gone from home for twenty years, presumed dead by most who knew him.",
       "inciting": "The gods finally grant him permission to leave Calypso's island and resume his journey home.",
@@ -1779,6 +2011,10 @@ export const EXAMPLES = [
       climax: "Bambi's mother is killed by a hunter while fleeing with him across a meadow.",
       fall: "Bambi grows up without her, eventually becoming a father himself, carrying her loss into his own life.",
     },
+    characters: [
+      { category: "protagonist", name: "Bambi", values: { setup: 1, rise: 0, climax: -3, fall: 1 } },
+      { category: "other", name: "Bambi's mother", values: { setup: 1, rise: 1, climax: -3, fall: -3 } },
+    ],
     sections: {
       "status-quo": "Bambi, a young deer, grows up under his mother's watchful protection in the forest.",
       "inciting": "Hunters begin appearing in the forest, and the animals start living under constant, quiet threat.",
@@ -1804,6 +2040,10 @@ export const EXAMPLES = [
       climax: "She and her friends face the Wicked Witch at her most dangerous, deep into unfamiliar territory.",
       fall: "Dorothy defeats the witch, gets her wish granted, and returns home valuing it more than she ever did before.",
     },
+    characters: [
+      { category: "protagonist", name: "Dorothy", values: { setup: 0, rise: -2, climax: -3, fall: 3 } },
+      { category: "antagonist", name: "the Wicked Witch of the West", values: { setup: 0, rise: 1, climax: 3, fall: -3 } },
+    ],
     sections: {
       "status-quo": "Dorothy lives an ordinary, restless life on a Kansas farm.",
       "inciting": "A tornado sweeps her and her house into the strange, unfamiliar land of Oz.",
@@ -1827,6 +2067,10 @@ export const EXAMPLES = [
       climax: "A moment of vulnerability threatens to end their friendship entirely just as feelings become undeniable.",
       fall: "They finally admit they're in love and end up together, closer than they'd have been without the wait.",
     },
+    characters: [
+      { category: "protagonist", name: "Harry", values: { setup: 0, rise: 1, climax: -2, fall: 3 } },
+      { category: "love-interest", name: "Sally", values: { setup: 0, rise: 1, climax: -1, fall: 3 } },
+    ],
     sections: {
       "status-quo": "Harry and Sally share a long car ride from Chicago to New York as strangers.",
       "inciting": "They clash the entire drive over whether men and women can ever really just be friends.",
@@ -1850,6 +2094,10 @@ export const EXAMPLES = [
       climax: "The Prince's search for the slipper's owner puts Cinderella's fate in the hands of a single, decisive test.",
       fall: "The slipper fits; Cinderella marries the Prince, her worth finally recognized beyond her circumstances.",
     },
+    characters: [
+      { category: "protagonist", name: "Cinderella", values: { setup: -3, rise: 1, climax: -1, fall: 3 } },
+      { category: "love-interest", name: "the Prince", values: { setup: 0, rise: 2, climax: 0, fall: 3 } },
+    ],
     sections: {
       "status-quo": "Cinderella lives as an unpaid servant in her own home, worked to exhaustion by her stepmother and stepsisters.",
       "inciting": "An invitation arrives to a royal ball, and her stepfamily forbids her from going.",
@@ -1873,6 +2121,10 @@ export const EXAMPLES = [
       climax: "Lennie accidentally kills a woman, and a mob forms to hunt him down.",
       fall: "George is forced to kill Lennie himself to spare him a worse death, and the dream of the farm dies with him.",
     },
+    characters: [
+      { category: "protagonist", name: "George", values: { setup: 0, rise: -1, climax: -3, fall: -2 } },
+      { category: "ally", name: "Lennie", values: { setup: 0, rise: -1, climax: -3, fall: -3 } },
+    ],
     sections: {
       "status-quo": "George and Lennie, migrant workers, arrive at a new ranch hoping to save enough for a small farm of their own.",
       "inciting": "Lennie's immense strength and limited understanding immediately start causing small, worrying incidents.",
@@ -1896,6 +2148,9 @@ export const EXAMPLES = [
       climax: "By the final act, nearly everyone around him is dead or doomed, the 'rightness' of his cause deeply muddied.",
       fall: "Hamlet dies having gotten his revenge, but whether the ending is a triumph or a tragedy is left genuinely ambiguous.",
     },
+    characters: [
+      { category: "protagonist", name: "Hamlet", values: { setup: -1, rise: -1, climax: -2, fall: 0 } },
+    ],
     sections: {
       "status-quo": "Hamlet mourns his father's death and his mother's swift remarriage to his uncle.",
       "inciting": "His father's ghost reveals Claudius murdered him, charging Hamlet with revenge.",
@@ -1919,6 +2174,10 @@ export const EXAMPLES = [
       climax: "Humanity is created last, formed in the divine image, and placed in the Garden of Eden.",
       fall: "Creation is complete and declared very good, the ascent from nothing to everything finished in a single arc.",
     },
+    characters: [
+      { category: "protagonist", name: "God", values: { setup: 0, rise: 2, climax: 3, fall: 3 } },
+      { category: "other", name: "Humanity", values: { setup: 0, rise: 0, climax: 3, fall: 3 } },
+    ],
     sections: {
       "status-quo": "In the beginning, there is nothing — formless void and darkness over the deep.",
       "inciting": "God speaks, and light appears, the first act separating something from nothing.",
@@ -1944,6 +2203,9 @@ export const EXAMPLES = [
       climax: "Oz itself reaches its turning point as the Wicked Witch is defeated and the Wizard exposed as a fraud.",
       fall: "The story closes as Dorothy leaves Oz behind and returns to Kansas.",
     },
+    characters: [
+      { category: "protagonist", name: "Dorothy", values: { setup: 0, rise: -1, climax: 1, fall: 3 } },
+    ],
     sections: {
       "status-quo": "Dorothy lives an ordinary life on a Kansas farm, restless within its familiar limits.",
       "inciting": "A tornado sweeps her from Kansas into the wholly unfamiliar land of Oz.",
@@ -1967,6 +2229,10 @@ export const EXAMPLES = [
       climax: "The final clue is within reach, at the point of greatest uncertainty about what it will reveal.",
       fall: "The question is answered, and the story ends there, its central mystery resolved.",
     },
+    characters: [
+      { category: "protagonist", name: "Robert Langdon", values: { setup: 0, rise: 0, climax: 1, fall: 2 } },
+      { category: "ally", name: "Sophie Neveu", values: { setup: 0, rise: 1, climax: 0, fall: 2 } },
+    ],
     sections: {
       "status-quo": "Robert Langdon is lecturing on symbols in Paris, his expertise purely academic so far.",
       "inciting": "A murdered curator's coded message poses a single burning question: what secret was he protecting?",
@@ -1990,6 +2256,9 @@ export const EXAMPLES = [
       climax: "Confronted with his own unmourned death, Scrooge must decide, urgently, who he's going to be.",
       fall: "The story ends once his transformation is complete and settled, a changed man for good.",
     },
+    characters: [
+      { category: "protagonist", name: "Ebenezer Scrooge", values: { setup: -3, rise: -1, climax: -3, fall: 3 } },
+    ],
     sections: {
       "status-quo": "The story opens on Scrooge, thoroughly satisfied with the miser he's become.",
       "inciting": "Marley's ghost warns him that three spirits will visit to challenge that satisfaction.",
@@ -2013,6 +2282,10 @@ export const EXAMPLES = [
       climax: "The turning point comes as the ship breaks apart, order fully collapsed into a fight for survival.",
       fall: "The story ends once a new order holds — the rescue, the survivors, the world reckoning with what happened.",
     },
+    characters: [
+      { category: "protagonist", name: "Jack Dawson", values: { setup: 0, rise: -1, climax: -3, fall: -3 } },
+      { category: "love-interest", name: "Rose DeWitt Bukater", values: { setup: 0, rise: -1, climax: -2, fall: 1 } },
+    ],
     sections: {
       "status-quo": "The story opens with the ship's grand order — first class and steerage alike — about to be disrupted.",
       "inciting": "The Titanic strikes an iceberg, the single event that will define everything after.",

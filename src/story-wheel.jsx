@@ -228,7 +228,7 @@ function Timeline({ structure, project, selected, onSelect, plotTypeExample }) {
 // plotType example carries a `sections` field (beat-id keyed, alongside its original act-keyed
 // `beats` field used elsewhere, e.g. the Compare view) purely for this finer breakdown.
 const GRID_STRUCTURE = structureById("three-act");
-function ActTable({ structure, plotTypeExample }) {
+function ActTable({ structure, project, plotTypeExample }) {
   // if the current story is itself using the Three-Act Structure, its beats are exactly what
   // column 1 already shows — an extra column would just repeat it, so it only appears for the
   // other 16 structures
@@ -241,6 +241,7 @@ function ActTable({ structure, plotTypeExample }) {
             <th>Act</th>
             {showStructureCol && <th>{structure.name} sections</th>}
             {plotTypeExample && <th>In {plotTypeExample.title}</th>}
+            <th>Your writing</th>
           </tr>
         </thead>
         <tbody>
@@ -296,6 +297,24 @@ function ActTable({ structure, plotTypeExample }) {
                     )}
                   </td>
                 )}
+                <td>
+                  {structureBeats.length === 0 ? "—" : (
+                    <ul className="act-table-list">
+                      {structureBeats.map(b => {
+                        const text = project.beats[b.id];
+                        return (
+                          <li key={b.id}>
+                            <span className="act-breakdown-swatch" style={{ background: ACTS[key].color }} />
+                            <span>
+                              <span className="act-table-beat-name">{b.name}</span>
+                              <span className={text ? "" : "act-table-unwritten"}>{text || "not written yet"}</span>
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </td>
               </tr>
             );
           })}
@@ -625,7 +644,7 @@ export default function StoryWheel() {
         ))}
       </div>
 
-      <ActTable structure={structure} plotTypeExample={plotTypeExample} />
+      <ActTable structure={structure} project={project} plotTypeExample={plotTypeExample} />
 
       <main className="layout">
         <div className="side-col">
@@ -750,6 +769,7 @@ button{font-family:inherit;cursor:pointer}
 .act-table-list li{display:flex;gap:8px}
 .act-table-list .act-breakdown-swatch{margin-top:5px}
 .act-table-beat-name{font-weight:600;color:var(--ember);display:block;margin-bottom:2px}
+.act-table-unwritten{font-style:italic;opacity:.6}
 .plot-type-note{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;
   font-size:12px;color:var(--dim);line-height:1.5;margin:0 0 12px}
 .plot-type-note span{font-weight:600}
