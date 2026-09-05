@@ -76,8 +76,9 @@ function groupSlices(slices, keyFn) {
    A linear Arrangement-View layout: horizontal tracks stacked top to bottom over one shared
    timeline (the story, left = start, right = end). Track order: Beats (the primary track) ->
    Written (a per-beat clip/empty-slot overlay of the same track) -> Acts (a 3-clip summary
-   track) -> two Character arcs line-layer tracks, always on: the chosen example's characters,
-   then — kept visually separate rather than overlaid — the story's own. */
+   track) -> two character-lane groups, always on: the chosen example's characters, then — kept
+   visually separate — the story's own, each character getting its own row/lane rather than every
+   character's line sharing one axis. */
 function Timeline({ structure, project, selected, onSelect, plotTypeExample }) {
   // which lines are hidden, keyed "ref:<category>" for the chosen example's characters and
   // "char:<id>" for the story's own — plain UI state, not worth persisting to the project
@@ -104,7 +105,7 @@ function Timeline({ structure, project, selected, onSelect, plotTypeExample }) {
     const groups = {};
     for (const key of Object.keys(ACTS)) {
       const here = (project.characters || []).filter(c => c.interacts?.[key]);
-      if (here.length >= 2) groups[key] = here.map(c => ({ name: c.name || "Unnamed", color: CATEGORY_COLORS[c.category || "other"] }));
+      if (here.length >= 2) groups[key] = here.map(c => ({ id: c.id, name: c.name || "Unnamed", color: CATEGORY_COLORS[c.category || "other"] }));
     }
     return groups;
   }, [project.characters]);
@@ -112,7 +113,6 @@ function Timeline({ structure, project, selected, onSelect, plotTypeExample }) {
     const g = actGroups.find(a => a.key === key);
     return g ? ((g.a0 + g.a1) / 2) * 10 : 0;
   };
-  const arcY = v => 100 - (clampArc(v) / 3) * 85;
   return (
     <div className="timeline" role="img" aria-label={`${structure.name} timeline`}>
       <div className="tl-summary">
@@ -163,81 +163,87 @@ function Timeline({ structure, project, selected, onSelect, plotTypeExample }) {
         </div>
       </div>
 
-      <ArcTrack trackLabel="Character arcs" legendPrefix={plotTypeExample ? `In ${plotTypeExample.title}:` : ""}
+      <CharacterLanes trackLabel="Character arcs"
         emptyMessage="Pick a plot type and an example above to see its characters' arcs here."
-        items={referenceCharacters.map(c => ({ key: c.name, category: c.category, values: c.values,
-          label: `${c.name} (${CATEGORY_LABELS[c.category]})` }))}
-        keyPrefix="ref" dashed hiddenLines={hiddenLines} toggleLine={toggleLine} arcX={arcX} arcY={arcY} />
+        items={referenceCharacters.map(c => ({ key: c.name, category: c.category, values: c.values, name: c.name }))}
+        keyPrefix="ref" dashed hiddenLines={hiddenLines} toggleLine={toggleLine} arcX={arcX} />
 
-      <ArcTrack trackLabel="Your characters" legendPrefix="Your characters:"
+      <CharacterLanes trackLabel="Your characters"
         emptyMessage="Give a character a fortune value in the Characters tab to see their arc here."
-        items={arcLineCharacters.map(c => ({ key: c.id, category: c.category, values: c.arcValue,
-          label: c.name || "Unnamed" }))}
-        keyPrefix="char" hiddenLines={hiddenLines} toggleLine={toggleLine} arcX={arcX} arcY={arcY}
+        items={arcLineCharacters.map(c => ({ key: c.id, category: c.category, values: c.arcValue, name: c.name || "Unnamed" }))}
+        keyPrefix="char" hiddenLines={hiddenLines} toggleLine={toggleLine} arcX={arcX}
         interactionGroups={interactionGroups} />
     </div>
   );
 }
 
-// one arc-lines track (an SVG lane of polylines, one per character) plus its click-to-toggle legend
-// below — used once for the chosen example's reference characters and again, separately, for the
-// story's own, so the two never visually blend into a single ambiguous tangle of lines
-function ArcTrack({ trackLabel, legendPrefix, emptyMessage, items, keyPrefix, dashed, hiddenLines, toggleLine, arcX, arcY, interactionGroups }) {
+// one row per character — its own small fortune sparkline, stacked rather than overlaid — plus,
+// when interactionGroups is given (only the story's own characters carry "interacts" flags), an
+// SVG overlay drawn on top spanning every row: a vertical connector between whichever rows meet in
+// a given act, so "who's on top" per act and "who meets whom" are both readable without one line's
+// shape ever being mistaken for another's on a shared axis
+function CharacterLanes({ trackLabel, emptyMessage, items, keyPrefix, dashed, hiddenLines, toggleLine, arcX, interactionGroups }) {
+  const laneY = v => 50 - (clampArc(v) / 3) * 40;
+  const rowOf = Object.fromEntries(items.map((c, i) => [c.key, i]));
+  const connectors = interactionGroups ? Object.entries(interactionGroups)
+    .map(([act, who]) => ({ act, rows: who.map(c => rowOf[c.id]).filter(i => i !== undefined) }))
+    .filter(c => c.rows.length >= 2) : [];
+  const catLabel = c => CATEGORY_LABELS[c.category || "other"];
   return (
-    <>
-      <div className="tl-track tl-track-arclines">
-        <div className="tl-label">{trackLabel}</div>
-        <div className="tl-lane tl-lane-arclines">
-          <svg viewBox="0 0 1000 200" preserveAspectRatio="none" className="arcline-svg" aria-hidden="true">
-            <line x1="0" y1="100" x2="1000" y2="100" className="arcline-midline" />
-            {interactionGroups && Object.entries(interactionGroups).map(([key, who]) => {
-              const x = arcX(key);
-              return (
-                <g key={key}>
-                  <line x1={x} y1="4" x2={x} y2="196" className="arcline-interaction">
-                    <title>{who.map(c => c.name).join(" & ")} interact here</title>
-                  </line>
-                  {who.map((c, i) => <circle key={i} cx={x} cy={8 + i * 9} r="3" fill={c.color} className="arcline-interaction-dot" />)}
-                </g>
-              );
-            })}
-            {items.map(c => {
-              const lineKey = `${keyPrefix}:${c.key}`;
-              if (hiddenLines.has(lineKey)) return null;
-              const color = CATEGORY_COLORS[c.category || "other"];
-              const points = Object.keys(ACTS).map(k => [arcX(k), arcY(c.values?.[k] ?? 0)]);
-              const pointsAttr = points.map(p => p.join(",")).join(" ");
-              return dashed ? (
-                <polyline key={lineKey} points={pointsAttr} className="arcline-path arcline-reference" stroke={color} />
-              ) : (
-                <g key={lineKey}>
-                  <polyline points={pointsAttr} className="arcline-path" stroke={color} />
-                  {points.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="4" className="arcline-point" fill={color} />)}
-                </g>
-              );
-            })}
-          </svg>
-        </div>
-      </div>
-      {items.length > 0 ? (
-        <div className="legend arcline-legend">
-          <span className="arcline-legend-label">{legendPrefix}</span>
+    <div className="tl-track char-lanes-track">
+      <div className="tl-label">{trackLabel}</div>
+      {items.length === 0 ? (
+        <p className="arcline-empty">{emptyMessage}</p>
+      ) : (
+        <div className="char-lanes">
           {items.map(c => {
             const lineKey = `${keyPrefix}:${c.key}`;
             const isOff = hiddenLines.has(lineKey);
+            const color = CATEGORY_COLORS[c.category || "other"];
+            const points = Object.keys(ACTS).map(k => [arcX(k), laneY(c.values?.[k] ?? 0)]);
+            const pointsAttr = points.map(p => p.join(",")).join(" ");
             return (
-              <button key={lineKey} type="button" className={`legend-item legend-toggle${isOff ? " is-off" : ""}`}
-                onClick={() => toggleLine(lineKey)} title={isOff ? "Click to show this line" : "Click to hide this line"}>
-                <i className={dashed ? "legend-swatch-dashed" : undefined} style={{ background: CATEGORY_COLORS[c.category || "other"] }} />
-                {c.label}
-              </button>
+              <div key={lineKey} className={`char-lane${isOff ? " is-off" : ""}`}>
+                <button type="button" className="char-lane-label" onClick={() => toggleLine(lineKey)}
+                  title={isOff ? "Click to show this line" : "Click to hide this line"}>
+                  <i className={dashed ? "legend-swatch-dashed" : undefined} style={{ background: color }} />
+                  <span className="char-lane-label-text">
+                    <span className="char-lane-label-name">{c.name}</span>
+                    <span className="char-lane-label-cat">{catLabel(c)}</span>
+                  </span>
+                </button>
+                <div className="char-lane-chart">
+                  <svg viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
+                    <line x1="0" y1="50" x2="1000" y2="50" className="char-lane-midline" />
+                    <polyline points={pointsAttr} className={`char-lane-path${dashed ? " char-lane-path-dashed" : ""}`} stroke={color} />
+                    {!dashed && points.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="4" className="char-lane-point" fill={color} />)}
+                  </svg>
+                </div>
+              </div>
             );
           })}
+          {connectors.length > 0 && (
+            <svg className="char-lanes-connectors" viewBox={`0 0 1000 ${items.length}`} preserveAspectRatio="none" aria-hidden="true">
+              {connectors.map(({ act, rows }) => {
+                const x = arcX(act);
+                const top = Math.min(...rows), bottom = Math.max(...rows);
+                return (
+                  <g key={act}>
+                    <line x1={x} y1={top + 0.5} x2={x} y2={bottom + 0.5} className="char-lane-connector">
+                      <title>{rows.map(i => items[i].name).join(" & ")} interact here</title>
+                    </line>
+                    {rows.map(i => (
+                      <line key={i} x1={x - 14} y1={i + 0.5} x2={x + 14} y2={i + 0.5}
+                        className="char-lane-connector-tick" stroke={CATEGORY_COLORS[items[i].category || "other"]} />
+                    ))}
+                  </g>
+                );
+              })}
+            </svg>
+          )}
         </div>
-      ) : (
-        <p className="arcline-empty">{emptyMessage}</p>
       )}
-    </>
+    </div>
   );
 }
 
@@ -464,9 +470,9 @@ function Characters({ characters, onChange }) {
       {characters.length > 0 && (
         <p className="char-sheet-hint">
           Each act's number is that character's <b>fortune</b> there — how well things are going for
-          them, from <b>-3</b> (rock bottom) to <b>3</b> (on top) — plotted as their line on the
-          Character arcs track above. Check "interacts" for any act where two or more characters
-          meet; a dashed marker appears there on that track.
+          them, from <b>-3</b> (rock bottom) to <b>3</b> (on top) — plotted on their own row in
+          "Your characters" above. Check "interacts" for any act where two or more characters meet;
+          a connecting line joins their rows there.
         </p>
       )}
       <button className="ghost-btn" onClick={add}>+ Add character</button>
@@ -853,29 +859,37 @@ button{font-family:inherit;cursor:pointer}
 .tl-clip-empty{background:transparent;border:1px solid var(--border);border-radius:3px}
 .tl-lane-acts .tl-clip{background:var(--panel2);border:1px solid var(--border);cursor:default}
 .tl-lane-acts .tl-clip-label{color:var(--gold)}
-.tl-track-arclines{height:140px}
-.tl-track-arclines .tl-lane{height:140px}
-.tl-lane-arclines{background:var(--panel)}
-.arcline-svg{width:100%;height:100%;display:block}
-.arcline-midline{stroke:var(--border);stroke-width:1.5}
-.arcline-interaction{stroke:var(--ember);stroke-width:1.5;stroke-dasharray:6 5;opacity:.7}
-.arcline-path{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;opacity:.9}
-.arcline-reference{stroke-dasharray:6 5;opacity:.55}
-.arcline-point{stroke:var(--panel);stroke-width:1.5}
-.arcline-legend{margin-top:-8px}
-.arcline-legend-label{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;
-  display:flex;align-items:center;margin-right:4px}
-.arcline-empty{color:var(--dim);font-size:12px;margin:-8px 0 0}
-.arcline-legend + .tl-track-arclines, .arcline-empty + .tl-track-arclines{margin-top:14px}
+.arcline-empty{color:var(--dim);font-size:12px;margin:0}
+.char-lanes-track{align-items:flex-start;margin-top:14px}
+.char-lanes{position:relative;flex:1;display:flex;flex-direction:column;background:var(--panel);
+  border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.char-lane{display:flex;align-items:stretch;height:44px;border-bottom:1px solid var(--border);
+  transition:opacity .15s}
+.char-lane:last-child{border-bottom:none}
+.char-lane.is-off{opacity:.32}
+.char-lane-label{display:flex;align-items:center;gap:7px;width:168px;flex:none;padding:0 10px;
+  background:transparent;border:none;border-right:1px solid var(--border);color:var(--ink);
+  text-align:left;cursor:pointer;font-family:inherit;overflow:hidden}
+.char-lane-label:hover .char-lane-label-name{color:var(--gold)}
+.char-lane-label i{width:9px;height:9px;border-radius:3px;flex:none}
+.char-lane-label-text{display:flex;flex-direction:column;gap:1px;min-width:0}
+.char-lane-label-name{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.char-lane-label-cat{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.03em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.char-lane-chart{flex:1;position:relative;min-width:0}
+.char-lane-chart svg{width:100%;height:100%;display:block}
+.char-lane-midline{stroke:var(--border);stroke-width:1.5}
+.char-lane-path{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;opacity:.9}
+.char-lane-path-dashed{stroke-dasharray:6 5;opacity:.6}
+.char-lane-point{stroke:var(--panel);stroke-width:1.5}
+.char-lanes-connectors{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.char-lane-connector,.char-lane-connector-tick{vector-effect:non-scaling-stroke}
+.char-lane-connector{stroke:var(--ember);stroke-width:2;stroke-dasharray:5 4;opacity:.85}
+.char-lane-connector-tick{stroke-width:3}
 .legend{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center;margin:4px 0 20px}
 .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--dim)}
 .legend-item i{width:9px;height:9px;border-radius:3px;display:inline-block}
 .legend-swatch-dashed{border:1.5px dashed rgba(0,0,0,.45);box-sizing:border-box}
-.legend-toggle{background:transparent;border:1px solid transparent;border-radius:6px;padding:3px 6px;
-  font-family:inherit;transition:opacity .15s,border-color .15s}
-.legend-toggle:hover{border-color:var(--border)}
-.legend-toggle.is-off{opacity:.35}
-.legend-toggle.is-off i{filter:grayscale(1)}
 .plot-type-hint{text-transform:none;letter-spacing:normal;font-size:11px;opacity:.7}
 .plot-type-top{display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px;margin:4px 0 18px;
   padding:14px 16px;background:var(--panel);border:1px solid var(--border);border-radius:12px}
@@ -977,5 +991,4 @@ button{font-family:inherit;cursor:pointer}
 .example-row-title{font-weight:600;color:var(--ember)}
 .example-row-creator{color:var(--dim);font-size:12px;flex:1}
 .example-row-plottype{color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
-.arcline-interaction-dot{stroke:var(--panel);stroke-width:1}
 `;
