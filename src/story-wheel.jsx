@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ACTS, STRUCTURES, structureById } from "./structures.js";
-import { PLOT_TYPES, plotTypeById, plotTypesByTaxonomy } from "./plot-types.js";
+import { plotTypeById, plotTypesByTaxonomy } from "./plot-types.js";
 import { examplesFor, exampleById } from "./examples.js";
 // Story Wheel — a linear, Arrangement-View-style story-structure sketchpad
 const APP_VERSION = "dev";   // replaced with package.json version at build time (scripts/build.mjs)
@@ -31,7 +31,7 @@ function newProject(structureId = "three-act") {
   const now = Date.now();
   return {
     id: uid(), title: "Untitled Story", structureId, genre: "", logline: "", plotType: "",
-    plotTypeExample: "", arcCharacterId: "",
+    plotTypeExample: "",
     beats: {}, characters: [], createdAt: now, updatedAt: now,
   };
 }
@@ -73,9 +73,8 @@ function groupSlices(slices, keyFn) {
    A linear Arrangement-View layout: horizontal tracks stacked top to bottom over one shared
    timeline (the story, left = start, right = end). Track order: Beats (the primary track) ->
    Written (a per-beat clip/empty-slot overlay of the same track) -> Acts (a 3-clip summary
-   track) -> Plot Type (an external 4-clip track, only present once one's picked; a highlighted
-   border marks a clip that also has a real-world example). */
-function Timeline({ structure, project, selected, onSelect, arcCharacter, selectedArcAct, onSelectArcAct }) {
+   track) -> Character arcs (a line-layer track, always on, one line per character category). */
+function Timeline({ structure, project, selected, onSelect }) {
   const slices = useMemo(() => segments(structure.beats), [structure]);
   const acts3 = useMemo(() => groupSlices(slices, b => b.threeAct), [slices]);
   const actGroups = useMemo(() => groupSlices(slices, b => b.act), [slices]);
@@ -89,6 +88,11 @@ function Timeline({ structure, project, selected, onSelect, arcCharacter, select
   // to actually reconcile or force their lines together at that point
   const interactionActs = useMemo(() => Object.keys(ACTS)
     .filter(key => (project.characters || []).filter(c => c.interacts?.[key]).length >= 2), [project.characters]);
+  const arcX = key => {
+    const g = actGroups.find(a => a.key === key);
+    return g ? ((g.a0 + g.a1) / 2) * 10 : 0;
+  };
+  const arcY = v => 100 - (clampArc(v) / 3) * 85;
   return (
     <div className="timeline" role="img" aria-label={`${structure.name} timeline`}>
       <div className="tl-summary">
@@ -139,39 +143,47 @@ function Timeline({ structure, project, selected, onSelect, arcCharacter, select
         </div>
       </div>
 
-      {arcLineCharacters.length > 0 && (
-        <div className="tl-track tl-track-arclines">
-          <div className="tl-label">Character arcs</div>
-          <div className="tl-lane tl-lane-arclines">
-            <svg viewBox="0 0 1000 200" preserveAspectRatio="none" className="arcline-svg" aria-hidden="true">
-              <line x1="0" y1="100" x2="1000" y2="100" className="arcline-midline" />
-              {interactionActs.map(key => {
-                const g = actGroups.find(a => a.key === key);
-                if (!g) return null;
-                const x = ((g.a0 + g.a1) / 2) * 10;
-                return <line key={key} x1={x} y1="4" x2={x} y2="196" className="arcline-interaction" />;
-              })}
-              {arcLineCharacters.map(c => {
-                const color = CATEGORY_COLORS[c.category || "other"];
-                const points = Object.keys(ACTS).map(key => {
-                  const g = actGroups.find(a => a.key === key);
-                  const x = g ? ((g.a0 + g.a1) / 2) * 10 : 0;
-                  const v = clampArc(c.arcValue?.[key] ?? 0);
-                  return [x, 100 - (v / 3) * 85];
-                });
-                return (
-                  <g key={c.id}>
-                    <polyline points={points.map(p => p.join(",")).join(" ")} className="arcline-path" stroke={color} />
-                    {points.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="4" className="arcline-point" fill={color} />)}
-                  </g>
-                );
-              })}
-            </svg>
-          </div>
+      <div className="tl-track tl-track-arclines">
+        <div className="tl-label">Character arcs</div>
+        <div className="tl-lane tl-lane-arclines">
+          <svg viewBox="0 0 1000 200" preserveAspectRatio="none" className="arcline-svg" aria-hidden="true">
+            <line x1="0" y1="100" x2="1000" y2="100" className="arcline-midline" />
+            {interactionActs.map(key => (
+              <line key={key} x1={arcX(key)} y1="4" x2={arcX(key)} y2="196" className="arcline-interaction" />
+            ))}
+            {REFERENCE_ARC_EXAMPLE.characters.map(c => {
+              const color = CATEGORY_COLORS[c.category];
+              const points = Object.keys(ACTS).map(key => [arcX(key), arcY(c.values[key])]);
+              return (
+                <polyline key={c.category} points={points.map(p => p.join(",")).join(" ")}
+                  className="arcline-path arcline-reference" stroke={color} />
+              );
+            })}
+            {arcLineCharacters.map(c => {
+              const color = CATEGORY_COLORS[c.category || "other"];
+              const points = Object.keys(ACTS).map(key => [arcX(key), arcY(c.arcValue?.[key] ?? 0)]);
+              return (
+                <g key={c.id}>
+                  <polyline points={points.map(p => p.join(",")).join(" ")} className="arcline-path" stroke={color} />
+                  {points.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="4" className="arcline-point" fill={color} />)}
+                </g>
+              );
+            })}
+          </svg>
         </div>
-      )}
+      </div>
+      <div className="legend arcline-legend">
+        <span className="arcline-legend-label">Example — {REFERENCE_ARC_EXAMPLE.title}:</span>
+        {REFERENCE_ARC_EXAMPLE.characters.map(c => (
+          <span key={c.category} className="legend-item">
+            <i className="legend-swatch-dashed" style={{ background: CATEGORY_COLORS[c.category] }} />
+            {c.name} ({CATEGORY_LABELS[c.category]})
+          </span>
+        ))}
+      </div>
       {arcLineCharacters.length > 0 && (
         <div className="legend arcline-legend">
+          <span className="arcline-legend-label">Your characters:</span>
           {arcLineCharacters.map(c => (
             <span key={c.id} className="legend-item">
               <i style={{ background: CATEGORY_COLORS[c.category || "other"] }} />
@@ -180,117 +192,10 @@ function Timeline({ structure, project, selected, onSelect, arcCharacter, select
           ))}
         </div>
       )}
-
-      {arcCharacter && (
-        <div className="tl-track">
-          <div className="tl-label">Arc</div>
-          <div className="tl-lane tl-lane-arc">
-            {actGroups.map(({ key, a0, a1 }) => {
-              const isSel = selectedArcAct === key;
-              const hasText = wordCount(arcCharacter.arc?.[key]) > 0;
-              return (
-                <div key={key} className={`tl-clip tl-clip-arc${isSel ? " is-sel" : ""}`}
-                  style={{ left: a0 + "%", width: (a1 - a0) + "%", background: ACTS[key].color, opacity: isSel ? 1 : hasText ? 0.88 : 0.45 }}
-                  onClick={() => onSelectArcAct(key)} title={`${arcCharacter.name || "Unnamed"} — ${ACTS[key].label}`}>
-                  <span className="tl-clip-label">{ACTS[key].label}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 
-/* ===== compare view — two timelines stacked, ribbons linking their matching acts ===== */
-// a plot type has no beats of its own — represented here as 4 equal-share pseudo-beats (one per
-// shared act-phase) so it can be dropped straight into CompareTimeline/ribbon math alongside a
-// real structure, with no separate code path
-function plotTypeAsWheel(plotType) {
-  return {
-    id: plotType.id, name: plotType.name,
-    beats: Object.keys(ACTS).map(key => ({ id: key, name: ACTS[key].label, pct: 25, act: key })),
-  };
-}
-// a smooth Sankey-style ribbon linking a span on the bottom edge of the top track to a span on
-// the top edge of the bottom track — both spans given as 0-100 percentages of the shared width
-function ribbonPathLinear(xA0, xA1, yA, xB0, xB1, yB) {
-  const midY = (yA + yB) / 2;
-  return [
-    `M ${xA0} ${yA}`, `C ${xA0} ${midY} ${xB0} ${midY} ${xB0} ${yB}`,
-    `L ${xB1} ${yB}`, `C ${xB1} ${midY} ${xA1} ${midY} ${xA1} ${yA}`, "Z",
-  ].join(" ");
-}
-function CompareTimeline({ structA, structB, numberedA = true, numberedB = true }) {
-  const W = 1000, trackH = 60, gap = 120;
-  const yA0 = 0, yA1 = trackH, yB0 = trackH + gap, yB1 = trackH + gap + trackH;
-  const slicesA = useMemo(() => segments(structA.beats), [structA]);
-  const slicesB = useMemo(() => segments(structB.beats), [structB]);
-  const groupsA = useMemo(() => groupSlices(slicesA, b => b.act), [slicesA]);
-  const groupsB = useMemo(() => groupSlices(slicesB, b => b.act), [slicesB]);
-  const ribbons = useMemo(() => groupsA
-    .map(gA => { const gB = groupsB.find(g => g.key === gA.key); return gB && { act: gA.key, d: ribbonPathLinear(gA.a0 * 10, gA.a1 * 10, yA1, gB.a0 * 10, gB.a1 * 10, yB0) }; })
-    .filter(Boolean), [groupsA, groupsB]);
-  return (
-    <svg viewBox={`0 0 ${W} ${yB1}`} className="compare-timeline" role="img" aria-label="Structure comparison timeline" preserveAspectRatio="none">
-      {slicesA.map(({ beat, a0, a1 }, i) => (
-        <g key={beat.id}>
-          <rect x={a0 * 10} y={yA0} width={(a1 - a0) * 10} height={trackH} fill={ACTS[beat.act].color} opacity={0.85} />
-          {numberedA && (a1 - a0) * 10 > 24 && (
-            <text x={a0 * 10 + (a1 - a0) * 5} y={yA0 + trackH / 2} textAnchor="middle" dominantBaseline="middle" className="slice-num">{i + 1}</text>
-          )}
-        </g>
-      ))}
-      {ribbons.map(r => <path key={r.act} d={r.d} fill={ACTS[r.act].color} className="ribbon" />)}
-      {slicesB.map(({ beat, a0, a1 }, i) => (
-        <g key={beat.id}>
-          <rect x={a0 * 10} y={yB0} width={(a1 - a0) * 10} height={trackH} fill={ACTS[beat.act].color} opacity={0.85} />
-          {numberedB && (a1 - a0) * 10 > 24 && (
-            <text x={a0 * 10 + (a1 - a0) * 5} y={yB0 + trackH / 2} textAnchor="middle" dominantBaseline="middle" className="slice-num">{i + 1}</text>
-          )}
-        </g>
-      ))}
-    </svg>
-  );
-}
-function ActBreakdown({ structure }) {
-  const groups = Object.keys(ACTS)
-    .map(key => ({ key, beats: structure.beats.filter(b => b.act === key) }))
-    .filter(g => g.beats.length);
-  return (
-    <div className="act-breakdown">
-      <h4>{structure.name}</h4>
-      {groups.map(g => (
-        <div className="act-breakdown-row" key={g.key}>
-          <span className="act-breakdown-swatch" style={{ background: ACTS[g.key].color }} />
-          <div>
-            <div className="act-breakdown-label">{ACTS[g.key].label}</div>
-            <div className="act-breakdown-beats">{g.beats.map(b => b.name).join(", ")}</div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-function PlotTypePanel({ plotType, example }) {
-  return (
-    <div className="plot-type-panel">
-      <div className="plot-type-taxonomy">{plotType.taxonomy}</div>
-      <p className="plot-type-blurb">{plotType.blurb}</p>
-      {Object.keys(ACTS).map(key => (
-        <div className="act-breakdown-row" key={key}>
-          <span className="act-breakdown-swatch" style={{ background: ACTS[key].color }} />
-          <div>
-            <div className="act-breakdown-label">{ACTS[key].label}</div>
-            <div className="act-breakdown-beats">{plotType.acts[key]}</div>
-            {example && <div className="example-line"><span>In {example.title}:</span> {example.beats[key]}</div>}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
 // the grid always breaks the Three-Act Structure's own sections into their four acts — one fixed,
 // simple reference for any plot type, independent of whichever of the 17 structures the current
 // story actually uses (that's shown live in the arrangement view instead, above). A plot type's
@@ -374,64 +279,12 @@ function ActTable({ structure, plotTypeExample }) {
     </div>
   );
 }
-function SidePicker({ label, kind, onKind, id, onId }) {
-  return (
-    <div className="compare-picker">
-      <span className="compare-picker-label">{label}</span>
-      <div className="compare-kind-toggle">
-        <button className={kind === "structure" ? "is-sel" : ""} onClick={() => onKind("structure")}>Structure</button>
-        <button className={kind === "plotType" ? "is-sel" : ""} onClick={() => onKind("plotType")}>Plot type</button>
-      </div>
-      {kind === "structure" ? (
-        <select value={id} onChange={e => onId(e.target.value)}>
-          {STRUCTURES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-        </select>
-      ) : (
-        <select value={id} onChange={e => onId(e.target.value)}>
-          {plotTypesByTaxonomy().map(g => (
-            <optgroup key={g.taxonomy} label={g.taxonomy}>
-              {g.items.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </optgroup>
-          ))}
-        </select>
-      )}
-    </div>
-  );
-}
-function CompareView({ onClose }) {
-  const [aKind, setAKind] = useState("plotType");
-  const [aId, setAId] = useState(PLOT_TYPES[0].id);
-  const [bKind, setBKind] = useState("structure");
-  const [bId, setBId] = useState(STRUCTURES[0].id);
-
-  const changeKindA = kind => { setAKind(kind); setAId(kind === "structure" ? STRUCTURES[0].id : PLOT_TYPES[0].id); };
-  const changeKindB = kind => { setBKind(kind); setBId(kind === "structure" ? STRUCTURES[0].id : PLOT_TYPES[0].id); };
-
-  const structA = aKind === "structure" ? structureById(aId) : plotTypeAsWheel(plotTypeById(aId));
-  const structB = bKind === "structure" ? structureById(bId) : plotTypeAsWheel(plotTypeById(bId));
-
-  return (
-    <div className="compare-view">
-      <div className="compare-head">
-        <SidePicker label="Top track" kind={aKind} onKind={changeKindA} id={aId} onId={setAId} />
-        <SidePicker label="Bottom track" kind={bKind} onKind={changeKindB} id={bId} onId={setBId} />
-        <button className="ghost-btn" onClick={onClose}>← Back to editor</button>
-      </div>
-      <p className="blurb">Ribbons connect each act to its counterpart on the other track. A structure's ribbon width is that act's real share of its story; a plot type's four acts are conceptual, not timed, so its segments are always even — it's the shape of a plot type's ribbons meeting a structure's real proportions that's worth reading.</p>
-      <div className="compare-body">
-        <CompareTimeline structA={structA} structB={structB} numberedA={aKind === "structure"} numberedB={bKind === "structure"} />
-        <div className="compare-legends">
-          {aKind === "structure" ? <ActBreakdown structure={structA} /> : <PlotTypePanel plotType={plotTypeById(aId)} />}
-          {bKind === "structure" ? <ActBreakdown structure={structB} /> : <PlotTypePanel plotType={plotTypeById(bId)} />}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* ===== beat editor ===== */
 
-function BeatEditor({ beat, text, onChange, plotType, plotTypeExample, example }) {
+// only the plot-type example is shown here — it's the one the user actually picked from a
+// dropdown; the structure has its own automatic example too, but showing both meant every beat
+// carried two unrelated "In ..." boxes, and only one of them was ever something the user chose
+function BeatEditor({ beat, text, onChange, plotType, plotTypeExample }) {
   return (
     <div className="beat-editor">
       <h3>{beat.name}</h3>
@@ -446,11 +299,6 @@ function BeatEditor({ beat, text, onChange, plotType, plotTypeExample, example }
       {plotTypeExample && plotTypeExample.beats[beat.act] && (
         <p className="example-note">
           <span className="example-note-tag">In {plotTypeExample.title}</span> — {plotTypeExample.beats[beat.act]}
-        </p>
-      )}
-      {example && example.beats[beat.id] && (
-        <p className="example-note">
-          <span className="example-note-tag">In {example.title}</span> — {example.beats[beat.id]}
         </p>
       )}
       <textarea value={text} placeholder="Write the scene, or just jot what has to happen…"
@@ -475,37 +323,27 @@ const DEFAULT_ARC_VALUE = { setup: 0, rise: 0, climax: 0, fall: 0 };
 const DEFAULT_INTERACTS = { setup: false, rise: false, climax: false, fall: false };
 const clampArc = v => Math.max(-3, Math.min(3, Math.round(Number(v)) || 0));
 
-// four stock stages of a change arc, mapped onto the same shared acts every structure, plot type
-// and example already uses — so a character's arc is just another act-keyed track, no new join key
-const ARC_STAGE_GUIDE = {
-  setup: "Who they are before the story disrupts them — their flaw, lie, or unmet want.",
-  rise: "How they change while pursuing the goal — new skills, allies, doubts.",
-  climax: "The test that forces a real choice — what breaks or reveals them.",
-  fall: "Who they've become — the lie replaced, the flaw faced, or, for a flat arc, what they proved right.",
+// a worked reference for the Character arcs track: one character per named category, all from the
+// same well-known story, so their shapes can be compared directly — a steady climb, a late-story
+// reversal, a mentor's sacrifice dip, and so on. Values are this project's own illustrative reading
+// of each arc's fortune, not a citation of anyone else's analysis.
+const REFERENCE_ARC_EXAMPLE = {
+  title: "Star Wars: A New Hope", creator: "George Lucas, 1977",
+  characters: [
+    { category: "protagonist", name: "Luke Skywalker", values: { setup: -2, rise: 0, climax: 1, fall: 3 } },
+    { category: "antagonist", name: "Darth Vader", values: { setup: 2, rise: 2, climax: 1, fall: -2 } },
+    { category: "ally", name: "Han Solo", values: { setup: -1, rise: -1, climax: 3, fall: 2 } },
+    { category: "mentor", name: "Obi-Wan Kenobi", values: { setup: 1, rise: 2, climax: -3, fall: 1 } },
+    { category: "love-interest", name: "Princess Leia", values: { setup: -2, rise: 1, climax: 1, fall: 2 } },
+    { category: "foil", name: "Biggs Darklighter", values: { setup: 0, rise: 1, climax: -3, fall: -3 } },
+    { category: "threshold-guardian", name: "Grand Moff Tarkin", values: { setup: 2, rise: 2, climax: 1, fall: -3 } },
+  ],
 };
-function ArcEditor({ character, act, text, onChange, example }) {
-  return (
-    <div className="beat-editor">
-      <h3>{character.name || "Unnamed"} <span className="arc-editor-act" style={{ color: ACTS[act].color }}>— {ACTS[act].label}</span></h3>
-      <p className="guide">{ARC_STAGE_GUIDE[act]}</p>
-      {example && (
-        <p className="example-note">
-          <span className="example-note-tag">In {example.title}</span> — {example.beats[act]}
-        </p>
-      )}
-      <textarea value={text} placeholder="What's happening to them here?"
-        onChange={e => onChange(e.target.value)} rows={12} />
-      <div className="wc">{wordCount(text)} words</div>
-    </div>
-  );
-}
 
 /* ===== characters ===== */
-const ROLES = ["Protagonist", "Antagonist", "Supporting", "Other"];
-function Characters({ characters, onChange, arcCharacterId, onArcCharacterChange }) {
+function Characters({ characters, onChange }) {
   const add = () => onChange([...characters, {
-    id: uid(), name: "", role: "Supporting", notes: "", category: "other",
-    arc: { setup: "", rise: "", climax: "", fall: "" },
+    id: uid(), name: "", category: "other", summary: "", notes: "",
     arcValue: { ...DEFAULT_ARC_VALUE }, interacts: { ...DEFAULT_INTERACTS },
   }]);
   const set = (id, patch) => onChange(characters.map(c => (c.id === id ? { ...c, ...patch } : c)));
@@ -523,52 +361,67 @@ function Characters({ characters, onChange, arcCharacterId, onArcCharacterChange
     <div className="characters">
       {characters.length === 0 && <p className="empty">No characters yet.</p>}
       {characters.length > 0 && (
-        <label className="plot-type-top-picker arc-tracker-picker">Track arc in timeline
-          <span className="plot-type-hint">(adds an Arc track to the arrangement view)</span>
-          <select value={arcCharacterId} onChange={e => onArcCharacterChange(e.target.value)}>
-            <option value="">None</option>
-            {characters.map(c => <option key={c.id} value={c.id}>{c.name || "Unnamed"}</option>)}
-          </select>
-        </label>
-      )}
-      {characters.map(c => (
-        <div className="char-block" key={c.id}>
-          <div className="char-row">
-            <input placeholder="Name" value={c.name} onChange={e => set(c.id, { name: e.target.value })} />
-            <select value={c.role} onChange={e => set(c.id, { role: e.target.value })}>
-              {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-            </select>
-            <select value={c.category || "other"} onChange={e => set(c.id, { category: e.target.value })}
-              style={{ color: CATEGORY_COLORS[c.category || "other"] }}>
-              {CATEGORY_LIST.map(cat => <option key={cat} value={cat}>{CATEGORY_LABELS[cat]}</option>)}
-            </select>
-            <input placeholder="One-line notes" value={c.notes} onChange={e => set(c.id, { notes: e.target.value })} />
-            <button className="icon-btn" onClick={() => remove(c.id)} title="Remove">✕</button>
-          </div>
-          <div className="char-arc-points">
-            <span className="char-arc-points-label">Arc points <span className="plot-type-hint">(-3 falling to 3 rising, per act — plots on the Character arcs track)</span></span>
-            <div className="char-arc-points-row">
-              {Object.keys(ACTS).map(key => (
-                <div className="char-arc-point" key={key}>
-                  <span className="char-arc-point-act" style={{ color: ACTS[key].color }}>{ACTS[key].label}</span>
-                  <input type="text" inputMode="numeric" className="char-arc-value" value={c.arcValue?.[key] ?? 0}
-                    onChange={e => {
-                      const raw = e.target.value;
-                      if (raw !== "" && raw !== "-" && !/^-?\d+$/.test(raw)) return; // ignore non-numeric keystrokes
-                      setArcValue(c, key, raw);
-                    }}
-                    onBlur={() => blurArcValue(c, key)} />
-                  <label className="char-interact-check">
-                    <input type="checkbox" checked={!!c.interacts?.[key]}
-                      onChange={e => setInteracts(c, key, e.target.checked)} />
-                    interacts here
-                  </label>
-                </div>
+        <div className="char-sheet-wrap">
+          <table className="char-sheet">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Summary</th>
+                <th>Notes</th>
+                {Object.keys(ACTS).map(key => (
+                  <th key={key} style={{ color: ACTS[key].color }}>{ACTS[key].label}</th>
+                ))}
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {characters.map(c => (
+                <tr key={c.id}>
+                  <td><input placeholder="Name" value={c.name} onChange={e => set(c.id, { name: e.target.value })} /></td>
+                  <td>
+                    <select value={c.category || "other"} onChange={e => set(c.id, { category: e.target.value })}
+                      style={{ color: CATEGORY_COLORS[c.category || "other"] }}>
+                      {CATEGORY_LIST.map(cat => <option key={cat} value={cat}>{CATEGORY_LABELS[cat]}</option>)}
+                    </select>
+                  </td>
+                  <td>
+                    <textarea rows={2} placeholder="Who are they? A few sentences on background, personality, wants."
+                      value={c.summary || ""} onChange={e => set(c.id, { summary: e.target.value })} />
+                  </td>
+                  <td><textarea rows={2} placeholder="Quick notes" value={c.notes} onChange={e => set(c.id, { notes: e.target.value })} /></td>
+                  {Object.keys(ACTS).map(key => (
+                    <td key={key} className="char-sheet-arc-cell">
+                      <input type="text" inputMode="numeric" className="char-arc-value" value={c.arcValue?.[key] ?? 0}
+                        title="Fortune in this act, from -3 (falling) to 3 (rising)"
+                        onChange={e => {
+                          const raw = e.target.value;
+                          if (raw !== "" && raw !== "-" && !/^-?\d+$/.test(raw)) return; // ignore non-numeric keystrokes
+                          setArcValue(c, key, raw);
+                        }}
+                        onBlur={() => blurArcValue(c, key)} />
+                      <label className="char-interact-check">
+                        <input type="checkbox" checked={!!c.interacts?.[key]}
+                          onChange={e => setInteracts(c, key, e.target.checked)} />
+                        interacts
+                      </label>
+                    </td>
+                  ))}
+                  <td><button className="icon-btn" onClick={() => remove(c.id)} title="Remove">✕</button></td>
+                </tr>
               ))}
-            </div>
-          </div>
+            </tbody>
+          </table>
         </div>
-      ))}
+      )}
+      {characters.length > 0 && (
+        <p className="char-sheet-hint">
+          Each act's number is that character's <b>fortune</b> there — how well things are going for
+          them, from <b>-3</b> (rock bottom) to <b>3</b> (on top) — plotted as their line on the
+          Character arcs track above. Check "interacts" for any act where two or more characters
+          meet; a dashed marker appears there on that track.
+        </p>
+      )}
       <button className="ghost-btn" onClick={add}>+ Add character</button>
     </div>
   );
@@ -625,8 +478,12 @@ function toMarkdown(project, structure) {
   if (project.characters.length) {
     lines.push("## Characters", "");
     for (const c of project.characters) {
-      lines.push(`- **${c.name || "Unnamed"}** (${c.role})${c.notes ? ` — ${c.notes}` : ""}`);
-      for (const key of Object.keys(ACTS)) if (c.arc?.[key]) lines.push(`  - *${ACTS[key].label}:* ${c.arc[key]}`);
+      lines.push(`- **${c.name || "Unnamed"}** (${CATEGORY_LABELS[c.category || "other"]})${c.summary ? ` — ${c.summary}` : ""}`);
+      if (c.notes) lines.push(`  - *Notes:* ${c.notes}`);
+      for (const key of Object.keys(ACTS)) {
+        const v = clampArc(c.arcValue?.[key]);
+        if (v !== 0) lines.push(`  - *${ACTS[key].label} fortune:* ${v > 0 ? "+" : ""}${v}`);
+      }
     }
     lines.push("");
   }
@@ -650,10 +507,8 @@ export default function StoryWheel() {
   const [projects, setProjects] = useState(loadProjects);
   const [activeId, setActiveId] = useState(() => loadActiveId());
   const [selected, setSelected] = useState(null);
-  const [selectedArcAct, setSelectedArcAct] = useState(null);
-  const [tab, setTab] = useState("beat"); // beat | arc | characters | notes
+  const [tab, setTab] = useState("beat"); // beat | characters | notes
   const [showStories, setShowStories] = useState(false);
-  const [compareOpen, setCompareOpen] = useState(false);
   const booted = useRef(false);
 
   useEffect(() => {
@@ -677,25 +532,12 @@ export default function StoryWheel() {
       setSelected(structure.beats[0]?.id || null);
   }, [structure?.id]); // eslint-disable-line
 
-  useEffect(() => {
-    setSelectedArcAct(project?.arcCharacterId ? "setup" : null);
-  }, [project?.arcCharacterId]); // eslint-disable-line
-
   const update = patch => setProjects(ps => ps.map(p => (p.id === activeId ? { ...p, ...patch, updatedAt: Date.now() } : p)));
 
   if (!project || !structure) return <div className="boot">Sharpening the pencil…</div>;
 
   const beat = structure.beats.find(b => b.id === selected);
   const plotType = plotTypeById(project.plotType);
-  const arcCharacter = project.characters.find(c => c.id === project.arcCharacterId) || null;
-  // "A Christmas Carol" already illustrates the MICE Quotient's "Character" plot type act by act —
-  // a character-driven plot type IS a change arc, so the same beats double as the arc reference
-  // rather than duplicating the same story as separate data
-  const arcExample = arcCharacter ? exampleById("christmas-carol-mice-character") : null;
-  // every structure ships with exactly one worked literature example, so it's shown automatically
-  // rather than picked from a dropdown — see it inline in the beat editor and split across the
-  // grid below the timeline
-  const structureExample = examplesFor("structure", structure.id)[0] || null;
   const plotTypeExamples = plotType ? examplesFor("plotType", plotType.id) : [];
   const plotTypeExample = plotTypeExamples.some(e => e.id === project.plotTypeExample) ? exampleById(project.plotTypeExample) : null;
 
@@ -728,108 +570,84 @@ export default function StoryWheel() {
       <style>{CSS}</style>
       <header className="topbar">
         <div className="brand">✦ Story Wheel</div>
-        {!compareOpen && (
-          <>
-            <input className="title-input" value={project.title}
-              onChange={e => update({ title: e.target.value })} placeholder="Story title" />
-            <select className="struct-select" value={project.structureId}
-              onChange={e => update({ structureId: e.target.value })}>
-              {STRUCTURES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-            <button className="ghost-btn" onClick={() => setShowStories(true)}>My Stories</button>
-            <button className="ghost-btn" onClick={() => setCompareOpen(true)}>Compare</button>
-            <button className="primary-btn" onClick={() => download(`${(project.title || "story").replace(/\s+/g, "-")}.md`, toMarkdown(project, structure))}>
-              Export
-            </button>
-          </>
-        )}
+        <input className="title-input" value={project.title}
+          onChange={e => update({ title: e.target.value })} placeholder="Story title" />
+        <select className="struct-select" value={project.structureId}
+          onChange={e => update({ structureId: e.target.value })}>
+          {STRUCTURES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
+        <button className="ghost-btn" onClick={() => setShowStories(true)}>My Stories</button>
+        <button className="primary-btn" onClick={() => download(`${(project.title || "story").replace(/\s+/g, "-")}.md`, toMarkdown(project, structure))}>
+          Export
+        </button>
       </header>
 
-      {compareOpen ? (
-        <CompareView onClose={() => setCompareOpen(false)} />
-      ) : (
-        <>
-          <p className="blurb">{structure.blurb}</p>
+      <p className="blurb">{structure.blurb}</p>
 
-          <div className="plot-type-top">
-            <label className="plot-type-top-picker">Plot type <span className="plot-type-hint">(pick one to see it against the timeline below)</span>
-              <select value={project.plotType} onChange={e => update({ plotType: e.target.value })}>
-                <option value="">None</option>
-                {plotTypesByTaxonomy().map(g => (
-                  <optgroup key={g.taxonomy} label={g.taxonomy}>
-                    {g.items.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                  </optgroup>
-                ))}
-              </select>
-            </label>
-            {plotType && (
-              <p className="plot-type-top-blurb"><span>{plotType.taxonomy}</span> — <em>{plotType.blurb}</em></p>
-            )}
-            {plotType && plotTypeExamples.length > 0 && (
-              <label className="plot-type-top-picker">See it in <span className="plot-type-hint">(a real example, mapped act-by-act)</span>
-                <select value={project.plotTypeExample} onChange={e => update({ plotTypeExample: e.target.value })}>
-                  <option value="">None</option>
-                  {plotTypeExamples.map(ex => <option key={ex.id} value={ex.id}>{ex.title}</option>)}
-                </select>
-              </label>
-            )}
-          </div>
-
-          <Timeline structure={structure} project={project} selected={selected} onSelect={id => { setSelected(id); setTab("beat"); }}
-            arcCharacter={arcCharacter} selectedArcAct={selectedArcAct}
-            onSelectArcAct={key => { setSelectedArcAct(key); setTab("arc"); }} />
-
-          <div className="legend">
-            {Object.values(ACTS).map(a => (
-              <span key={a.label} className="legend-item"><i style={{ background: a.color }} />{a.label}</span>
+      <div className="plot-type-top">
+        <label className="plot-type-top-picker">Plot type <span className="plot-type-hint">(pick one to see it against the timeline below)</span>
+          <select value={project.plotType} onChange={e => update({ plotType: e.target.value })}>
+            <option value="">None</option>
+            {plotTypesByTaxonomy().map(g => (
+              <optgroup key={g.taxonomy} label={g.taxonomy}>
+                {g.items.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </optgroup>
             ))}
+          </select>
+        </label>
+        {plotType && (
+          <p className="plot-type-top-blurb"><span>{plotType.taxonomy}</span> — <em>{plotType.blurb}</em></p>
+        )}
+        {plotType && plotTypeExamples.length > 0 && (
+          <label className="plot-type-top-picker">See it in <span className="plot-type-hint">(a real example, mapped act-by-act)</span>
+            <select value={project.plotTypeExample} onChange={e => update({ plotTypeExample: e.target.value })}>
+              <option value="">None</option>
+              {plotTypeExamples.map(ex => <option key={ex.id} value={ex.id}>{ex.title}</option>)}
+            </select>
+          </label>
+        )}
+      </div>
+
+      <Timeline structure={structure} project={project} selected={selected} onSelect={id => { setSelected(id); setTab("beat"); }} />
+
+      <div className="legend">
+        {Object.values(ACTS).map(a => (
+          <span key={a.label} className="legend-item"><i style={{ background: a.color }} />{a.label}</span>
+        ))}
+      </div>
+
+      <ActTable structure={structure} plotTypeExample={plotTypeExample} />
+
+      <main className="layout">
+        <div className="side-col">
+          <div className="tabs">
+            <button className={tab === "beat" ? "is-sel" : ""} onClick={() => setTab("beat")}>Beat</button>
+            <button className={tab === "characters" ? "is-sel" : ""} onClick={() => setTab("characters")}>Characters</button>
+            <button className={tab === "notes" ? "is-sel" : ""} onClick={() => setTab("notes")}>Logline &amp; Notes</button>
           </div>
-
-          <ActTable structure={structure} plotTypeExample={plotTypeExample} />
-
-          <main className="layout">
-            <div className="side-col">
-              <div className="tabs">
-                <button className={tab === "beat" ? "is-sel" : ""} onClick={() => setTab("beat")}>Beat</button>
-                {arcCharacter && (
-                  <button className={tab === "arc" ? "is-sel" : ""} onClick={() => setTab("arc")}>Arc</button>
-                )}
-                <button className={tab === "characters" ? "is-sel" : ""} onClick={() => setTab("characters")}>Characters</button>
-                <button className={tab === "notes" ? "is-sel" : ""} onClick={() => setTab("notes")}>Logline &amp; Notes</button>
-              </div>
-              {tab === "beat" && beat && (
-                <BeatEditor beat={beat} text={project.beats[beat.id] || ""}
-                  onChange={text => update({ beats: { ...project.beats, [beat.id]: text } })}
-                  plotType={plotType} plotTypeExample={plotTypeExample} example={structureExample} />
-              )}
-              {tab === "arc" && arcCharacter && selectedArcAct && (
-                <ArcEditor character={arcCharacter} act={selectedArcAct} text={arcCharacter.arc?.[selectedArcAct] || ""}
-                  onChange={text => update({
-                    characters: project.characters.map(c => (c.id === arcCharacter.id
-                      ? { ...c, arc: { ...c.arc, [selectedArcAct]: text } } : c)),
-                  })} example={arcExample} />
-              )}
-              {tab === "characters" && (
-                <Characters characters={project.characters} onChange={characters => update({ characters })}
-                  arcCharacterId={project.arcCharacterId} onArcCharacterChange={id => update({ arcCharacterId: id })} />
-              )}
-              {tab === "notes" && (
-                <div className="notes-panel">
-                  <label>Genre</label>
-                  <input value={project.genre} onChange={e => update({ genre: e.target.value })} placeholder="e.g. mystery, literary fiction, YA fantasy" />
-                  <label>Logline</label>
-                  <textarea value={project.logline} onChange={e => update({ logline: e.target.value })} rows={5}
-                    placeholder="One or two sentences: who wants what, and what's stopping them." />
-                </div>
-              )}
-            </div>
-          </main>
-
-          {showStories && (
-            <StoryPanel projects={projects} activeId={activeId} onOpen={openStory} onNew={newStory}
-              onRename={renameStory} onDuplicate={duplicateStory} onDelete={deleteStory} onClose={() => setShowStories(false)} />
+          {tab === "beat" && beat && (
+            <BeatEditor beat={beat} text={project.beats[beat.id] || ""}
+              onChange={text => update({ beats: { ...project.beats, [beat.id]: text } })}
+              plotType={plotType} plotTypeExample={plotTypeExample} />
           )}
-        </>
+          {tab === "characters" && (
+            <Characters characters={project.characters} onChange={characters => update({ characters })} />
+          )}
+          {tab === "notes" && (
+            <div className="notes-panel">
+              <label>Genre</label>
+              <input value={project.genre} onChange={e => update({ genre: e.target.value })} placeholder="e.g. mystery, literary fiction, YA fantasy" />
+              <label>Logline</label>
+              <textarea value={project.logline} onChange={e => update({ logline: e.target.value })} rows={5}
+                placeholder="One or two sentences: who wants what, and what's stopping them." />
+            </div>
+          )}
+        </div>
+      </main>
+
+      {showStories && (
+        <StoryPanel projects={projects} activeId={activeId} onOpen={openStory} onNew={newStory}
+          onRename={renameStory} onDuplicate={duplicateStory} onDelete={deleteStory} onClose={() => setShowStories(false)} />
       )}
     </div>
   );
@@ -878,7 +696,6 @@ button{font-family:inherit;cursor:pointer}
 .tl-clip-empty{background:transparent;border:1px solid var(--border);border-radius:3px}
 .tl-lane-acts .tl-clip{background:var(--panel2);border:1px solid var(--border);cursor:default}
 .tl-lane-acts .tl-clip-label{color:var(--gold)}
-.tl-lane-arc .tl-clip{border-radius:3px}
 .tl-track-arclines{height:140px}
 .tl-track-arclines .tl-lane{height:140px}
 .tl-lane-arclines{background:var(--panel)}
@@ -886,11 +703,15 @@ button{font-family:inherit;cursor:pointer}
 .arcline-midline{stroke:var(--border);stroke-width:1.5}
 .arcline-interaction{stroke:var(--ember);stroke-width:1.5;stroke-dasharray:6 5;opacity:.7}
 .arcline-path{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;opacity:.9}
+.arcline-reference{stroke-dasharray:6 5;opacity:.55}
 .arcline-point{stroke:var(--panel);stroke-width:1.5}
 .arcline-legend{margin-top:-8px}
-.legend{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:4px 0 20px}
+.arcline-legend-label{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;
+  display:flex;align-items:center;margin-right:4px}
+.legend{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center;margin:4px 0 20px}
 .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--dim)}
 .legend-item i{width:9px;height:9px;border-radius:3px;display:inline-block}
+.legend-swatch-dashed{border:1.5px dashed rgba(0,0,0,.45);box-sizing:border-box}
 .plot-type-hint{text-transform:none;letter-spacing:normal;font-size:11px;opacity:.7}
 .plot-type-top{display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px;margin:4px 0 18px;
   padding:14px 16px;background:var(--panel);border:1px solid var(--border);border-radius:12px}
@@ -915,10 +736,6 @@ button{font-family:inherit;cursor:pointer}
 .act-table-list li{display:flex;gap:8px}
 .act-table-list .act-breakdown-swatch{margin-top:5px}
 .act-table-beat-name{font-weight:600;color:var(--ember);display:block;margin-bottom:2px}
-.plot-type-panel{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--border);
-  border-radius:12px;padding:14px 16px}
-.plot-type-taxonomy{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
-.plot-type-blurb{color:var(--gold);font-size:13px;font-style:italic;margin:0 0 12px}
 .plot-type-note{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;
   font-size:12px;color:var(--dim);line-height:1.5;margin:0 0 12px}
 .plot-type-note span{font-weight:600}
@@ -941,25 +758,27 @@ button{font-family:inherit;cursor:pointer}
 .beat-editor textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;
   color:var(--ink);padding:12px;font-size:14px;line-height:1.6;font-family:'Fraunces',serif;resize:vertical}
 .wc{color:var(--dim);font-size:11px;margin-top:6px;text-align:right}
-.characters{display:flex;flex-direction:column;gap:8px}
-.arc-tracker-picker{padding-bottom:12px;margin-bottom:4px;border-bottom:1px solid var(--border)}
-.char-block{display:flex;flex-direction:column;gap:6px;padding-bottom:10px;margin-bottom:4px;
-  border-bottom:1px solid var(--border)}
-.char-block:last-of-type{border-bottom:none;margin-bottom:0}
-.char-row{display:grid;grid-template-columns:1fr 110px 150px 2fr auto;gap:8px}
-.char-row input,.char-row select{background:var(--bg);border:1px solid var(--border);color:var(--ink);
-  border-radius:7px;padding:8px 10px;font-size:13px}
-.char-arc-points{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
-.char-arc-points-label{display:block;font-size:11px;color:var(--dim);text-transform:uppercase;
-  letter-spacing:.04em;margin-bottom:8px}
-.char-arc-points-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.char-arc-point{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
-.char-arc-point-act{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.characters{display:flex;flex-direction:column;gap:12px}
+.char-sheet-wrap{width:100%;overflow-x:auto}
+.char-sheet{width:100%;min-width:820px;border-collapse:collapse;font-size:13px}
+.char-sheet th{text-align:left;font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;
+  font-weight:600;padding:0 8px 8px;border-bottom:1px solid var(--border);white-space:nowrap}
+.char-sheet td{vertical-align:top;padding:8px;border-bottom:1px solid var(--border)}
+.char-sheet tr:last-child td{border-bottom:none}
+.char-sheet input,.char-sheet select,.char-sheet textarea{background:var(--bg);border:1px solid var(--border);
+  color:var(--ink);border-radius:7px;padding:7px 9px;font-size:13px;font-family:inherit;width:100%;
+  box-sizing:border-box;resize:vertical}
+.char-sheet td:first-child{min-width:120px}
+.char-sheet td:nth-child(2){min-width:130px}
+.char-sheet td:nth-child(3),.char-sheet td:nth-child(4){min-width:170px}
+.char-sheet-arc-cell{min-width:78px}
 .char-arc-value{width:52px;text-align:center;background:var(--panel);
-  border:1px solid var(--border);color:var(--ink);border-radius:6px;padding:5px 4px;font-size:13px}
+  border:1px solid var(--border);color:var(--ink);border-radius:6px;padding:5px 4px;font-size:13px;
+  display:block;margin-bottom:4px}
 .char-interact-check{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--dim);
-  cursor:pointer}
-@media (max-width: 700px){ .char-arc-points-row{grid-template-columns:repeat(2,1fr);row-gap:12px} }
+  cursor:pointer;white-space:nowrap}
+.char-sheet-hint{font-size:12px;color:var(--dim);line-height:1.5;margin:0}
+.char-sheet-hint b{color:var(--gold)}
 .empty{color:var(--dim);font-size:13px}
 .notes-panel{display:flex;flex-direction:column;gap:6px}
 .notes-panel label{color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.04em;margin-top:8px}
@@ -977,22 +796,5 @@ button{font-family:inherit;cursor:pointer}
 .struct-pick{display:flex;flex-direction:column;gap:8px}
 .struct-opt{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:10px 12px}
 .struct-opt span{color:var(--dim);font-size:12px}
-.compare-head{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:8px}
-.compare-picker{display:flex;flex-direction:column;gap:6px}
-.compare-picker-label{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em}
-.compare-kind-toggle{display:flex;gap:4px}
-.compare-kind-toggle button{background:transparent;border:1px solid var(--border);color:var(--dim);font-size:11px;padding:4px 9px;border-radius:6px}
-.compare-kind-toggle button.is-sel{background:var(--panel2);color:var(--gold);border-color:var(--gold)}
-.compare-picker select{background:var(--panel);border:1px solid var(--border);color:var(--ink);border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;text-transform:none;letter-spacing:normal;min-width:200px}
-.compare-body{display:flex;flex-direction:column;align-items:center;gap:24px}
-.compare-timeline{width:100%;max-width:820px}
-.ribbon{opacity:.28}
-.slice-num{font-family:'Archivo',sans-serif;font-size:26px;font-weight:700;fill:#120E1C;pointer-events:none}
-.compare-legends{display:grid;grid-template-columns:1fr 1fr;gap:24px;width:100%;max-width:900px}
-@media (max-width: 700px){ .compare-legends{grid-template-columns:1fr} }
-.act-breakdown h4{font-family:'Fraunces',serif;color:var(--gold);margin:0 0 10px;font-size:16px}
-.act-breakdown-row{display:flex;gap:10px;margin-bottom:10px}
 .act-breakdown-swatch{width:10px;height:10px;border-radius:3px;flex:none;margin-top:4px}
-.act-breakdown-label{font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
-.act-breakdown-beats{font-size:13px;line-height:1.5}
 `;

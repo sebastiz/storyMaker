@@ -6,9 +6,7 @@ Structure, Kishōtenketsu, the Fichtean Curve, Dan Harmon's Story Circle, the Ei
 Structure, Weiland's Structure, Truby's 22 Steps, the Pixar Story Spine, The Virgin's Promise, The
 Heroine's Journey, Todorov's Equilibrium Theory, Frame Narrative, and Propp's 31 Functions — and a
 horizontal timeline lays out its beats as clips, sized by how much of the story each one typically
-takes up. Click a beat to see its guidance and write the scene. A
-**Compare** view stacks any two of them — structures, plot types, or one of each — as two
-horizontal tracks with ribbons linking their matching acts, to see how they relate.
+takes up. Click a beat to see its guidance and write the scene.
 
 **Live app:** open `index.html` directly, or enable GitHub Pages (Settings → Pages → deploy from
 `main`, root) to serve it at `https://sebastiz.github.io/storyMaker/`.
@@ -20,32 +18,21 @@ horizontal tracks with ribbons linking their matching acts, to see how they rela
 - **The timeline** — a genuine Ableton Arrangement View, horizontal tracks stacked top to bottom
   over one shared timeline: **Beats** (the main track, clips sized by each beat's share of the
   story and colour-coded by act), **Written** (a thin per-beat lane of filled clips vs. empty
-  slots), **Acts** (the three-act spine as a 3-clip summary track), and, once you've picked one,
-  **Arc** (a character's change arc as a 4-clip track — see below) — a live progress count sits
-  above the tracks
-- **Character arcs** — track one character's arc right in the arrangement view: pick them from the
-  Characters tab and a 4-clip **Arc** track appears alongside Beats/Written/Acts, one clip per
-  shared act (Setup/Rising Action/Confrontation/Resolution), each prompted with a stock stage of a
-  change arc — who they are before the story disrupts them, how they change while pursuing the
-  goal, the test that forces a real choice, who they've become. Click a clip to write that stage in
-  a dedicated Arc tab next to the beat editor; only one character is tracked at a time, keeping the
-  timeline readable. A worked reference is shown automatically alongside your own notes — Scrooge's
-  transformation in *A Christmas Carol*, act by act — both inline in the Arc tab and as its own
-  column in the grid, the same "no picker needed" treatment every other example in the app gets
-- **Character arc lines** — every character (not just the one tracked above) can get a lightweight
-  fortune arc: a **-3 to 3** score per shared act, set from four small number fields on the
-  Characters tab, plus an "interacts here" checkbox per act. Any character with a non-zero score
-  draws a coloured line on a **Character arcs** track in the arrangement view, one polyline per
-  character plotted across the same four acts everything else aligns to, coloured by a category
-  you pick per character (Protagonist, Antagonist, Ally, Mentor, Love Interest, Foil, Threshold
-  Guardian, or Other), with a small legend underneath. A thin dashed line marks any act where two
+  slots), **Acts** (the three-act spine as a 3-clip summary track), and **Character arcs** (see
+  below) — a live progress count sits above the tracks
+- **Character arcs** — every character gets a lightweight fortune arc: a **-3 to 3** score per
+  shared act, set from the Characters spreadsheet, plus an "interacts here" checkbox per act. Any
+  character with a non-zero score draws a coloured line on the **Character arcs** track in the
+  arrangement view, one polyline per character plotted across the same four acts everything else
+  aligns to, coloured by a category you pick per character (Protagonist, Antagonist, Ally, Mentor,
+  Love Interest, Foil, Threshold Guardian, or Other). A worked reference is
+  shown automatically underneath — one character per category from *Star Wars: A New Hope*, each
+  a dashed line of their own — so the track is never empty and there's always something to compare
+  your own characters' shapes against; your own characters get their own solid-line legend once
+  you've given at least one a non-zero score. A thin dashed vertical line marks any act where two
   or more characters are flagged as interacting there — a visual cue only, not a claim about what
-  happens at that point. The track only appears once at least one character has scores set
-- **Compare view** — stack any two structures, plot types, or a structure against a plot type, as
-  two horizontal tracks; ribbons connect each one's four acts to its counterpart in the other,
-  sized by that act's own share of its story (a plot type's four acts are conceptual, so its
-  segments are always even — it's the shape of its ribbons meeting a structure's real proportions
-  that's worth reading)
+  happens at that point. Each act's score is that character's *fortune* — how well things are
+  going for them, from rock bottom to on top — not a plot event by itself
 - **Plot type** — a picker at the top of the page tags the story with a plot-type taxonomy:
   Booker's 7 Basic Plots, Tobias' 20 Master Plots, Polti's 36 Dramatic Situations, Vonnegut's 6
   Story Shapes, or the MICE Quotient (73 entries total, grouped by taxonomy). It works with any of
@@ -62,20 +49,19 @@ horizontal tracks with ribbons linking their matching acts, to see how they rela
   one of the 73 plot types. Whenever the story's actual structure isn't the Three-Act Structure
   itself, its own beats appear too, in one more bulleted, act-grouped column of their own — so
   switching to, say, the Hero's Journey adds an "Ordinary World / Call to Adventure…" column
-  without disturbing the fixed Three-Act reference the rest of the grid is built on. Every structure
-  and plot type separately ships with its own worked
-  example too — shown inline in the beat editor as you write, both at once when applicable (*Jaws*
-  next to *Die Hard* on the Three-Act Structure, say) — *Star Wars* on the Hero's Journey, *The
-  Godfather* on Truby's 22 Steps, *Cinderella* on Propp's 31 Functions… — no picker needed.
+  without disturbing the fixed Three-Act reference the rest of the grid is built on. Once you've
+  picked a plot type's own example, that same example — and only that one — also appears inline in
+  the beat editor as you write, next to whichever beat it speaks to.
   **Every one of the 17 structures and all 73 plot types has at least one worked example** (90 in
   total), each checked programmatically against the target's actual beat/act ids so nothing is
-  mismatched or missing. (The character Arc track stays out of this grid — its own reference
-  example lives inline in the Arc tab instead.)
+  mismatched or missing.
 - **Beat editor** — a distraction-free textarea per beat with a live word count; the timeline's
   Written track marks which beats have been written
-- **Characters** — a roster (name, role, category, one-line notes) alongside the outline, with an
-  optional per-act change arc for whichever one is tracked in the timeline, plus lightweight per-act
-  arc scores and interaction flags for every character (see Character arc lines, above)
+- **Characters** — an interactive spreadsheet: one row per character, with Name, Type (Protagonist,
+  Antagonist, Ally, Mentor, Love Interest, Foil, Threshold Guardian, or Other), a free-text Summary
+  of who they are, Notes, and a fortune value + "interacts here" checkbox for each of the four
+  shared acts (see Character arcs, above) — add and remove rows freely, the table scrolls
+  horizontally on narrow screens
 - **Logline & notes** — a genre field and a logline/premise textarea per story
 - **My Stories** — keep multiple stories side by side, switch, rename, duplicate or delete them
 - **Export** — write the whole outline out as a Markdown file
