@@ -74,7 +74,16 @@ function groupSlices(slices, keyFn) {
    timeline (the story, left = start, right = end). Track order: Beats (the primary track) ->
    Written (a per-beat clip/empty-slot overlay of the same track) -> Acts (a 3-clip summary
    track) -> Character arcs (a line-layer track, always on, one line per character category). */
-function Timeline({ structure, project, selected, onSelect }) {
+function Timeline({ structure, project, selected, onSelect, plotTypeExample }) {
+  // which lines are hidden, keyed "ref:<category>" for the chosen example's characters and
+  // "char:<id>" for the story's own — plain UI state, not worth persisting to the project
+  const [hiddenLines, setHiddenLines] = useState(() => new Set());
+  const toggleLine = key => setHiddenLines(prev => {
+    const next = new Set(prev);
+    next.has(key) ? next.delete(key) : next.add(key);
+    return next;
+  });
+  const referenceCharacters = plotTypeExample?.characters || [];
   const slices = useMemo(() => segments(structure.beats), [structure]);
   const acts3 = useMemo(() => groupSlices(slices, b => b.threeAct), [slices]);
   const actGroups = useMemo(() => groupSlices(slices, b => b.act), [slices]);
@@ -151,19 +160,23 @@ function Timeline({ structure, project, selected, onSelect }) {
             {interactionActs.map(key => (
               <line key={key} x1={arcX(key)} y1="4" x2={arcX(key)} y2="196" className="arcline-interaction" />
             ))}
-            {REFERENCE_ARC_EXAMPLE.characters.map(c => {
+            {referenceCharacters.map(c => {
+              const key = `ref:${c.category}`;
+              if (hiddenLines.has(key)) return null;
               const color = CATEGORY_COLORS[c.category];
-              const points = Object.keys(ACTS).map(key => [arcX(key), arcY(c.values[key])]);
+              const points = Object.keys(ACTS).map(k => [arcX(k), arcY(c.values[k])]);
               return (
-                <polyline key={c.category} points={points.map(p => p.join(",")).join(" ")}
+                <polyline key={key} points={points.map(p => p.join(",")).join(" ")}
                   className="arcline-path arcline-reference" stroke={color} />
               );
             })}
             {arcLineCharacters.map(c => {
+              const key = `char:${c.id}`;
+              if (hiddenLines.has(key)) return null;
               const color = CATEGORY_COLORS[c.category || "other"];
-              const points = Object.keys(ACTS).map(key => [arcX(key), arcY(c.arcValue?.[key] ?? 0)]);
+              const points = Object.keys(ACTS).map(k => [arcX(k), arcY(c.arcValue?.[k] ?? 0)]);
               return (
-                <g key={c.id}>
+                <g key={key}>
                   <polyline points={points.map(p => p.join(",")).join(" ")} className="arcline-path" stroke={color} />
                   {points.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="4" className="arcline-point" fill={color} />)}
                 </g>
@@ -172,24 +185,36 @@ function Timeline({ structure, project, selected, onSelect }) {
           </svg>
         </div>
       </div>
-      <div className="legend arcline-legend">
-        <span className="arcline-legend-label">Example — {REFERENCE_ARC_EXAMPLE.title}:</span>
-        {REFERENCE_ARC_EXAMPLE.characters.map(c => (
-          <span key={c.category} className="legend-item">
-            <i className="legend-swatch-dashed" style={{ background: CATEGORY_COLORS[c.category] }} />
-            {c.name} ({CATEGORY_LABELS[c.category]})
-          </span>
-        ))}
-      </div>
+      {referenceCharacters.length > 0 && (
+        <div className="legend arcline-legend">
+          <span className="arcline-legend-label">In {plotTypeExample.title}:</span>
+          {referenceCharacters.map(c => {
+            const key = `ref:${c.category}`;
+            const isOff = hiddenLines.has(key);
+            return (
+              <button key={key} type="button" className={`legend-item legend-toggle${isOff ? " is-off" : ""}`}
+                onClick={() => toggleLine(key)} title={isOff ? "Click to show this line" : "Click to hide this line"}>
+                <i className="legend-swatch-dashed" style={{ background: CATEGORY_COLORS[c.category] }} />
+                {c.name} ({CATEGORY_LABELS[c.category]})
+              </button>
+            );
+          })}
+        </div>
+      )}
       {arcLineCharacters.length > 0 && (
         <div className="legend arcline-legend">
           <span className="arcline-legend-label">Your characters:</span>
-          {arcLineCharacters.map(c => (
-            <span key={c.id} className="legend-item">
-              <i style={{ background: CATEGORY_COLORS[c.category || "other"] }} />
-              {c.name || "Unnamed"}
-            </span>
-          ))}
+          {arcLineCharacters.map(c => {
+            const key = `char:${c.id}`;
+            const isOff = hiddenLines.has(key);
+            return (
+              <button key={key} type="button" className={`legend-item legend-toggle${isOff ? " is-off" : ""}`}
+                onClick={() => toggleLine(key)} title={isOff ? "Click to show this line" : "Click to hide this line"}>
+                <i style={{ background: CATEGORY_COLORS[c.category || "other"] }} />
+                {c.name || "Unnamed"}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
@@ -322,23 +347,6 @@ const CATEGORY_COLORS = {
 const DEFAULT_ARC_VALUE = { setup: 0, rise: 0, climax: 0, fall: 0 };
 const DEFAULT_INTERACTS = { setup: false, rise: false, climax: false, fall: false };
 const clampArc = v => Math.max(-3, Math.min(3, Math.round(Number(v)) || 0));
-
-// a worked reference for the Character arcs track: one character per named category, all from the
-// same well-known story, so their shapes can be compared directly — a steady climb, a late-story
-// reversal, a mentor's sacrifice dip, and so on. Values are this project's own illustrative reading
-// of each arc's fortune, not a citation of anyone else's analysis.
-const REFERENCE_ARC_EXAMPLE = {
-  title: "Star Wars: A New Hope", creator: "George Lucas, 1977",
-  characters: [
-    { category: "protagonist", name: "Luke Skywalker", values: { setup: -2, rise: 0, climax: 1, fall: 3 } },
-    { category: "antagonist", name: "Darth Vader", values: { setup: 2, rise: 2, climax: 1, fall: -2 } },
-    { category: "ally", name: "Han Solo", values: { setup: -1, rise: -1, climax: 3, fall: 2 } },
-    { category: "mentor", name: "Obi-Wan Kenobi", values: { setup: 1, rise: 2, climax: -3, fall: 1 } },
-    { category: "love-interest", name: "Princess Leia", values: { setup: -2, rise: 1, climax: 1, fall: 2 } },
-    { category: "foil", name: "Biggs Darklighter", values: { setup: 0, rise: 1, climax: -3, fall: -3 } },
-    { category: "threshold-guardian", name: "Grand Moff Tarkin", values: { setup: 2, rise: 2, climax: 1, fall: -3 } },
-  ],
-};
 
 /* ===== characters ===== */
 function Characters({ characters, onChange }) {
@@ -608,7 +616,8 @@ export default function StoryWheel() {
         )}
       </div>
 
-      <Timeline structure={structure} project={project} selected={selected} onSelect={id => { setSelected(id); setTab("beat"); }} />
+      <Timeline structure={structure} project={project} selected={selected} onSelect={id => { setSelected(id); setTab("beat"); }}
+        plotTypeExample={plotTypeExample} />
 
       <div className="legend">
         {Object.values(ACTS).map(a => (
@@ -712,6 +721,11 @@ button{font-family:inherit;cursor:pointer}
 .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--dim)}
 .legend-item i{width:9px;height:9px;border-radius:3px;display:inline-block}
 .legend-swatch-dashed{border:1.5px dashed rgba(0,0,0,.45);box-sizing:border-box}
+.legend-toggle{background:transparent;border:1px solid transparent;border-radius:6px;padding:3px 6px;
+  font-family:inherit;transition:opacity .15s,border-color .15s}
+.legend-toggle:hover{border-color:var(--border)}
+.legend-toggle.is-off{opacity:.35}
+.legend-toggle.is-off i{filter:grayscale(1)}
 .plot-type-hint{text-transform:none;letter-spacing:normal;font-size:11px;opacity:.7}
 .plot-type-top{display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px;margin:4px 0 18px;
   padding:14px 16px;background:var(--panel);border:1px solid var(--border);border-radius:12px}
