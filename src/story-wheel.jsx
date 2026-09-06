@@ -30,7 +30,7 @@ function saveActiveId(id) {
 function newProject(structureId = "three-act") {
   const now = Date.now();
   return {
-    id: uid(), title: "Untitled Story", structureId, seed: "", genre: "", logline: "", plotType: "",
+    id: uid(), title: "Untitled Story", structureId, seed: "", need: "", genre: "", logline: "", plotType: "",
     plotTypeExample: "",
     beats: {}, characters: [], createdAt: now, updatedAt: now,
   };
@@ -296,6 +296,29 @@ function ActTable({ structure, project, plotTypeExample }) {
           </tr>
         </thead>
         <tbody>
+          <tr>
+            <td className="act-table-act">
+              <div className="act-table-act-heading">Foundations</div>
+              <ul className="act-table-list">
+                <li>The Seed</li>
+                <li>What the Protagonist Needs</li>
+              </ul>
+            </td>
+            {showStructureCol && <td>—</td>}
+            {plotTypeExample && <td>—</td>}
+            <td>
+              <ul className="act-table-list">
+                <li>
+                  <span className="act-table-beat-name">The Seed</span>
+                  <span className={project.seed ? "" : "act-table-unwritten"}>{project.seed || "not written yet"}</span>
+                </li>
+                <li>
+                  <span className="act-table-beat-name">What the Protagonist Needs</span>
+                  <span className={project.need ? "" : "act-table-unwritten"}>{project.need || "not written yet"}</span>
+                </li>
+              </ul>
+            </td>
+          </tr>
           {Object.keys(ACTS).map(key => {
             const beats = GRID_STRUCTURE.beats.filter(b => b.act === key);
             const structureBeats = structure.beats.filter(b => b.act === key);
@@ -375,6 +398,28 @@ function ActTable({ structure, project, plotTypeExample }) {
   );
 }
 /* ===== beat editor ===== */
+
+// two pre-beat sub-tabs shown ahead of the structure's own beats — story foundations that exist
+// before any structure is picked, so they stay constant across structures rather than living
+// inside one. Ids are namespaced so they can never collide with a real beat id.
+const SEED_TAB = "__seed__";
+const NEED_TAB = "__need__";
+const FOUNDATION_TABS = [
+  { id: SEED_TAB, name: "The Seed", guide: "The spark this story started from — a line, an image, a 'what if…'." },
+  { id: NEED_TAB, name: "What the Protagonist Needs", guide: "What the protagonist actually needs by the end — not what they think they want." },
+];
+
+function FoundationEditor({ title, guide, text, onChange }) {
+  return (
+    <div className="beat-editor">
+      <h3>{title}</h3>
+      <p className="guide">{guide}</p>
+      <textarea value={text} placeholder="Write it out, or just jot what has to happen…"
+        onChange={e => onChange(e.target.value)} rows={12} />
+      <div className="wc">{wordCount(text)} words</div>
+    </div>
+  );
+}
 
 // only the plot-type example is shown here — it's the one the user actually picked from a
 // dropdown; the structure has its own automatic example too, but showing both meant every beat
@@ -611,6 +656,7 @@ function ExampleBrowser({ onPick, onClose }) {
 function toMarkdown(project, structure) {
   const lines = [`# ${project.title || "Untitled Story"}`, ""];
   if (project.seed) lines.push(`_Seed: ${project.seed}_`, "");
+  if (project.need) lines.push(`_What the protagonist needs: ${project.need}_`, "");
   if (project.genre) lines.push(`*Genre: ${project.genre}*`, "");
   if (project.logline) lines.push(`> ${project.logline}`, "");
   lines.push(`_Structure: ${structure.name}_`, "");
@@ -680,7 +726,8 @@ export default function StoryWheel() {
   const structure = project ? structureById(project.structureId) : null;
 
   useEffect(() => {
-    if (structure && (!selected || !structure.beats.some(b => b.id === selected)))
+    if (!structure || selected === SEED_TAB || selected === NEED_TAB) return;
+    if (!selected || !structure.beats.some(b => b.id === selected))
       setSelected(structure.beats[0]?.id || null);
   }, [structure?.id]); // eslint-disable-line
 
@@ -688,7 +735,7 @@ export default function StoryWheel() {
 
   if (!project || !structure) return <div className="boot">Sharpening the pencil…</div>;
 
-  const beat = structure.beats.find(b => b.id === selected);
+  const beat = structure.beats.find(b => b.id === selected) || null;
   const plotType = plotTypeById(project.plotType);
   const plotTypeExamples = plotType ? examplesFor("plotType", plotType.id) : [];
   const plotTypeExample = plotTypeExamples.some(e => e.id === project.plotTypeExample) ? exampleById(project.plotTypeExample) : null;
@@ -803,21 +850,38 @@ export default function StoryWheel() {
           <div className="tabs">
             <button className={tab === "beat" ? "is-sel" : ""} onClick={() => setTab("beat")}>Beat</button>
             <button className={tab === "characters" ? "is-sel" : ""} onClick={() => setTab("characters")}>Characters</button>
-            <button className={tab === "notes" ? "is-sel" : ""} onClick={() => setTab("notes")}>Seed &amp; Notes</button>
+            <button className={tab === "notes" ? "is-sel" : ""} onClick={() => setTab("notes")}>Notes</button>
           </div>
-          {tab === "beat" && beat && (
-            <BeatEditor beat={beat} text={project.beats[beat.id] || ""}
-              onChange={text => update({ beats: { ...project.beats, [beat.id]: text } })}
-              plotType={plotType} plotTypeExample={plotTypeExample} />
+          {tab === "beat" && (
+            <>
+              <div className="beat-subtabs">
+                {FOUNDATION_TABS.map(f => (
+                  <button key={f.id} className={selected === f.id ? "is-sel" : ""} onClick={() => setSelected(f.id)}>{f.name}</button>
+                ))}
+                {structure.beats.map(b => (
+                  <button key={b.id} className={selected === b.id ? "is-sel" : ""} onClick={() => setSelected(b.id)}>{b.name}</button>
+                ))}
+              </div>
+              {selected === SEED_TAB && (
+                <FoundationEditor title="The Seed" guide={FOUNDATION_TABS[0].guide}
+                  text={project.seed} onChange={seed => update({ seed })} />
+              )}
+              {selected === NEED_TAB && (
+                <FoundationEditor title="What the Protagonist Needs" guide={FOUNDATION_TABS[1].guide}
+                  text={project.need} onChange={need => update({ need })} />
+              )}
+              {beat && (
+                <BeatEditor beat={beat} text={project.beats[beat.id] || ""}
+                  onChange={text => update({ beats: { ...project.beats, [beat.id]: text } })}
+                  plotType={plotType} plotTypeExample={plotTypeExample} />
+              )}
+            </>
           )}
           {tab === "characters" && (
             <Characters characters={project.characters} onChange={characters => update({ characters })} />
           )}
           {tab === "notes" && (
             <div className="notes-panel">
-              <label>Seed</label>
-              <textarea value={project.seed} onChange={e => update({ seed: e.target.value })} rows={3}
-                placeholder="The spark this story started from — a line, an image, a 'what if…'." />
               <label>Genre</label>
               <input value={project.genre} onChange={e => update({ genre: e.target.value })} placeholder="e.g. mystery, literary fiction, YA fantasy" />
               <label>Logline</label>
@@ -956,6 +1020,10 @@ button{font-family:inherit;cursor:pointer}
 .tabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:10px}
 .tabs button{background:transparent;border:none;color:var(--dim);font-size:13px;padding:6px 10px;border-radius:7px}
 .tabs button.is-sel{background:var(--panel2);color:var(--gold)}
+.beat-subtabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.beat-subtabs button{background:var(--bg);border:1px solid var(--border);color:var(--dim);font-size:12px;
+  padding:6px 10px;border-radius:7px;white-space:nowrap}
+.beat-subtabs button.is-sel{background:var(--panel2);color:var(--gold);border-color:var(--gold)}
 .beat-editor h3{font-family:'Fraunces',serif;margin:0 0 6px;font-size:20px;color:var(--gold)}
 .guide{color:var(--dim);font-size:13px;margin:0 0 6px;line-height:1.5}
 .beat-ex-line{color:var(--gold);font-size:12px;margin:0 0 12px;opacity:.85}
