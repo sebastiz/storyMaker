@@ -504,11 +504,18 @@ function FoundationEditor({ title, guide, text, onChange }) {
   );
 }
 
-// only the plot-type example is shown here — it's the one the user actually picked from a
-// dropdown; the structure has its own automatic example too, but showing both meant every beat
-// carried two unrelated "In ..." boxes, and only one of them was ever something the user chose
-function BeatEditor({ beat, text, onChange, plotType, plotTypeExample, characters, interactions }) {
+// exactly one worked example ever shows per beat: the plot-type example the user actually picked
+// from a dropdown, using its exact beat-by-beat text (falling back to its coarser per-act text on
+// the rare beat that misses it); or, when nothing's picked, the current structure's own dedicated
+// example — every structure has exactly one, always available, mapped onto that structure's real
+// beats. Never both at once; two unrelated "In ..." boxes on the same beat is clutter, not help.
+function BeatEditor({ beat, text, onChange, plotType, plotTypeExample, structureExample, characters, interactions }) {
   const interactionLines = beatInteractionLines(beat.id, characters, interactions);
+  const activeExample = plotTypeExample
+    ? { title: plotTypeExample.title, text: plotTypeExample.sections?.[beat.id] ?? plotTypeExample.beats?.[beat.act] }
+    : structureExample
+      ? { title: structureExample.title, text: structureExample.beats?.[beat.id] }
+      : null;
   return (
     <div className="beat-editor">
       <h3>{beat.name}</h3>
@@ -520,9 +527,9 @@ function BeatEditor({ beat, text, onChange, plotType, plotTypeExample, character
           <span style={{ color: ACTS[beat.act].color }}>{plotType.name}:</span> {plotType.acts[beat.act]}
         </p>
       )}
-      {plotTypeExample && plotTypeExample.beats[beat.act] && (
+      {activeExample?.text && (
         <p className="example-note">
-          <span className="example-note-tag">In {plotTypeExample.title}</span> — {plotTypeExample.beats[beat.act]}
+          <span className="example-note-tag">In {activeExample.title}</span> — {activeExample.text}
         </p>
       )}
       <textarea value={text} placeholder="Write the scene, or just jot what has to happen…"
@@ -1021,6 +1028,14 @@ export default function StoryWheel() {
   const plotType = plotTypeById(project.plotType);
   const plotTypeExamples = plotType ? examplesFor("plotType", plotType.id) : [];
   const plotTypeExample = plotTypeExamples.some(e => e.id === project.plotTypeExample) ? exampleById(project.plotTypeExample) : null;
+  // every structure has exactly one dedicated example mapped beat-by-beat onto it (Star Wars for
+  // the Hero's Journey, Cinderella for Propp's 31 Functions, etc.) — always available, no picking
+  // needed, so it's the fallback illustration once no plot-type example is guiding the beat notes
+  const structureExample = examplesFor("structure", structure.id)[0] || null;
+  // a plot-type example's fine-grained, beat-by-beat breakdown only exists for the Three-Act
+  // Structure (that's what its `sections` field is keyed to) — so picking one is also picking that
+  // structure, the same way choosing "See it in" already used to just silently mismatch otherwise
+  const pickPlotTypeExample = exampleId => update(exampleId ? { plotTypeExample: exampleId, structureId: "three-act" } : { plotTypeExample: exampleId });
 
   const openStory = id => { setActiveId(id); setShowStories(false); };
   const newStory = structureId => {
@@ -1107,8 +1122,8 @@ export default function StoryWheel() {
           <p className="plot-type-top-blurb"><span>{plotType.taxonomy}</span> — <em>{plotType.blurb}</em></p>
         )}
         {plotType && plotTypeExamples.length > 0 && (
-          <label className="plot-type-top-picker">See it in <span className="plot-type-hint">(a real example, mapped act-by-act)</span>
-            <select value={project.plotTypeExample} onChange={e => update({ plotTypeExample: e.target.value })}>
+          <label className="plot-type-top-picker">See it in <span className="plot-type-hint">(a real example, mapped beat-by-beat — switches your structure to Three-Act, where it's fully mapped out)</span>
+            <select value={project.plotTypeExample} onChange={e => pickPlotTypeExample(e.target.value)}>
               <option value="">None</option>
               {plotTypeExamples.map(ex => <option key={ex.id} value={ex.id}>{ex.title}</option>)}
             </select>
@@ -1162,7 +1177,7 @@ export default function StoryWheel() {
               {beat && (
                 <BeatEditor beat={beat} text={project.beats[beat.id] || ""}
                   onChange={text => update({ beats: { ...project.beats, [beat.id]: text } })}
-                  plotType={plotType} plotTypeExample={plotTypeExample}
+                  plotType={plotType} plotTypeExample={plotTypeExample} structureExample={structureExample}
                   characters={project.characters} interactions={project.interactions} />
               )}
             </>
@@ -1190,7 +1205,10 @@ export default function StoryWheel() {
           onExportAll={exportAllStories} onImport={importStories} />
       )}
       {showExamples && (
-        <ExampleBrowser onPick={(plotTypeId, exampleId) => { update({ plotType: plotTypeId, plotTypeExample: exampleId }); setShowExamples(false); }}
+        <ExampleBrowser onPick={(plotTypeId, exampleId) => {
+          update({ plotType: plotTypeId, plotTypeExample: exampleId, ...(exampleId ? { structureId: "three-act" } : {}) });
+          setShowExamples(false);
+        }}
           onClose={() => setShowExamples(false)} />
       )}
     </div>
