@@ -664,6 +664,7 @@ function CharacterFlow({ characters, structure, onChange }) {
             <i className="char-flow-swatch" style={{ background: CATEGORY_COLORS[c.category || "other"] }} />
             <span className="char-flow-name">{c.name || "Unnamed"}</span>
             <span className="char-flow-cat">{CATEGORY_LABELS[c.category || "other"]}</span>
+            {c.job && <span className="char-flow-job">{c.job}</span>}
             {(c.need || c.summary) && <span className="char-flow-need">{c.need || c.summary}</span>}
             <button type="button" className="icon-btn" title="Clear this character's fortune line"
               onClick={() => setArcPoints(c.id, {})}>↺</button>
@@ -1200,6 +1201,7 @@ button{font-family:inherit;cursor:pointer}
 .char-flow-swatch{width:9px;height:9px;border-radius:3px;flex:none}
 .char-flow-name{font-family:'Fraunces',serif;font-size:15px;color:var(--ink)}
 .char-flow-cat{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em}
+.char-flow-job{font-size:12px;color:var(--ink);opacity:.8;white-space:nowrap}
 .char-flow-need{flex:1;min-width:120px;font-size:12px;color:var(--dim);font-style:italic;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .arc-graph{display:flex;gap:8px}
