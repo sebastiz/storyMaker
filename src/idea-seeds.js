@@ -131,11 +131,28 @@ const VOWEL_SOUND = /^[aeiou]/i;
 const article = word => (VOWEL_SOUND.test(word) ? "an" : "a");
 const countryPhrase = country => (COUNTRIES_NEEDING_THE.has(country) ? `the ${country}` : country);
 
-export function buildSeedSentence({ need, job, timePhrase, country }) {
-  if (!need || !job || !timePhrase || !country) return "";
+// one clause per character, e.g. "A blacksmith (Antagonist) who wants power."
+export function buildCharacterClause({ need, job, categoryLabel }) {
+  if (!need || !job) return "";
   const a = article(job);
-  return `${a[0].toUpperCase()}${a.slice(1)} ${job} in ${countryPhrase(country)} `
-    + `during ${timePhrase}, who ${need}.`;
+  const cap = `${a[0].toUpperCase()}${a.slice(1)}`;
+  return `${cap} ${job}${categoryLabel ? ` (${categoryLabel})` : ""} who ${need}.`;
+}
+
+// "In France during the Second World War" — no trailing punctuation, since it's a lead-in
+export function buildSettingClause({ country, timePhrase }) {
+  if (!country || !timePhrase) return "";
+  return `In ${countryPhrase(country)} during ${timePhrase}`;
+}
+
+// stitches a setting and any number of character clauses into one seed paragraph, skipping
+// whichever half is left blank rather than demanding every field be filled in
+export function buildSeedParagraph({ country, timePhrase, characters }) {
+  const setting = buildSettingClause({ country, timePhrase });
+  const clauses = (characters || []).map(buildCharacterClause).filter(Boolean);
+  if (!setting) return clauses.join(" ");
+  if (clauses.length === 0) return `${setting}.`;
+  return `${setting}: ${clauses.join(" ")}`;
 }
 
 export const randomOf = list => list[Math.floor(Math.random() * list.length)];

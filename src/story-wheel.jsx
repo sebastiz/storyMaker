@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ACTS, STRUCTURES, structureById } from "./structures.js";
 import { plotTypeById, plotTypesByTaxonomy } from "./plot-types.js";
 import { examplesFor, exampleById } from "./examples.js";
-import { CHARACTER_NEEDS, CHARACTER_JOBS, TIME_PERIODS, COUNTRIES, buildSeedSentence, randomOf } from "./idea-seeds.js";
+import { CHARACTER_NEEDS, CHARACTER_JOBS, TIME_PERIODS, COUNTRIES, buildSeedParagraph, randomOf } from "./idea-seeds.js";
 // Story Wheel — a linear, Arrangement-View-style story-structure sketchpad
 const APP_VERSION = "dev";   // replaced with package.json version at build time (scripts/build.mjs)
 
@@ -410,19 +410,34 @@ const FOUNDATION_TABS = [
   { id: NEED_TAB, name: "What the Protagonist Needs", guide: "What the protagonist actually needs by the end — not what they think they want." },
 ];
 
-// exhaustive-ish dropdowns (need / job / era / country) that compile into one seed sentence —
-// an on-ramp for the blank-page problem, not a replacement for writing the seed out by hand
+// exhaustive-ish dropdowns (setting: era / country, plus one need+job row per character —
+// protagonist and antagonist by default, any of the other character categories addable) that
+// compile into one seed paragraph — an on-ramp for the blank-page problem, not a replacement
+// for writing the seed out by hand
 function IdeaGenerator({ onUseSeed }) {
-  const [need, setNeed] = useState("");
-  const [job, setJob] = useState("");
+  const [rows, setRows] = useState([
+    { id: uid(), category: "protagonist", need: "", job: "" },
+    { id: uid(), category: "antagonist", need: "", job: "" },
+  ]);
   const [timeIdx, setTimeIdx] = useState("");
   const [country, setCountry] = useState("");
   const timePhrase = timeIdx !== "" ? TIME_PERIODS[timeIdx].phrase : "";
-  const sentence = buildSeedSentence({ need, job, timePhrase, country });
+
+  const setRow = (id, patch) => setRows(rows.map(r => (r.id === id ? { ...r, ...patch } : r)));
+  const removeRow = id => setRows(rows.filter(r => r.id !== id));
+  const addRow = () => {
+    const used = new Set(rows.map(r => r.category));
+    const category = CATEGORY_LIST.find(c => !used.has(c)) || CATEGORY_LIST[rows.length % CATEGORY_LIST.length];
+    setRows([...rows, { id: uid(), category, need: "", job: "" }]);
+  };
+
+  const paragraph = buildSeedParagraph({
+    country, timePhrase,
+    characters: rows.map(r => ({ need: r.need, job: r.job, categoryLabel: CATEGORY_LABELS[r.category] })),
+  });
 
   const randomize = () => {
-    setNeed(randomOf(CHARACTER_NEEDS));
-    setJob(randomOf(CHARACTER_JOBS));
+    setRows(rows.map(r => ({ ...r, need: randomOf(CHARACTER_NEEDS), job: randomOf(CHARACTER_JOBS) })));
     setTimeIdx(String(Math.floor(Math.random() * TIME_PERIODS.length)));
     setCountry(randomOf(COUNTRIES));
   };
@@ -430,18 +445,6 @@ function IdeaGenerator({ onUseSeed }) {
   return (
     <div className="idea-gen">
       <div className="idea-gen-grid">
-        <label>Character need
-          <select value={need} onChange={e => setNeed(e.target.value)}>
-            <option value="">Choose…</option>
-            {CHARACTER_NEEDS.map(n => <option key={n} value={n}>{n}</option>)}
-          </select>
-        </label>
-        <label>Job
-          <select value={job} onChange={e => setJob(e.target.value)}>
-            <option value="">Choose…</option>
-            {CHARACTER_JOBS.map(j => <option key={j} value={j}>{j}</option>)}
-          </select>
-        </label>
         <label>Time period
           <select value={timeIdx} onChange={e => setTimeIdx(e.target.value)}>
             <option value="">Choose…</option>
@@ -455,10 +458,35 @@ function IdeaGenerator({ onUseSeed }) {
           </select>
         </label>
       </div>
-      <p className="idea-gen-preview">{sentence || "Pick all four to build a seed sentence…"}</p>
+
+      <div className="idea-gen-chars-wrap">
+        <div className="idea-gen-chars">
+          {rows.map(row => (
+            <div className="idea-gen-char-row" key={row.id}>
+              <select value={row.category} onChange={e => setRow(row.id, { category: e.target.value })}>
+                {CATEGORY_LIST.map(c => <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>)}
+              </select>
+              <select value={row.need} onChange={e => setRow(row.id, { need: e.target.value })}>
+                <option value="">Need…</option>
+                {CHARACTER_NEEDS.map(n => <option key={n} value={n}>{n}</option>)}
+              </select>
+              <select value={row.job} onChange={e => setRow(row.id, { job: e.target.value })}>
+                <option value="">Job…</option>
+                {CHARACTER_JOBS.map(j => <option key={j} value={j}>{j}</option>)}
+              </select>
+              <button type="button" className="icon-btn" onClick={() => removeRow(row.id)} title="Remove character">✕</button>
+            </div>
+          ))}
+        </div>
+      </div>
+      <button type="button" className="ghost-btn idea-gen-add" onClick={addRow}>+ Add character</button>
+
+      <p className="idea-gen-preview">
+        {paragraph || "Pick a setting and at least one character's need and job to build a seed…"}
+      </p>
       <div className="idea-gen-actions">
         <button type="button" className="ghost-btn" onClick={randomize}>🎲 Surprise me</button>
-        <button type="button" className="primary-btn" disabled={!sentence} onClick={() => onUseSeed(sentence)}>
+        <button type="button" className="primary-btn" disabled={!paragraph} onClick={() => onUseSeed(paragraph)}>
           Use as seed
         </button>
       </div>
@@ -1094,6 +1122,12 @@ button{font-family:inherit;cursor:pointer}
   text-transform:uppercase;letter-spacing:.04em}
 .idea-gen-grid select{background:var(--panel);border:1px solid var(--border);color:var(--ink);
   border-radius:7px;padding:8px 9px;font-size:13px;font-family:inherit}
+.idea-gen-chars-wrap{width:100%;overflow-x:auto;margin-top:12px}
+.idea-gen-chars{display:flex;flex-direction:column;gap:8px;min-width:520px}
+.idea-gen-char-row{display:grid;grid-template-columns:150px 1fr 1fr 26px;gap:8px;align-items:center}
+.idea-gen-char-row select{background:var(--panel);border:1px solid var(--border);color:var(--ink);
+  border-radius:7px;padding:8px 9px;font-size:13px;font-family:inherit;width:100%}
+.idea-gen-add{margin-top:8px}
 .idea-gen-preview{font-family:'Fraunces',serif;font-style:italic;color:var(--ink);font-size:15px;
   line-height:1.5;margin:14px 0 10px}
 .idea-gen-actions{display:flex;gap:8px;flex-wrap:wrap}
