@@ -21,7 +21,7 @@ export const STRUCTURES = [
     beats: [
       { id: "status-quo",   name: "Opening Image",     pct: 5,  act: "setup",  threeAct: 1, guide: "The world before the story disturbs it. What's the ordinary, in one image or scene?", ex: "Quiet village morning" },
       { id: "inciting",     name: "Inciting Incident",  pct: 7,  act: "setup",  threeAct: 1, guide: "The event that makes the story start. What breaks the ordinary world open?", ex: "Dragon attacks village" },
-      { id: "plot-point-1", name: "Reaction to Incident", pct: 8,  act: "setup",  threeAct: 1, guide: "The point of no return — the protagonist commits to the journey.", ex: "Hero grabs sword" },
+      { id: "plot-point-1", name: "Situation Disclosure", pct: 8,  act: "setup",  threeAct: 1, guide: "The point of no return — the protagonist commits to the journey.", ex: "Hero grabs sword" },
       { id: "rising",       name: "Establish the New World", pct: 20, act: "rise",   threeAct: 2, guide: "Obstacles escalate, stakes climb, the protagonist learns the rules of the new world.", ex: "Gathers allies, trains" },
       { id: "midpoint",     name: "Full Situation Disclosure", pct: 8,  act: "rise",   threeAct: 2, guide: "A false victory or false defeat that shifts the story's direction and raises the stakes.", ex: "Discovers evil's scale" },
       { id: "plot-point-2", name: "The Drop",           pct: 12, act: "climax", threeAct: 2, guide: "Everything falls apart. The lowest point, right before the final push.", ex: "Ally betrays hero" },
