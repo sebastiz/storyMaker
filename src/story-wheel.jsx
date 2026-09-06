@@ -366,12 +366,18 @@ function ActTable({ structure, project, plotTypeExample }) {
                     <ul className="act-table-list">
                       {structureBeats.map(b => {
                         const text = project.beats[b.id];
+                        const interactionLines = beatInteractionLines(b.id, project.characters, project.interactions);
                         return (
                           <li key={b.id}>
                             <span className="act-breakdown-swatch" style={{ background: ACTS[key].color }} />
                             <span>
                               <span className="act-table-beat-name">{b.name}</span>
                               <span className={text ? "" : "act-table-unwritten"}>{text || "not written yet"}</span>
+                              {interactionLines.map(l => (
+                                <span key={l.id} className="act-table-interaction-line" style={{ color: INTERACTION_COLORS[l.type] }}>
+                                  {l.text}
+                                </span>
+                              ))}
                             </span>
                           </li>
                         );
@@ -502,8 +508,7 @@ function FoundationEditor({ title, guide, text, onChange }) {
 // dropdown; the structure has its own automatic example too, but showing both meant every beat
 // carried two unrelated "In ..." boxes, and only one of them was ever something the user chose
 function BeatEditor({ beat, text, onChange, plotType, plotTypeExample, characters, interactions }) {
-  const nameOf = id => characters?.find(c => c.id === id)?.name || "Unnamed";
-  const beatInteractions = (interactions || []).filter(it => it.beatId === beat.id);
+  const interactionLines = beatInteractionLines(beat.id, characters, interactions);
   return (
     <div className="beat-editor">
       <h3>{beat.name}</h3>
@@ -520,23 +525,18 @@ function BeatEditor({ beat, text, onChange, plotType, plotTypeExample, character
           <span className="example-note-tag">In {plotTypeExample.title}</span> — {plotTypeExample.beats[beat.act]}
         </p>
       )}
-      {beatInteractions.length > 0 && (
-        // mirrors an interaction's dotted connector on the Character Flow grid — surfaced here too
-        // since that's where the scene actually gets written, so the beat you're writing reminds
-        // you who meets whom and how it goes, without touching your own prose in the textarea below
-        <p className="beat-interaction-note">
-          <span className="beat-interaction-note-tag">Interactions here</span>
-          {beatInteractions.map((it, i) => (
-            <span key={it.id}>
-              {i > 0 && ", "}
-              {nameOf(it.aId)} & {nameOf(it.bId)} <span style={{ color: INTERACTION_COLORS[it.type] }}>({INTERACTION_LABELS[it.type]})</span>
-            </span>
-          ))}
-        </p>
-      )}
       <textarea value={text} placeholder="Write the scene, or just jot what has to happen…"
         onChange={e => onChange(e.target.value)} rows={12} />
       <div className="wc">{wordCount(text)} words</div>
+      {interactionLines.length > 0 && (
+        // mirrors an interaction's dotted connector on the Character Flow grid — surfaced here too,
+        // after the notes above rather than inside them, so it never touches the writer's own prose
+        <div className="beat-interaction-lines">
+          {interactionLines.map(l => (
+            <p key={l.id} className="beat-interaction-line" style={{ color: INTERACTION_COLORS[l.type] }}>{l.text}</p>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -556,7 +556,17 @@ const CATEGORY_COLORS = {
 // (good/bad/neither), not who was in it, so it stays legible however the two characters are colored
 const INTERACTION_TYPES = ["positive", "negative", "neutral"];
 const INTERACTION_LABELS = { positive: "Positive", negative: "Negative", neutral: "Neutral" };
+const INTERACTION_ADVERBS = { positive: "positively", negative: "negatively", neutral: "neutrally" };
 const INTERACTION_COLORS = { positive: "#6FBF73", negative: "#D2555A", neutral: "#9A93A8" };
+// one plain sentence per interaction landing on this beat, e.g. "Elena interacts with Baron Voss
+// negatively." — shared by the Act Table (after that beat's own notes) and the Beat editor (after
+// the textarea), so both read the same underlying data the same way
+function beatInteractionLines(beatId, characters, interactions) {
+  const nameOf = id => characters?.find(c => c.id === id)?.name || "Unnamed";
+  return (interactions || [])
+    .filter(it => it.beatId === beatId)
+    .map(it => ({ id: it.id, type: it.type, text: `${nameOf(it.aId)} interacts with ${nameOf(it.bId)} ${INTERACTION_ADVERBS[it.type]}.` }));
+}
 const clampArc = v => Math.max(-3, Math.min(3, Math.round(Number(v)) || 0));
 // -3..3 fortune <-> the 0-100 y coordinate the arc charts (both the small timeline preview and the
 // big draggable graph) share, so a drawn point and a plotted point always land in the same place
@@ -1287,6 +1297,7 @@ button{font-family:inherit;cursor:pointer}
 .act-table-list .act-breakdown-swatch{margin-top:5px}
 .act-table-beat-name{font-weight:600;color:var(--ember);display:block;margin-bottom:2px}
 .act-table-unwritten{font-style:italic;opacity:.6}
+.act-table-interaction-line{display:block;font-size:12px;font-style:italic;margin-top:3px}
 .plot-type-note{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;
   font-size:12px;color:var(--dim);line-height:1.5;margin:0 0 12px}
 .plot-type-note span{font-weight:600}
@@ -1297,10 +1308,8 @@ button{font-family:inherit;cursor:pointer}
 .example-note-tag{color:var(--ember);font-weight:600}
 .example-line{font-size:12px;color:var(--dim);margin-top:4px;line-height:1.5}
 .example-line span{color:var(--ember);font-weight:600}
-.beat-interaction-note{background:var(--bg);border:1px solid var(--border);border-left:3px solid var(--gold);
-  border-radius:8px;padding:10px 12px;font-size:12px;color:var(--ink);line-height:1.7;margin:0 0 12px}
-.beat-interaction-note-tag{display:block;color:var(--gold);font-weight:600;text-transform:uppercase;
-  font-size:10px;letter-spacing:.05em;margin-bottom:2px}
+.beat-interaction-lines{margin-top:10px;display:flex;flex-direction:column;gap:4px}
+.beat-interaction-line{margin:0;font-size:13px;font-style:italic;line-height:1.5}
 .side-col{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;
   min-height:420px;width:100%;max-width:720px}
 .tabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:10px}
