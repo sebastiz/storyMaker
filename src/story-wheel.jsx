@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ACTS, STRUCTURES, structureById } from "./structures.js";
 import { plotTypeById, plotTypesByTaxonomy } from "./plot-types.js";
-import { examplesFor, exampleById } from "./examples.js";
+import { examplesFor } from "./examples.js";
 import { CHARACTER_NEEDS, CHARACTER_JOBS, TIME_PERIODS, COUNTRIES, buildSeedParagraph, randomOf } from "./idea-seeds.js";
 // Story Wheel — a linear, Arrangement-View-style story-structure sketchpad
 const APP_VERSION = "dev";   // replaced with package.json version at build time (scripts/build.mjs)
@@ -32,7 +32,6 @@ function newProject(structureId = "three-act") {
   const now = Date.now();
   return {
     id: uid(), title: "Untitled Story", structureId, seed: "", need: "", genre: "", logline: "", plotType: "",
-    plotTypeExample: "",
     beats: {}, characters: [], interactions: [], createdAt: now, updatedAt: now,
   };
 }
@@ -80,7 +79,7 @@ function groupSlices(slices, keyFn) {
    track) -> two character-lane groups, always on: the chosen example's characters, then — kept
    visually separate — the story's own, each character getting its own row/lane rather than every
    character's line sharing one axis. */
-function Timeline({ structure, project, selected, onSelect, plotTypeExample }) {
+function Timeline({ structure, project, selected, onSelect, plotTypeExamples }) {
   // which lines are hidden, keyed "ref:<category>" for the chosen example's characters and
   // "char:<id>" for the story's own — plain UI state, not worth persisting to the project
   const [hiddenLines, setHiddenLines] = useState(() => new Set());
@@ -89,7 +88,10 @@ function Timeline({ structure, project, selected, onSelect, plotTypeExample }) {
     next.has(key) ? next.delete(key) : next.add(key);
     return next;
   });
-  const referenceCharacters = plotTypeExample?.characters || [];
+  // only one example's cast gets drawn here — usually just the first of up to 3 has character
+  // arcs at all, and overlaying 3 casts' worth of lines on one small reference track would be
+  // unreadable clutter, not clarity
+  const referenceCharacters = plotTypeExamples?.find(ex => ex.characters)?.characters || [];
   const slices = useMemo(() => segments(structure.beats), [structure]);
   const acts3 = useMemo(() => groupSlices(slices, b => b.threeAct), [slices]);
   const actGroups = useMemo(() => groupSlices(slices, b => b.act), [slices]);
@@ -269,21 +271,20 @@ function CharacterLanes({ trackLabel, emptyMessage, items, keyPrefix, dashed, hi
 // plotType example carries a `sections` field (beat-id keyed, alongside its original act-keyed
 // `beats` field used elsewhere, e.g. the Compare view) purely for this finer breakdown.
 const GRID_STRUCTURE = structureById("three-act");
-function ActTable({ structure, project, plotTypeExample }) {
-  // if the current story is itself using the Three-Act Structure, its beats are exactly what
-  // column 1 already shows — an extra column would just repeat it, so it only appears for the
-  // other 16 structures. It's also redundant once a plot-type example is active: the example
-  // column already lists this same structure's beat names alongside real text, so the bare
-  // beat-name column would just be repeating what's right next to it.
-  const showStructureCol = structure.id !== GRID_STRUCTURE.id && !plotTypeExample;
+function ActTable({ structure, project, plotTypeExamples, structureExamples }) {
+  // exactly one set of "In ..." columns ever shows: up to 3 plot-type examples the user picked,
+  // or — since every structure now has 3 dedicated examples of its own, always available — those,
+  // when no plot type is active. A bare beat-name-only reference column is never needed anymore,
+  // since real example text (with the same beat names right there) is always on screen instead.
+  const activeExamples = plotTypeExamples.length > 0 ? plotTypeExamples : structureExamples;
+  const exampleText = (ex, b, key) => (ex.sections ? (ex.sections[b.id] ?? ex.beats?.[key]) : ex.beats?.[b.id]);
   return (
     <div className="act-table-wrap">
       <table className="act-table">
         <thead>
           <tr>
             <th>Act</th>
-            {showStructureCol && <th>{structure.name} sections</th>}
-            {plotTypeExample && <th>In {plotTypeExample.title}</th>}
+            {activeExamples.map(ex => <th key={ex.id}>In {ex.title}</th>)}
             <th>Your writing</th>
           </tr>
         </thead>
@@ -296,8 +297,7 @@ function ActTable({ structure, project, plotTypeExample }) {
                 <li>What the Protagonist Needs</li>
               </ul>
             </td>
-            {showStructureCol && <td>—</td>}
-            {plotTypeExample && <td>—</td>}
+            {activeExamples.map(ex => <td key={ex.id}>—</td>)}
             <td>
               <ul className="act-table-list">
                 <li>
@@ -332,26 +332,12 @@ function ActTable({ structure, project, plotTypeExample }) {
                     </ul>
                   )}
                 </td>
-                {showStructureCol && (
-                  <td>
-                    {structureBeats.length === 0 ? "—" : (
-                      <ul className="act-table-list">
-                        {structureBeats.map(b => (
-                          <li key={b.id}>
-                            <span className="act-breakdown-swatch" style={{ background: ACTS[key].color }} />
-                            {b.name}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </td>
-                )}
-                {plotTypeExample && (
-                  <td>
-                    {/* keyed to whichever structure this example's per-beat text was actually
-                        written for (plotTypeExample.bestStructureId) — the same one the app
-                        auto-switches to on picking it, so this always lines up with the current
-                        structure's own beats rather than a fixed Three-Act grid */}
+                {activeExamples.map(ex => (
+                  <td key={ex.id}>
+                    {/* whether ex is a plot-type example (sections keyed to its bestStructureId,
+                        the same one the app auto-switched to) or one of the current structure's
+                        own dedicated examples (fine beats keyed directly), this always lines up
+                        with the current structure's own beats */}
                     {structureBeats.length === 0 ? "—" : (
                       <ul className="act-table-list">
                         {structureBeats.map(b => (
@@ -359,14 +345,14 @@ function ActTable({ structure, project, plotTypeExample }) {
                             <span className="act-breakdown-swatch" style={{ background: ACTS[key].color }} />
                             <span>
                               <span className="act-table-beat-name">{b.name}</span>
-                              <span>{plotTypeExample.sections?.[b.id] ?? plotTypeExample.beats?.[key]}</span>
+                              <span>{exampleText(ex, b, key)}</span>
                             </span>
                           </li>
                         ))}
                       </ul>
                     )}
                   </td>
-                )}
+                ))}
                 <td>
                   {structureBeats.length === 0 ? "—" : (
                     <ul className="act-table-list">
@@ -515,13 +501,16 @@ function FoundationEditor({ title, guide, text, onChange }) {
 // the rare beat that misses it); or, when nothing's picked, the current structure's own dedicated
 // example — every structure has exactly one, always available, mapped onto that structure's real
 // beats. Never both at once; two unrelated "In ..." boxes on the same beat is clutter, not help.
-function BeatEditor({ beat, text, onChange, plotType, plotTypeExample, structureExample, characters, interactions }) {
+function BeatEditor({ beat, text, onChange, plotType, plotTypeExamples, structureExamples, characters, interactions }) {
   const interactionLines = beatInteractionLines(beat.id, characters, interactions);
-  const activeExample = plotTypeExample
-    ? { title: plotTypeExample.title, text: plotTypeExample.sections?.[beat.id] ?? plotTypeExample.beats?.[beat.act] }
-    : structureExample
-      ? { title: structureExample.title, text: structureExample.beats?.[beat.id] }
-      : null;
+  // exactly one set ever shows per beat: up to 3 plot-type examples the user actually picked, each
+  // with its exact beat-by-beat text (falling back to its coarser per-act text on the rare beat
+  // that misses it); or, when no plot type is picked, the current structure's own dedicated
+  // examples — up to 3, always available, mapped onto that structure's real beats
+  const activeExamples = (plotTypeExamples.length > 0
+    ? plotTypeExamples.map(ex => ({ id: ex.id, title: ex.title, text: ex.sections?.[beat.id] ?? ex.beats?.[beat.act] }))
+    : structureExamples.map(ex => ({ id: ex.id, title: ex.title, text: ex.beats?.[beat.id] }))
+  ).filter(ex => ex.text);
   return (
     <div className="beat-editor">
       <h3>{beat.name}</h3>
@@ -533,11 +522,11 @@ function BeatEditor({ beat, text, onChange, plotType, plotTypeExample, structure
           <span style={{ color: ACTS[beat.act].color }}>{plotType.name}:</span> {plotType.acts[beat.act]}
         </p>
       )}
-      {activeExample?.text && (
-        <p className="example-note">
-          <span className="example-note-tag">In {activeExample.title}</span> — {activeExample.text}
+      {activeExamples.map(ex => (
+        <p key={ex.id} className="example-note">
+          <span className="example-note-tag">In {ex.title}</span> — {ex.text}
         </p>
-      )}
+      ))}
       <textarea value={text} placeholder="Write the scene, or just jot what has to happen…"
         onChange={e => onChange(e.target.value)} rows={12} />
       <div className="wc">{wordCount(text)} words</div>
@@ -921,7 +910,7 @@ function ExampleBrowser({ onPick, onClose }) {
             <div key={g.taxonomy} className="example-group">
               <h4>{g.taxonomy}</h4>
               {g.items.map(({ plotType, example }) => (
-                <button key={plotType.id} type="button" className="example-row" onClick={() => onPick(plotType.id, example.id)}>
+                <button key={plotType.id} type="button" className="example-row" onClick={() => onPick(plotType.id)}>
                   <span className="example-row-title">{example.title}</span>
                   <span className="example-row-creator">{example.creator}</span>
                   <span className="example-row-plottype">{plotType.name}</span>
@@ -945,8 +934,12 @@ function toMarkdown(project, structure) {
   lines.push(`_Structure: ${structure.name}_`, "");
   const plotType = plotTypeById(project.plotType);
   if (plotType) lines.push(`_Plot type: ${plotType.name} (${plotType.taxonomy})_`, "");
-  const structureExample = examplesFor("structure", structure.id)[0];
-  if (structureExample) lines.push(`_Studying: ${structureExample.title} (${structureExample.creator})_`, "");
+  // prefer whichever set of examples the app is actually showing on screen — the plot type's own,
+  // when one is picked, otherwise the current structure's always-available dedicated examples
+  const studying = plotType ? examplesFor("plotType", plotType.id) : examplesFor("structure", structure.id);
+  if (studying.length) {
+    lines.push(`_Studying: ${studying.map(ex => `${ex.title} (${ex.creator})`).join("; ")}_`, "");
+  }
   if (project.characters.length) {
     lines.push("## Characters", "");
     for (const c of project.characters) {
@@ -1032,18 +1025,16 @@ export default function StoryWheel() {
 
   const beat = structure.beats.find(b => b.id === selected) || null;
   const plotType = plotTypeById(project.plotType);
+  // up to 3 real stories per plot type, all mapped onto the SAME structure (bestStructureId) so
+  // they line up beat-for-beat as columns; picking a plot type is also picking that structure
   const plotTypeExamples = plotType ? examplesFor("plotType", plotType.id) : [];
-  const plotTypeExample = plotTypeExamples.some(e => e.id === project.plotTypeExample) ? exampleById(project.plotTypeExample) : null;
-  // every structure has exactly one dedicated example mapped beat-by-beat onto it (Star Wars for
-  // the Hero's Journey, Cinderella for Propp's 31 Functions, etc.) — always available, no picking
-  // needed, so it's the fallback illustration once no plot-type example is guiding the beat notes
-  const structureExample = examplesFor("structure", structure.id)[0] || null;
-  // each plot-type example's fine-grained, beat-by-beat breakdown is written against whichever
-  // structure actually suits that story (`bestStructureId`) — so picking one is also picking that
-  // structure, the same way choosing "See it in" already used to just silently mismatch otherwise
-  const pickPlotTypeExample = exampleId => {
-    const ex = exampleId ? exampleById(exampleId) : null;
-    update(ex ? { plotTypeExample: exampleId, structureId: ex.bestStructureId || "three-act" } : { plotTypeExample: exampleId });
+  // every structure has up to 3 dedicated examples mapped beat-by-beat onto it (Star Wars, The
+  // Matrix, Harry Potter for the Hero's Journey, say) — always available, no picking needed, so
+  // they're the fallback illustration once no plot type is guiding the beat notes
+  const structureExamples = examplesFor("structure", structure.id);
+  const pickPlotType = plotTypeId => {
+    const exs = plotTypeId ? examplesFor("plotType", plotTypeId) : [];
+    update({ plotType: plotTypeId, ...(exs.length ? { structureId: exs[0].bestStructureId } : {}) });
   };
 
   const openStory = id => { setActiveId(id); setShowStories(false); };
@@ -1106,15 +1097,13 @@ export default function StoryWheel() {
         <select className="struct-select" value={project.structureId}
           onChange={e => {
             const structureId = e.target.value;
-            // a plot-type example's precise per-beat text only exists for the one structure it was
-            // written against (bestStructureId) — switching away from that manually left the
-            // example active with nowhere accurate to plot, so every beat in an act fell back to
-            // showing the exact same coarse sentence as its neighbors. Dropping the example here
-            // (only when it no longer matches) lets the new structure's own dedicated example, or a
-            // freshly re-picked one, take over instead.
-            const currentEx = project.plotTypeExample ? exampleById(project.plotTypeExample) : null;
-            const keepExample = currentEx && currentEx.bestStructureId === structureId;
-            update(keepExample ? { structureId } : { structureId, plotTypeExample: "" });
+            // a plot type's examples only have precise per-beat text for the one structure they
+            // were written against (bestStructureId) — switching away from that manually left them
+            // active with nowhere accurate to plot, so every beat in an act fell back to showing
+            // the exact same coarse sentence as its neighbors. Dropping the plot type here (only
+            // when it no longer matches) lets the new structure's own dedicated examples take over.
+            const keepPlotType = plotTypeExamples.length > 0 && plotTypeExamples[0].bestStructureId === structureId;
+            update(keepPlotType ? { structureId } : { structureId, plotType: "" });
           }}>
           {STRUCTURES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
@@ -1128,8 +1117,8 @@ export default function StoryWheel() {
       <p className="blurb">{structure.blurb}</p>
 
       <div className="plot-type-top">
-        <label className="plot-type-top-picker">Plot type <span className="plot-type-hint">(pick one to see it against the timeline below)</span>
-          <select value={project.plotType} onChange={e => update({ plotType: e.target.value })}>
+        <label className="plot-type-top-picker">Plot type <span className="plot-type-hint">(switches your structure to wherever it's mapped out beat-by-beat, and shows up to 3 real examples)</span>
+          <select value={project.plotType} onChange={e => pickPlotType(e.target.value)}>
             <option value="">None</option>
             {plotTypesByTaxonomy().map(g => (
               <optgroup key={g.taxonomy} label={g.taxonomy}>
@@ -1141,18 +1130,15 @@ export default function StoryWheel() {
         {plotType && (
           <p className="plot-type-top-blurb"><span>{plotType.taxonomy}</span> — <em>{plotType.blurb}</em></p>
         )}
-        {plotType && plotTypeExamples.length > 0 && (
-          <label className="plot-type-top-picker">See it in <span className="plot-type-hint">(a real example, mapped beat-by-beat — switches your structure to Three-Act, where it's fully mapped out)</span>
-            <select value={project.plotTypeExample} onChange={e => pickPlotTypeExample(e.target.value)}>
-              <option value="">None</option>
-              {plotTypeExamples.map(ex => <option key={ex.id} value={ex.id}>{ex.title}</option>)}
-            </select>
-          </label>
+        {plotTypeExamples.length > 0 && (
+          <p className="plot-type-top-blurb">
+            <span>Studying</span> <em>{plotTypeExamples.map(ex => ex.title).join(", ")}</em>
+          </p>
         )}
       </div>
 
       <Timeline structure={structure} project={project} selected={selected} onSelect={id => { setSelected(id); setTab("beat"); }}
-        plotTypeExample={plotTypeExample} />
+        plotTypeExamples={plotTypeExamples} />
 
       <div className="legend">
         {Object.values(ACTS).map(a => (
@@ -1160,7 +1146,7 @@ export default function StoryWheel() {
         ))}
       </div>
 
-      <ActTable structure={structure} project={project} plotTypeExample={plotTypeExample} />
+      <ActTable structure={structure} project={project} plotTypeExamples={plotTypeExamples} structureExamples={structureExamples} />
 
       <main className="layout">
         <div className="side-col">
@@ -1197,7 +1183,7 @@ export default function StoryWheel() {
               {beat && (
                 <BeatEditor beat={beat} text={project.beats[beat.id] || ""}
                   onChange={text => update({ beats: { ...project.beats, [beat.id]: text } })}
-                  plotType={plotType} plotTypeExample={plotTypeExample} structureExample={structureExample}
+                  plotType={plotType} plotTypeExamples={plotTypeExamples} structureExamples={structureExamples}
                   characters={project.characters} interactions={project.interactions} />
               )}
             </>
@@ -1226,11 +1212,7 @@ export default function StoryWheel() {
       )}
       {showExamples && (
         <ExampleBrowser
-          onPick={(plotTypeId, exampleId) => {
-            const ex = exampleId ? exampleById(exampleId) : null;
-            update({ plotType: plotTypeId, plotTypeExample: exampleId, ...(ex ? { structureId: ex.bestStructureId || "three-act" } : {}) });
-            setShowExamples(false);
-          }}
+          onPick={plotTypeId => { pickPlotType(plotTypeId); setShowExamples(false); }}
           onClose={() => setShowExamples(false)} />
       )}
     </div>
