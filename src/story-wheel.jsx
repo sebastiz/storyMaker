@@ -883,9 +883,17 @@ function StoryPanel({ projects, activeId, onOpen, onNew, onRename, onDuplicate, 
    A searchable index over all 73 plot-type examples (one worked example per plot type), grouped
    by taxonomy — lets you jump straight to a plot type + example pair instead of hunting through
    the two chained dropdowns above the timeline. Picking a row sets both at once. */
-function ExampleBrowser({ onPick, onClose }) {
+function ExampleBrowser({ onPick, onPickStructure, onClose }) {
   const [query, setQuery] = useState("");
   const q = query.trim().toLowerCase();
+  // every structure's one dedicated, beat-by-beat example — picking one switches straight to that
+  // exact structure (not always Three-Act, unlike the plot-type rows below), since it's the one
+  // structure this particular story was actually mapped onto
+  const structureRows = STRUCTURES
+    .map(structure => ({ structure, example: examplesFor("structure", structure.id)[0] }))
+    .filter(r => r.example)
+    .filter(({ structure, example }) => !q || [structure.name, example.title, example.creator]
+      .some(s => s.toLowerCase().includes(q)));
   const groups = plotTypesByTaxonomy()
     .map(g => ({
       taxonomy: g.taxonomy,
@@ -908,9 +916,22 @@ function ExampleBrowser({ onPick, onClose }) {
           <button className="icon-btn" onClick={onClose}>✕</button>
         </div>
         <input className="example-search" autoFocus value={query} onChange={e => setQuery(e.target.value)}
-          placeholder="Search by title, author, or plot type…" />
+          placeholder="Search by title, author, plot type, or structure…" />
         <div className="example-groups">
-          {groups.length === 0 && <p className="empty">No matches.</p>}
+          {structureRows.length === 0 && groups.length === 0 && <p className="empty">No matches.</p>}
+          {structureRows.length > 0 && (
+            <div className="example-group">
+              <h4>Story Structures</h4>
+              {structureRows.map(({ structure, example }) => (
+                <button key={structure.id} type="button" className="example-row"
+                  onClick={() => onPickStructure(structure.id)}>
+                  <span className="example-row-title">{example.title}</span>
+                  <span className="example-row-creator">{example.creator}</span>
+                  <span className="example-row-plottype">{structure.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
           {groups.map(g => (
             <div key={g.taxonomy} className="example-group">
               <h4>{g.taxonomy}</h4>
@@ -1205,10 +1226,17 @@ export default function StoryWheel() {
           onExportAll={exportAllStories} onImport={importStories} />
       )}
       {showExamples && (
-        <ExampleBrowser onPick={(plotTypeId, exampleId) => {
-          update({ plotType: plotTypeId, plotTypeExample: exampleId, ...(exampleId ? { structureId: "three-act" } : {}) });
-          setShowExamples(false);
-        }}
+        <ExampleBrowser
+          onPick={(plotTypeId, exampleId) => {
+            update({ plotType: plotTypeId, plotTypeExample: exampleId, ...(exampleId ? { structureId: "three-act" } : {}) });
+            setShowExamples(false);
+          }}
+          onPickStructure={structureId => {
+            // clearing the plot-type example is what makes that structure's own dedicated example
+            // take over in the Beat editor — no extra state needed, it's already a 1:1 match
+            update({ structureId, plotType: "", plotTypeExample: "" });
+            setShowExamples(false);
+          }}
           onClose={() => setShowExamples(false)} />
       )}
     </div>
