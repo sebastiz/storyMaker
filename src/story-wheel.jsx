@@ -1091,7 +1091,7 @@ export default function StoryWheel() {
     <div className="app">
       <style>{CSS}</style>
       <header className="topbar">
-        <div className="brand">✦ Story Wheel</div>
+        <div className="brand">✦ Story Wheel <span className="app-version" title="Build version">v{APP_VERSION}</span></div>
         <input className="title-input" value={project.title}
           onChange={e => update({ title: e.target.value })} placeholder="Story title" />
         <select className="struct-select" value={project.structureId}
@@ -1232,6 +1232,7 @@ const CSS = `
 .app{min-height:100vh;background:var(--bg);color:var(--ink);font-family:'Archivo',system-ui,sans-serif;padding:18px 20px 40px}
 .topbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
 .brand{font-family:'Fraunces',serif;font-weight:650;font-size:20px;color:var(--gold);white-space:nowrap}
+.app-version{font-family:'Archivo',sans-serif;font-weight:400;font-size:11px;color:var(--dim);vertical-align:middle}
 .title-input{flex:1;min-width:160px;background:var(--panel);border:1px solid var(--border);color:var(--ink);
   border-radius:8px;padding:9px 12px;font-family:'Fraunces',serif;font-size:16px}
 .struct-select{background:var(--panel);border:1px solid var(--border);color:var(--ink);border-radius:8px;padding:9px 10px;font-size:13px}
