@@ -76,11 +76,11 @@ function groupSlices(slices, keyFn) {
    A linear Arrangement-View layout: horizontal tracks stacked top to bottom over one shared
    timeline (the story, left = start, right = end). Track order: Beats (the primary track) ->
    Written (a per-beat clip/empty-slot overlay of the same track) -> Acts (a 3-clip summary
-   track) -> two character-lane groups, always on: the chosen example's characters, then — kept
-   visually separate — the story's own, each character getting its own row/lane rather than every
-   character's line sharing one axis. */
+   track) -> two character-lane groups, always on: the plot type's typical character-role arcs,
+   then — kept visually separate — the story's own, each character getting its own row/lane
+   rather than every character's line sharing one axis. */
 function Timeline({ structure, project, selected, onSelect, plotTypeExamples }) {
-  // which lines are hidden, keyed "ref:<category>" for the chosen example's characters and
+  // which lines are hidden, keyed "ref:<category>" for the plot type's typical roles and
   // "char:<id>" for the story's own — plain UI state, not worth persisting to the project
   const [hiddenLines, setHiddenLines] = useState(() => new Set());
   const toggleLine = key => setHiddenLines(prev => {
@@ -88,10 +88,11 @@ function Timeline({ structure, project, selected, onSelect, plotTypeExamples }) 
     next.has(key) ? next.delete(key) : next.add(key);
     return next;
   });
-  // only one example's cast gets drawn here — usually just the first of up to 3 has character
-  // arcs at all, and overlaying 3 casts' worth of lines on one small reference track would be
-  // unreadable clutter, not clarity
-  const referenceCharacters = plotTypeExamples?.find(ex => ex.characters)?.characters || [];
+  // one row per character *role* (protagonist, antagonist, ally, ...), averaged across every one
+  // of this plot type's examples that has that role — the typical shape of that role's fortune
+  // across the story, not any single example's cast. Replaces showing just the first example's
+  // named characters, which threw away the other examples' arcs and didn't generalize.
+  const referenceCharacters = useMemo(() => typicalCharacterArcs(plotTypeExamples), [plotTypeExamples]);
   const slices = useMemo(() => segments(structure.beats), [structure]);
   const acts3 = useMemo(() => groupSlices(slices, b => b.threeAct), [slices]);
   const actGroups = useMemo(() => groupSlices(slices, b => b.act), [slices]);
@@ -167,8 +168,8 @@ function Timeline({ structure, project, selected, onSelect, plotTypeExamples }) 
         </div>
       </div>
 
-      <CharacterLanes trackLabel="Character arcs"
-        emptyMessage="Pick a plot type and an example above to see its characters' arcs here."
+      <CharacterLanes trackLabel="Typical character arcs"
+        emptyMessage="Pick a plot type above to see the typical arc for each character role here."
         items={referenceCharacters.map(c => ({
           key: c.name, category: c.category, name: c.name,
           points: Object.keys(ACTS).map(k => [arcX(k), arcY(c.values?.[k] ?? 0)]),
@@ -554,6 +555,31 @@ const CATEGORY_COLORS = {
   protagonist: "#E9C88A", antagonist: "#D2785A", ally: "#5FA8A0", mentor: "#8E7CC3",
   "love-interest": "#D98CA8", foil: "#C97B3D", "threshold-guardian": "#6FA3D8", other: "#8B8398",
 };
+// one row per character role that shows up in any of this plot type's examples, its fortune at
+// each act averaged across every example that has that role — the typical shape a "protagonist"
+// or "mentor" arc takes in this plot type, not any single story's cast. Rows are named after the
+// role (there's no one character to name), keyed by category so they merge across examples rather
+// than duplicating a "Protagonist" row per story. `interacts` is carried through as true for a
+// role/act whenever most of the contributing examples flagged an interaction there.
+function typicalCharacterArcs(examples) {
+  const byCategory = {};
+  for (const ex of examples || []) {
+    for (const c of ex.characters || []) {
+      const cat = c.category || "other";
+      (byCategory[cat] ||= []).push(c);
+    }
+  }
+  return CATEGORY_LIST.filter(cat => byCategory[cat]).map(cat => {
+    const chars = byCategory[cat];
+    const values = {}, interacts = {};
+    for (const act of Object.keys(ACTS)) {
+      const known = chars.map(c => c.values?.[act]).filter(v => typeof v === "number");
+      values[act] = known.length ? known.reduce((s, v) => s + v, 0) / known.length : 0;
+      interacts[act] = chars.filter(c => c.interacts?.[act]).length * 2 >= chars.length;
+    }
+    return { category: cat, name: CATEGORY_LABELS[cat], values, interacts };
+  });
+}
 // deliberately separate from the category palette above — an interaction's color says how it went
 // (good/bad/neither), not who was in it, so it stays legible however the two characters are colored
 const INTERACTION_TYPES = ["positive", "negative", "neutral"];
