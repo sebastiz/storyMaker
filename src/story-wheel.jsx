@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ACTS, STRUCTURES, structureById } from "./structures.js";
 import { plotTypeById, plotTypesByTaxonomy } from "./plot-types.js";
 import { examplesFor, exampleById } from "./examples.js";
+import { CHARACTER_NEEDS, CHARACTER_JOBS, TIME_PERIODS, COUNTRIES, buildSeedSentence, randomOf } from "./idea-seeds.js";
 // Story Wheel — a linear, Arrangement-View-style story-structure sketchpad
 const APP_VERSION = "dev";   // replaced with package.json version at build time (scripts/build.mjs)
 
@@ -408,6 +409,62 @@ const FOUNDATION_TABS = [
   { id: SEED_TAB, name: "The Seed", guide: "The spark this story started from — a line, an image, a 'what if…'." },
   { id: NEED_TAB, name: "What the Protagonist Needs", guide: "What the protagonist actually needs by the end — not what they think they want." },
 ];
+
+// exhaustive-ish dropdowns (need / job / era / country) that compile into one seed sentence —
+// an on-ramp for the blank-page problem, not a replacement for writing the seed out by hand
+function IdeaGenerator({ onUseSeed }) {
+  const [need, setNeed] = useState("");
+  const [job, setJob] = useState("");
+  const [timeIdx, setTimeIdx] = useState("");
+  const [country, setCountry] = useState("");
+  const timePhrase = timeIdx !== "" ? TIME_PERIODS[timeIdx].phrase : "";
+  const sentence = buildSeedSentence({ need, job, timePhrase, country });
+
+  const randomize = () => {
+    setNeed(randomOf(CHARACTER_NEEDS));
+    setJob(randomOf(CHARACTER_JOBS));
+    setTimeIdx(String(Math.floor(Math.random() * TIME_PERIODS.length)));
+    setCountry(randomOf(COUNTRIES));
+  };
+
+  return (
+    <div className="idea-gen">
+      <div className="idea-gen-grid">
+        <label>Character need
+          <select value={need} onChange={e => setNeed(e.target.value)}>
+            <option value="">Choose…</option>
+            {CHARACTER_NEEDS.map(n => <option key={n} value={n}>{n}</option>)}
+          </select>
+        </label>
+        <label>Job
+          <select value={job} onChange={e => setJob(e.target.value)}>
+            <option value="">Choose…</option>
+            {CHARACTER_JOBS.map(j => <option key={j} value={j}>{j}</option>)}
+          </select>
+        </label>
+        <label>Time period
+          <select value={timeIdx} onChange={e => setTimeIdx(e.target.value)}>
+            <option value="">Choose…</option>
+            {TIME_PERIODS.map((t, i) => <option key={t.label} value={i}>{t.label}</option>)}
+          </select>
+        </label>
+        <label>Country
+          <select value={country} onChange={e => setCountry(e.target.value)}>
+            <option value="">Choose…</option>
+            {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </label>
+      </div>
+      <p className="idea-gen-preview">{sentence || "Pick all four to build a seed sentence…"}</p>
+      <div className="idea-gen-actions">
+        <button type="button" className="ghost-btn" onClick={randomize}>🎲 Surprise me</button>
+        <button type="button" className="primary-btn" disabled={!sentence} onClick={() => onUseSeed(sentence)}>
+          Use as seed
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function FoundationEditor({ title, guide, text, onChange }) {
   return (
@@ -863,8 +920,13 @@ export default function StoryWheel() {
                 ))}
               </div>
               {selected === SEED_TAB && (
-                <FoundationEditor title="The Seed" guide={FOUNDATION_TABS[0].guide}
-                  text={project.seed} onChange={seed => update({ seed })} />
+                <>
+                  <IdeaGenerator onUseSeed={sentence => update({
+                    seed: project.seed ? `${project.seed}\n\n${sentence}` : sentence,
+                  })} />
+                  <FoundationEditor title="The Seed" guide={FOUNDATION_TABS[0].guide}
+                    text={project.seed} onChange={seed => update({ seed })} />
+                </>
               )}
               {selected === NEED_TAB && (
                 <FoundationEditor title="What the Protagonist Needs" guide={FOUNDATION_TABS[1].guide}
@@ -1026,6 +1088,16 @@ button{font-family:inherit;cursor:pointer}
 .beat-subtabs button.is-sel{background:var(--panel2);color:var(--gold);border-color:var(--gold)}
 .beat-editor h3{font-family:'Fraunces',serif;margin:0 0 6px;font-size:20px;color:var(--gold)}
 .guide{color:var(--dim);font-size:13px;margin:0 0 6px;line-height:1.5}
+.idea-gen{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px}
+.idea-gen-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.idea-gen-grid label{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--dim);
+  text-transform:uppercase;letter-spacing:.04em}
+.idea-gen-grid select{background:var(--panel);border:1px solid var(--border);color:var(--ink);
+  border-radius:7px;padding:8px 9px;font-size:13px;font-family:inherit}
+.idea-gen-preview{font-family:'Fraunces',serif;font-style:italic;color:var(--ink);font-size:15px;
+  line-height:1.5;margin:14px 0 10px}
+.idea-gen-actions{display:flex;gap:8px;flex-wrap:wrap}
+.idea-gen-actions .primary-btn:disabled{opacity:.4}
 .beat-ex-line{color:var(--gold);font-size:12px;margin:0 0 12px;opacity:.85}
 .beat-ex-line em{font-style:italic}
 .beat-editor textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;
