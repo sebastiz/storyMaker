@@ -1116,7 +1116,15 @@ export default function StoryWheel() {
         <input className="title-input" value={project.title}
           onChange={e => update({ title: e.target.value })} placeholder="Story title" />
         <select className="struct-select" value={project.structureId}
-          onChange={e => update({ structureId: e.target.value })}>
+          onChange={e => {
+            const structureId = e.target.value;
+            // a plot-type example's precise per-beat text only exists for Three-Act — switching
+            // away from it manually (as opposed to via Browse Examples, which already clears this)
+            // left the example active with nowhere accurate to plot, so every beat in an act fell
+            // back to showing the exact same coarse sentence as its neighbors. Dropping the example
+            // here lets the new structure's own dedicated example take over instead.
+            update(structureId === "three-act" ? { structureId } : { structureId, plotTypeExample: "" });
+          }}>
           {STRUCTURES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
         <button className="ghost-btn" onClick={() => setShowStories(true)}>My Stories</button>
