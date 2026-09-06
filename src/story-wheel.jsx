@@ -272,8 +272,10 @@ const GRID_STRUCTURE = structureById("three-act");
 function ActTable({ structure, project, plotTypeExample }) {
   // if the current story is itself using the Three-Act Structure, its beats are exactly what
   // column 1 already shows — an extra column would just repeat it, so it only appears for the
-  // other 16 structures
-  const showStructureCol = structure.id !== GRID_STRUCTURE.id;
+  // other 16 structures. It's also redundant once a plot-type example is active: the example
+  // column already lists this same structure's beat names alongside real text, so the bare
+  // beat-name column would just be repeating what's right next to it.
+  const showStructureCol = structure.id !== GRID_STRUCTURE.id && !plotTypeExample;
   return (
     <div className="act-table-wrap">
       <table className="act-table">
