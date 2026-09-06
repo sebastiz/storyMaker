@@ -501,7 +501,9 @@ function FoundationEditor({ title, guide, text, onChange }) {
 // only the plot-type example is shown here — it's the one the user actually picked from a
 // dropdown; the structure has its own automatic example too, but showing both meant every beat
 // carried two unrelated "In ..." boxes, and only one of them was ever something the user chose
-function BeatEditor({ beat, text, onChange, plotType, plotTypeExample }) {
+function BeatEditor({ beat, text, onChange, plotType, plotTypeExample, characters, interactions }) {
+  const nameOf = id => characters?.find(c => c.id === id)?.name || "Unnamed";
+  const beatInteractions = (interactions || []).filter(it => it.beatId === beat.id);
   return (
     <div className="beat-editor">
       <h3>{beat.name}</h3>
@@ -516,6 +518,20 @@ function BeatEditor({ beat, text, onChange, plotType, plotTypeExample }) {
       {plotTypeExample && plotTypeExample.beats[beat.act] && (
         <p className="example-note">
           <span className="example-note-tag">In {plotTypeExample.title}</span> — {plotTypeExample.beats[beat.act]}
+        </p>
+      )}
+      {beatInteractions.length > 0 && (
+        // mirrors an interaction's dotted connector on the Character Flow grid — surfaced here too
+        // since that's where the scene actually gets written, so the beat you're writing reminds
+        // you who meets whom and how it goes, without touching your own prose in the textarea below
+        <p className="beat-interaction-note">
+          <span className="beat-interaction-note-tag">Interactions here</span>
+          {beatInteractions.map((it, i) => (
+            <span key={it.id}>
+              {i > 0 && ", "}
+              {nameOf(it.aId)} & {nameOf(it.bId)} <span style={{ color: INTERACTION_COLORS[it.type] }}>({INTERACTION_LABELS[it.type]})</span>
+            </span>
+          ))}
         </p>
       )}
       <textarea value={text} placeholder="Write the scene, or just jot what has to happen…"
@@ -1136,7 +1152,8 @@ export default function StoryWheel() {
               {beat && (
                 <BeatEditor beat={beat} text={project.beats[beat.id] || ""}
                   onChange={text => update({ beats: { ...project.beats, [beat.id]: text } })}
-                  plotType={plotType} plotTypeExample={plotTypeExample} />
+                  plotType={plotType} plotTypeExample={plotTypeExample}
+                  characters={project.characters} interactions={project.interactions} />
               )}
             </>
           )}
@@ -1280,6 +1297,10 @@ button{font-family:inherit;cursor:pointer}
 .example-note-tag{color:var(--ember);font-weight:600}
 .example-line{font-size:12px;color:var(--dim);margin-top:4px;line-height:1.5}
 .example-line span{color:var(--ember);font-weight:600}
+.beat-interaction-note{background:var(--bg);border:1px solid var(--border);border-left:3px solid var(--gold);
+  border-radius:8px;padding:10px 12px;font-size:12px;color:var(--ink);line-height:1.7;margin:0 0 12px}
+.beat-interaction-note-tag{display:block;color:var(--gold);font-weight:600;text-transform:uppercase;
+  font-size:10px;letter-spacing:.05em;margin-bottom:2px}
 .side-col{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;
   min-height:420px;width:100%;max-width:720px}
 .tabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:10px}
