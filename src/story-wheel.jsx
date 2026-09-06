@@ -94,22 +94,10 @@ function Timeline({ structure, project, selected, onSelect, plotTypeExample }) {
   const acts3 = useMemo(() => groupSlices(slices, b => b.threeAct), [slices]);
   const actGroups = useMemo(() => groupSlices(slices, b => b.act), [slices]);
   const done = structure.beats.filter(b => wordCount(project.beats[b.id]) > 0).length;
-  // every character with at least one non-zero arc point gets a line — an empty/all-zero arc
-  // means "not scored yet", not "flat arc", so it stays off the track rather than drawing a
-  // meaningless straight line at the midline
-  const arcLineCharacters = useMemo(() => (project.characters || [])
-    .filter(c => Object.values(effectiveArcPoints(c, structure)).some(v => clampArc(v) !== 0)), [project.characters, structure]);
-  // maps a beat id to its mid-point on the shared 0-1000 axis, so "your characters" plots one point
-  // per beat (sub-act) rather than the coarse one-point-per-act the small preview used to show
-  const beatX = beatId => {
-    const s = slices.find(sl => sl.beat.id === beatId);
-    return s ? s.mid * 10 : 0;
-  };
   // a v1 visual marker only — an act where 2+ characters flagged "interacts here", not an attempt
   // to actually reconcile or force their lines together at that point. Keeps who, not just how
   // many, so the marker can name names on hover instead of just flagging that something happened.
-  // Shared by both the story's own characters (keyed by id) and a chosen example's cast (keyed by
-  // name, since reference characters have no id of their own).
+  // Reference characters are keyed by name, since they have no id of their own.
   const groupInteractions = (chars, idOf) => {
     const groups = {};
     for (const key of Object.keys(ACTS)) {
@@ -118,7 +106,6 @@ function Timeline({ structure, project, selected, onSelect, plotTypeExample }) {
     }
     return groups;
   };
-  const interactionGroups = useMemo(() => groupInteractions(project.characters, c => c.id), [project.characters]);
   const referenceInteractionGroups = useMemo(() => groupInteractions(referenceCharacters, c => c.name), [referenceCharacters]);
   const arcX = key => {
     const g = actGroups.find(a => a.key === key);
@@ -186,15 +173,6 @@ function Timeline({ structure, project, selected, onSelect, plotTypeExample }) {
         }))}
         keyPrefix="ref" dashed hiddenLines={hiddenLines} toggleLine={toggleLine} arcX={arcX} actBands={actBands}
         interactionGroups={referenceInteractionGroups} />
-
-      <CharacterLanes trackLabel="Your characters"
-        emptyMessage="Draw a character's fortune in the Character Flow tab to see their arc here."
-        items={arcLineCharacters.map(c => ({
-          key: c.id, category: c.category, name: c.name || "Unnamed",
-          points: structure.beats.map(b => [beatX(b.id), arcY(effectiveArcPoints(c, structure)[b.id] ?? 0)]),
-        }))}
-        keyPrefix="char" hiddenLines={hiddenLines} toggleLine={toggleLine} arcX={arcX} actBands={actBands}
-        interactionGroups={interactionGroups} />
     </div>
   );
 }
@@ -573,18 +551,20 @@ function effectiveArcPoints(character, structure) {
 }
 
 /* ===== character flow ===== */
-// one small multi-touch-friendly graph per character: drag (mouse or finger) across the grid to
-// set that beat's fortune, snapping x to the nearest beat/sub-act and y to the nearest integer
-// -3..3. A fast swipe still fills in every column it crosses via linear interpolation, so the line
-// stays continuous rather than only marking the columns a slow, precise drag happened to land on.
-function CharacterArcGraph({ character, structure, color, onChange }) {
+// every character's fortune line lives on one shared grid so they read against each other, not
+// just against the acts — a click on a chip below picks which one a drag actually edits (drawing
+// on a shared grid is otherwise ambiguous about which of several overlapping lines you mean to
+// move); the rest keep showing, dimmed, for comparison. Dragging (mouse or finger) snaps x to the
+// nearest beat/sub-act and y to the nearest integer -3..3; a fast swipe still fills in every column
+// it crosses via linear interpolation, so the line stays continuous rather than only marking the
+// columns a slow, precise drag happened to land on.
+function CharacterFlowGraph({ characters, activeId, structure, onChangeActive }) {
   const segs = useMemo(() => segments(structure.beats), [structure]);
   const bands = useMemo(() => groupSlices(segs, b => b.act).map(g => ({ key: g.key, x0: g.a0 * 10, x1: g.a1 * 10 })), [segs]);
   const svgRef = useRef(null);
   const dragRef = useRef(null);
 
-  const effective = effectiveArcPoints(character, structure);
-  const valueAt = i => clampArc(effective[segs[i].beat.id] ?? 0);
+  const active = characters.find(c => c.id === activeId);
 
   const cellFromEvent = e => {
     const rect = svgRef.current.getBoundingClientRect();
@@ -595,6 +575,7 @@ function CharacterArcGraph({ character, structure, color, onChange }) {
     return { index, value: arcValueFromY(yPct) };
   };
   const paint = (fromIndex, fromValue, toIndex, toValue) => {
+    if (!active) return;
     const lo = Math.min(fromIndex, toIndex), hi = Math.max(fromIndex, toIndex);
     const span = toIndex - fromIndex;
     const patch = {};
@@ -602,9 +583,10 @@ function CharacterArcGraph({ character, structure, color, onChange }) {
       const t = span === 0 ? 1 : (i - fromIndex) / span;
       patch[segs[i].beat.id] = clampArc(Math.round(fromValue + (toValue - fromValue) * t));
     }
-    onChange({ ...character.arcPoints, ...patch });
+    onChangeActive({ ...active.arcPoints, ...patch });
   };
   const handleDown = e => {
+    if (!active) return;
     e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
     const { index, value } = cellFromEvent(e);
@@ -619,8 +601,11 @@ function CharacterArcGraph({ character, structure, color, onChange }) {
   };
   const endDrag = () => { dragRef.current = null; };
 
-  const points = segs.map((s, i) => [s.mid * 10, arcY(valueAt(i))]);
-  const pointsAttr = points.map(p => p.join(",")).join(" ");
+  const lines = characters.map(c => {
+    const effective = effectiveArcPoints(c, structure);
+    const points = segs.map(s => [s.mid * 10, arcY(clampArc(effective[s.beat.id] ?? 0))]);
+    return { id: c.id, color: CATEGORY_COLORS[c.category || "other"], points, isActive: c.id === activeId };
+  });
 
   return (
     <div className="arc-graph">
@@ -634,8 +619,16 @@ function CharacterArcGraph({ character, structure, color, onChange }) {
             <line key={v} x1="0" y1={arcY(v)} x2="1000" y2={arcY(v)} className={v === 0 ? "char-lane-midline" : "arc-grid-line"} />
           ))}
           {segs.slice(1).map((s, i) => <line key={i} x1={s.a0 * 10} y1="0" x2={s.a0 * 10} y2="100" className="arc-grid-line" />)}
-          <polyline points={pointsAttr} className="char-lane-path" stroke={color} />
-          {points.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="5" className="arc-graph-point" fill={color} />)}
+          {lines.filter(l => !l.isActive).map(l => (
+            <polyline key={l.id} points={l.points.map(p => p.join(",")).join(" ")}
+              className="char-lane-path arc-graph-path-dim" stroke={l.color} />
+          ))}
+          {lines.filter(l => l.isActive).map(l => (
+            <g key={l.id}>
+              <polyline points={l.points.map(p => p.join(",")).join(" ")} className="char-lane-path" stroke={l.color} />
+              {l.points.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="5" className="arc-graph-point" fill={l.color} />)}
+            </g>
+          ))}
         </svg>
         <div className="arc-act-labels">
           {bands.map(b => (
@@ -650,33 +643,50 @@ function CharacterArcGraph({ character, structure, color, onChange }) {
 }
 
 // character identity (name, type, need, job, notes) is edited from the Seed tab's idea generator —
-// this tab is purely for drawing each character's fortune over the story, one graph per character
+// this tab is purely for drawing fortune. All characters share one grid; the chip row below picks
+// which character a drag on the grid actually edits.
 function CharacterFlow({ characters, structure, onChange }) {
-  const setArcPoints = (id, arcPoints) => onChange(characters.map(c => (c.id === id ? { ...c, arcPoints } : c)));
+  const [activeId, setActiveId] = useState(characters[0]?.id ?? null);
+  useEffect(() => {
+    if (!characters.some(c => c.id === activeId)) setActiveId(characters[0]?.id ?? null);
+  }, [characters]);
+
   if (characters.length === 0) {
     return <p className="empty">No characters yet — add one from the Seed tab (name, type, need, job, notes), then come back here to draw their fortune.</p>;
   }
+  const active = characters.find(c => c.id === activeId);
+  const setArcPoints = (id, arcPoints) => onChange(characters.map(c => (c.id === id ? { ...c, arcPoints } : c)));
+
   return (
     <div className="character-flow">
-      {characters.map(c => (
-        <div key={c.id} className="char-flow-card">
-          <div className="char-flow-head">
+      <div className="char-flow-legend">
+        {characters.map(c => (
+          <button key={c.id} type="button"
+            className={`char-flow-chip${c.id === activeId ? " is-active" : ""}`}
+            onClick={() => setActiveId(c.id)}>
             <i className="char-flow-swatch" style={{ background: CATEGORY_COLORS[c.category || "other"] }} />
-            <span className="char-flow-name">{c.name || "Unnamed"}</span>
-            <span className="char-flow-cat">{CATEGORY_LABELS[c.category || "other"]}</span>
-            {c.job && <span className="char-flow-job">{c.job}</span>}
-            {(c.need || c.summary) && <span className="char-flow-need">{c.need || c.summary}</span>}
-            <button type="button" className="icon-btn" title="Clear this character's fortune line"
-              onClick={() => setArcPoints(c.id, {})}>↺</button>
-          </div>
-          <CharacterArcGraph character={c} structure={structure} color={CATEGORY_COLORS[c.category || "other"]}
-            onChange={arcPoints => setArcPoints(c.id, arcPoints)} />
+            {c.name || "Unnamed"} <span className="char-flow-cat">{CATEGORY_LABELS[c.category || "other"]}</span>
+          </button>
+        ))}
+      </div>
+      <CharacterFlowGraph characters={characters} activeId={activeId} structure={structure}
+        onChangeActive={arcPoints => setArcPoints(activeId, arcPoints)} />
+      {active && (
+        <div className="char-flow-active-info">
+          <span>
+            Drawing <b>{active.name || "Unnamed"}</b>
+            {active.job && <> — {active.job}</>}
+            {(active.need || active.summary) && <> — <i>{active.need || active.summary}</i></>}
+          </span>
+          <button type="button" className="icon-btn" title="Clear this character's fortune line"
+            onClick={() => setArcPoints(activeId, {})}>↺</button>
         </div>
-      ))}
+      )}
       <p className="char-sheet-hint">
-        Drag across the grid — with a mouse or a finger — to draw each character's <b>fortune</b> over
-        the story, from <b>-3</b> (rock bottom) to <b>3</b> (on top). Columns follow the acts and their
-        beats (sub-acts).
+        Click a character above, then drag across the grid — with a mouse or a finger — to draw their
+        <b> fortune</b> over the story, from <b>-3</b> (rock bottom) to <b>3</b> (on top). Columns
+        follow the acts and their beats (sub-acts); every character's line shows at once so you can
+        compare them.
       </p>
     </div>
   );
@@ -1194,23 +1204,25 @@ button{font-family:inherit;cursor:pointer}
 .beat-editor textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;
   color:var(--ink);padding:12px;font-size:14px;line-height:1.6;font-family:'Fraunces',serif;resize:vertical}
 .wc{color:var(--dim);font-size:11px;margin-top:6px;text-align:right}
-.character-flow{display:flex;flex-direction:column;gap:14px}
-.char-flow-card{display:flex;flex-direction:column;gap:8px;background:var(--panel);
-  border:1px solid var(--border);border-radius:10px;padding:12px}
-.char-flow-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.character-flow{display:flex;flex-direction:column;gap:10px}
+.char-flow-legend{display:flex;flex-wrap:wrap;gap:6px}
+.char-flow-chip{display:flex;align-items:center;gap:6px;background:var(--panel);
+  border:1px solid var(--border);color:var(--dim);border-radius:20px;padding:6px 12px;font-size:12px}
+.char-flow-chip.is-active{color:var(--ink);border-color:var(--gold)}
 .char-flow-swatch{width:9px;height:9px;border-radius:3px;flex:none}
-.char-flow-name{font-family:'Fraunces',serif;font-size:15px;color:var(--ink)}
 .char-flow-cat{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em}
-.char-flow-job{font-size:12px;color:var(--ink);opacity:.8;white-space:nowrap}
-.char-flow-need{flex:1;min-width:120px;font-size:12px;color:var(--dim);font-style:italic;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.char-flow-active-info{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  font-size:12px;color:var(--dim)}
+.char-flow-active-info b{color:var(--gold);font-weight:600}
+.char-flow-active-info i{font-style:italic}
 .arc-graph{display:flex;gap:8px}
 .arc-graph-yaxis{display:flex;flex-direction:column;justify-content:space-between;
   font-size:10px;color:var(--dim);padding:2px 0}
 .arc-graph-main{position:relative;flex:1;min-width:0}
-.arc-graph-svg{width:100%;height:140px;display:block;border-radius:8px;background:var(--bg);
+.arc-graph-svg{width:100%;height:200px;display:block;border-radius:8px;background:var(--bg);
   border:1px solid var(--border);touch-action:none;cursor:crosshair}
 .arc-grid-line{stroke:var(--border);stroke-width:1}
+.arc-graph-path-dim{opacity:.4;stroke-width:2}
 .arc-graph-point{stroke:var(--panel);stroke-width:1.5}
 .arc-act-labels{position:relative;height:14px;margin-top:2px}
 .arc-act-label{position:absolute;top:0;text-align:center;font-size:9px;color:var(--dim);
