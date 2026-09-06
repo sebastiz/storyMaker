@@ -33,7 +33,7 @@ function newProject(structureId = "three-act") {
   return {
     id: uid(), title: "Untitled Story", structureId, seed: "", need: "", genre: "", logline: "", plotType: "",
     plotTypeExample: "",
-    beats: {}, characters: [], createdAt: now, updatedAt: now,
+    beats: {}, characters: [], interactions: [], createdAt: now, updatedAt: now,
   };
 }
 // fills in any field a newer app version added (e.g. `seed`) that an older saved/imported
@@ -536,6 +536,11 @@ const CATEGORY_COLORS = {
   protagonist: "#E9C88A", antagonist: "#D2785A", ally: "#5FA8A0", mentor: "#8E7CC3",
   "love-interest": "#D98CA8", foil: "#C97B3D", "threshold-guardian": "#6FA3D8", other: "#8B8398",
 };
+// deliberately separate from the category palette above — an interaction's color says how it went
+// (good/bad/neither), not who was in it, so it stays legible however the two characters are colored
+const INTERACTION_TYPES = ["positive", "negative", "neutral"];
+const INTERACTION_LABELS = { positive: "Positive", negative: "Negative", neutral: "Neutral" };
+const INTERACTION_COLORS = { positive: "#6FBF73", negative: "#D2555A", neutral: "#9A93A8" };
 const clampArc = v => Math.max(-3, Math.min(3, Math.round(Number(v)) || 0));
 // -3..3 fortune <-> the 0-100 y coordinate the arc charts (both the small timeline preview and the
 // big draggable graph) share, so a drawn point and a plotted point always land in the same place
@@ -558,7 +563,7 @@ function effectiveArcPoints(character, structure) {
 // nearest beat/sub-act and y to the nearest integer -3..3; a fast swipe still fills in every column
 // it crosses via linear interpolation, so the line stays continuous rather than only marking the
 // columns a slow, precise drag happened to land on.
-function CharacterFlowGraph({ characters, activeId, structure, onChangeActive }) {
+function CharacterFlowGraph({ characters, activeId, structure, interactions, onChangeActive }) {
   const segs = useMemo(() => segments(structure.beats), [structure]);
   const bands = useMemo(() => groupSlices(segs, b => b.act).map(g => ({ key: g.key, x0: g.a0 * 10, x1: g.a1 * 10 })), [segs]);
   const svgRef = useRef(null);
@@ -606,6 +611,30 @@ function CharacterFlowGraph({ characters, activeId, structure, onChangeActive })
     const points = segs.map(s => [s.mid * 10, arcY(clampArc(effective[s.beat.id] ?? 0))]);
     return { id: c.id, color: CATEGORY_COLORS[c.category || "other"], points, isActive: c.id === activeId };
   });
+  const lineOf = Object.fromEntries(lines.map(l => [l.id, l]));
+  const nameOf = id => characters.find(c => c.id === id)?.name || "Unnamed";
+
+  // a dotted connector between the two characters' current fortune at the beat they interact in —
+  // several interactions landing on the same beat are nudged apart so they don't draw on top of
+  // each other; each connector is colored by interaction type (positive/negative/neutral), not by
+  // either character, since the line is about how the meeting went, not who was in it
+  const byBeat = {};
+  for (const it of interactions || []) {
+    if (!lineOf[it.aId] || !lineOf[it.bId]) continue;
+    const segIndex = segs.findIndex(s => s.beat.id === it.beatId);
+    if (segIndex === -1) continue;
+    (byBeat[it.beatId] ??= []).push({ ...it, segIndex });
+  }
+  const connectors = Object.values(byBeat).flatMap(group => {
+    const baseX = segs[group[0].segIndex].mid * 10;
+    return group.map((it, i) => ({
+      ...it,
+      x: baseX + (i - (group.length - 1) / 2) * 10,
+      yA: lineOf[it.aId].points[it.segIndex][1],
+      yB: lineOf[it.bId].points[it.segIndex][1],
+      colorA: lineOf[it.aId].color, colorB: lineOf[it.bId].color,
+    }));
+  });
 
   return (
     <div className="arc-graph">
@@ -629,6 +658,15 @@ function CharacterFlowGraph({ characters, activeId, structure, onChangeActive })
               {l.points.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="5" className="arc-graph-point" fill={l.color} />)}
             </g>
           ))}
+          {connectors.map(it => (
+            <g key={it.id}>
+              <line x1={it.x} y1={it.yA} x2={it.x} y2={it.yB} className="interaction-line" stroke={INTERACTION_COLORS[it.type]}>
+                <title>{`${nameOf(it.aId)} & ${nameOf(it.bId)} — ${INTERACTION_LABELS[it.type]}`}</title>
+              </line>
+              <circle cx={it.x} cy={it.yA} r="3" fill={it.colorA} className="interaction-line-dot" />
+              <circle cx={it.x} cy={it.yB} r="3" fill={it.colorB} className="interaction-line-dot" />
+            </g>
+          ))}
         </svg>
         <div className="arc-act-labels">
           {bands.map(b => (
@@ -645,7 +683,7 @@ function CharacterFlowGraph({ characters, activeId, structure, onChangeActive })
 // character identity (name, type, need, job, notes) is edited from the Seed tab's idea generator —
 // this tab is purely for drawing fortune. All characters share one grid; the chip row below picks
 // which character a drag on the grid actually edits.
-function CharacterFlow({ characters, structure, onChange }) {
+function CharacterFlow({ characters, structure, interactions, onChange, onChangeInteractions }) {
   const [activeId, setActiveId] = useState(characters[0]?.id ?? null);
   useEffect(() => {
     if (!characters.some(c => c.id === activeId)) setActiveId(characters[0]?.id ?? null);
@@ -669,7 +707,7 @@ function CharacterFlow({ characters, structure, onChange }) {
           </button>
         ))}
       </div>
-      <CharacterFlowGraph characters={characters} activeId={activeId} structure={structure}
+      <CharacterFlowGraph characters={characters} activeId={activeId} structure={structure} interactions={interactions}
         onChangeActive={arcPoints => setArcPoints(activeId, arcPoints)} />
       {active && (
         <div className="char-flow-active-info">
@@ -688,6 +726,70 @@ function CharacterFlow({ characters, structure, onChange }) {
         follow the acts and their beats (sub-acts); every character's line shows at once so you can
         compare them.
       </p>
+      <h4 className="interactions-heading">Interactions</h4>
+      <InteractionsTable characters={characters} structure={structure} interactions={interactions}
+        onChange={onChangeInteractions} />
+    </div>
+  );
+}
+
+// who meets whom, where, and how it went — a plain table, since a dropdown-per-cell is easier to
+// fill in accurately than trying to click two exact points on the shared grid above. Each row draws
+// as a dotted connector on that grid, between the two characters' fortune at that beat.
+function InteractionsTable({ characters, structure, interactions, onChange }) {
+  const otherOf = id => characters.find(c => c.id !== id)?.id ?? id;
+  const addRow = () => {
+    const aId = characters[0].id;
+    onChange([...interactions, { id: uid(), aId, bId: otherOf(aId), beatId: structure.beats[0].id, type: "neutral" }]);
+  };
+  const setRow = (id, patch) => onChange(interactions.map(it => (it.id === id ? { ...it, ...patch } : it)));
+  const setA = (it, aId) => setRow(it.id, { aId, bId: it.bId === aId ? otherOf(aId) : it.bId });
+  const setB = (it, bId) => setRow(it.id, { bId, aId: it.aId === bId ? otherOf(bId) : it.aId });
+  const removeRow = id => onChange(interactions.filter(it => it.id !== id));
+
+  if (characters.length < 2) {
+    return <p className="char-sheet-hint">Add at least two characters (in the Seed tab) to specify interactions between them.</p>;
+  }
+  return (
+    <div className="interactions-table-wrap">
+      {interactions.length > 0 && (
+        <table className="interactions-table">
+          <thead>
+            <tr><th>Character</th><th></th><th>Character</th><th>Where</th><th>Type</th><th></th></tr>
+          </thead>
+          <tbody>
+            {interactions.map(it => (
+              <tr key={it.id}>
+                <td>
+                  <select value={it.aId} onChange={e => setA(it, e.target.value)}>
+                    {characters.map(c => <option key={c.id} value={c.id}>{c.name || "Unnamed"}</option>)}
+                  </select>
+                </td>
+                <td className="interactions-table-and">&amp;</td>
+                <td>
+                  <select value={it.bId} onChange={e => setB(it, e.target.value)}>
+                    {characters.filter(c => c.id !== it.aId).map(c => <option key={c.id} value={c.id}>{c.name || "Unnamed"}</option>)}
+                  </select>
+                </td>
+                <td>
+                  <select value={it.beatId} onChange={e => setRow(it.id, { beatId: e.target.value })}>
+                    {structure.beats.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                  </select>
+                </td>
+                <td>
+                  <select value={it.type} onChange={e => setRow(it.id, { type: e.target.value })}
+                    style={{ color: INTERACTION_COLORS[it.type] }}>
+                    {INTERACTION_TYPES.map(t => <option key={t} value={t}>{INTERACTION_LABELS[t]}</option>)}
+                  </select>
+                </td>
+                <td><button type="button" className="icon-btn" onClick={() => removeRow(it.id)} title="Remove">✕</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      {interactions.length === 0 && <p className="empty">No interactions yet.</p>}
+      <button type="button" className="ghost-btn" onClick={addRow}>+ Add interaction</button>
     </div>
   );
 }
@@ -818,6 +920,15 @@ function toMarkdown(project, structure) {
         const v = clampArc(arcPoints[b.id] ?? 0);
         if (v !== 0) lines.push(`  - *${b.name} fortune:* ${v > 0 ? "+" : ""}${v}`);
       }
+    }
+    lines.push("");
+  }
+  if (project.interactions?.length) {
+    lines.push("## Interactions", "");
+    const nameOf = id => project.characters.find(c => c.id === id)?.name || "Unnamed";
+    for (const it of project.interactions) {
+      const beat = structure.beats.find(b => b.id === it.beatId);
+      lines.push(`- **${nameOf(it.aId)}** & **${nameOf(it.bId)}** — ${INTERACTION_LABELS[it.type]}${beat ? ` (${beat.name})` : ""}`);
     }
     lines.push("");
   }
@@ -1030,8 +1141,9 @@ export default function StoryWheel() {
             </>
           )}
           {tab === "characters" && (
-            <CharacterFlow characters={project.characters} structure={structure}
-              onChange={characters => update({ characters })} />
+            <CharacterFlow characters={project.characters} structure={structure} interactions={project.interactions}
+              onChange={characters => update({ characters })}
+              onChangeInteractions={interactions => update({ interactions })} />
           )}
           {tab === "notes" && (
             <div className="notes-panel">
@@ -1227,6 +1339,18 @@ button{font-family:inherit;cursor:pointer}
 .arc-act-labels{position:relative;height:14px;margin-top:2px}
 .arc-act-label{position:absolute;top:0;text-align:center;font-size:9px;color:var(--dim);
   text-transform:uppercase;letter-spacing:.03em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.interaction-line{stroke-width:2;stroke-dasharray:4 3;vector-effect:non-scaling-stroke;opacity:.9}
+.interaction-line-dot{stroke:var(--panel);stroke-width:1}
+.interactions-heading{font-family:'Fraunces',serif;margin:4px 0 0;font-size:15px;color:var(--gold)}
+.interactions-table-wrap{width:100%;overflow-x:auto}
+.interactions-table{width:100%;min-width:520px;border-collapse:collapse;font-size:13px}
+.interactions-table th{text-align:left;font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;
+  font-weight:600;padding:0 8px 8px;border-bottom:1px solid var(--border);white-space:nowrap}
+.interactions-table td{vertical-align:middle;padding:6px 8px;border-bottom:1px solid var(--border)}
+.interactions-table tr:last-child td{border-bottom:none}
+.interactions-table select{background:var(--bg);border:1px solid var(--border);color:var(--ink);
+  border-radius:7px;padding:6px 8px;font-size:13px;font-family:inherit;width:100%}
+.interactions-table-and{color:var(--dim);text-align:center;padding:6px 2px!important}
 .char-sheet-hint{font-size:12px;color:var(--dim);line-height:1.5;margin:0}
 .char-sheet-hint b{color:var(--gold)}
 .empty{color:var(--dim);font-size:13px}
