@@ -131,12 +131,15 @@ const VOWEL_SOUND = /^[aeiou]/i;
 const article = word => (VOWEL_SOUND.test(word) ? "an" : "a");
 const countryPhrase = country => (COUNTRIES_NEEDING_THE.has(country) ? `the ${country}` : country);
 
-// one clause per character, e.g. "A blacksmith (Antagonist) who wants power."
-export function buildCharacterClause({ need, job, categoryLabel }) {
+// one clause per character, e.g. "A blacksmith (Antagonist) who wants power." — or, once named,
+// "Elena, a blacksmith (Antagonist), who wants power."
+export function buildCharacterClause({ name, need, job, categoryLabel }) {
   if (!need || !job) return "";
   const a = article(job);
+  const roleLabel = categoryLabel ? ` (${categoryLabel})` : "";
+  if (name && name.trim()) return `${name.trim()}, ${a} ${job}${roleLabel}, who ${need}.`;
   const cap = `${a[0].toUpperCase()}${a.slice(1)}`;
-  return `${cap} ${job}${categoryLabel ? ` (${categoryLabel})` : ""} who ${need}.`;
+  return `${cap} ${job}${roleLabel} who ${need}.`;
 }
 
 // "In France during the Second World War" — no trailing punctuation, since it's a lead-in
